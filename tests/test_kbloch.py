@@ -24,6 +24,11 @@ def test_bloch():
     assert nGout>0,'negative nG'
     assert nGout<=nG,'wrong nG'
 
+def test_getG_numpy_int():
+    nG_np = np.int32(50)
+    G2, nGout2 = grcwa.Lattice_getG(nG_np, Lk1, Lk2, method=method)
+    assert nGout2 > 0
+
 if AG_AVAILABLE:
     grcwa.set_backend('autograd')
     Nx = 51
