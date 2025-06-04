@@ -63,17 +63,13 @@ def get_ifft(Nx,Ny,s_in,G):
     '''
     Reconstruct real-space fields
     '''
-    dN = 1./Nx/Ny
-    nG,_ = G.shape
+    dN = 1.0 / Nx / Ny
 
-    s0 = bd.zeros((Nx,Ny),dtype=complex)
-    for i in range(nG):
-        x = G[i,0]
-        y = G[i,1]
-
-        stmp = bd.zeros((Nx,Ny),dtype=complex)
-        stmp[x,y] = 1.
-        s0 = s0 + s_in[i]*stmp
+    # Directly assign each Fourier coefficient to its corresponding
+    # location in the frequency domain array.  This is equivalent to
+    # the previous explicit loop but vectorised for efficiency.
+    s0 = bd.zeros((Nx, Ny), dtype=complex)
+    s0[G[:, 0], G[:, 1]] = s_in
 
     s_out = bd.ifft2(s0)/dN
     return s_out
