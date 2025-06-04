@@ -37,13 +37,13 @@ def get_conv(dN,s_in,G):
     G: shape (nG,2), 2 for Lk1,Lk2
     s_out: 1/N sum a_m exp(-2pi i mk/n), shape (nGx*nGy)
     '''
-    nG,_ = G.shape
-    sfft = bd.fft2(s_in)*dN
+    sfft = bd.fft2(s_in) * dN
     
 
-    ix = range(nG)
-    ii,jj = bd.meshgrid(ix,ix,indexing='ij')
-    s_out = sfft[G[ii,0]-G[jj,0], G[ii,1]-G[jj,1]]    
+    # broadcast subtractions to construct index offsets
+    gi = G[:, 0][:, None] - G[:, 0]
+    gj = G[:, 1][:, None] - G[:, 1]
+    s_out = sfft[gi, gj]
     return s_out
 
 def get_fft(dN,s_in,G):

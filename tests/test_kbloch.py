@@ -1,5 +1,6 @@
 import numpy as np
 import grcwa
+from grcwa.fft_funs import get_conv
 from .utils import t_grad
 
 try:
@@ -77,4 +78,30 @@ if AG_AVAILABLE:
         dx = 1e-3
         ind = np.random.randint(nGout,size=1)[0]
         FD, AD = t_grad(fun,grad_fun,x,dx,ind)
-        assert abs(FD-AD)<abs(FD)*tol,'wrong ifft gradient'        
+        assert abs(FD-AD)<abs(FD)*tol,'wrong ifft gradient'
+
+# -------------------------------------------------------------
+# Tests below do not require autograd
+
+def _old_get_conv(dN, grid, G):
+    """Original meshgrid-based convolution for reference."""
+    nG = G.shape[0]
+    sfft = np.fft.fft2(grid) * dN
+    ix = range(nG)
+    ii, jj = np.meshgrid(ix, ix, indexing="ij")
+    return sfft[G[ii, 0] - G[jj, 0], G[ii, 1] - G[jj, 1]]
+
+
+def test_get_conv_broadcast_random():
+    """New broadcast implementation matches previous version."""
+    np.random.seed(0)
+    for _ in range(3):
+        Nx = np.random.randint(8, 16)
+        Ny = np.random.randint(8, 16)
+        grid = np.random.random((Nx, Ny))
+        dN = 1.0 / Nx / Ny
+        nG_local = np.random.randint(5, 15)
+        G_local, _ = grcwa.Lattice_getG(nG_local, Lk1, Lk2, method=method)
+        new = get_conv(dN, grid, G_local)
+        old = _old_get_conv(dN, grid, G_local)
+        assert np.allclose(new, old)
