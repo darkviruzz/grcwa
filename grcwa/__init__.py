@@ -1,6 +1,6 @@
 """Top-level package for grcwa."""
 from .backend import backend, set_backend
-from .fft_funs import Epsilon_fft,get_fft,get_ifft
+from .fft_funs import Epsilon_fft, get_fft, get_ifft, get_conv
 from .kbloch import Lattice_Reciprocate,Lattice_getG,Lattice_SetKs
 from .rcwa import obj
 

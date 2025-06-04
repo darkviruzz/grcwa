@@ -82,3 +82,20 @@ if AG_AVAILABLE:
         ref = old_get_ifft(Nx, Ny, x, G)
         grcwa.set_backend('autograd')
         assert np.allclose(ref, new)
+
+    def test_get_conv():
+        # Ensure broadcasting version of get_conv matches the previous
+        # meshgrid implementation on random grids.
+        def old_get_conv(dN, s_in, G):
+            sfft = np.fft.fft2(s_in) * dN
+            nG, _ = G.shape
+            ix = range(nG)
+            ii, jj = np.meshgrid(ix, ix, indexing='ij')
+            return sfft[G[ii, 0] - G[jj, 0], G[ii, 1] - G[jj, 1]]
+
+        grcwa.set_backend('numpy')
+        s = np.random.random((Nx, Ny))
+        new = grcwa.get_conv(dN, s, G)
+        ref = old_get_conv(dN, s, G)
+        grcwa.set_backend('autograd')
+        assert np.allclose(ref, new)

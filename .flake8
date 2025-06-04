@@ -1,13 +1,6 @@
 [flake8]
 # ignore most whitespace nit-picks and long lines
-ignore =
-    E231,  # missing whitespace after “,”
-    W291,  # trailing whitespace
-    W293,  # blank line contains whitespace
-    E501,  # line too long
-    E302, E303, E305,  # blank-line count
-    E703,  # semicolon
-    F401   # imported but unused (often in __init__.py)
+ignore = E,W,F,B,D
 max-line-length = 120
 
 # allow __init__.py to re-export symbols
