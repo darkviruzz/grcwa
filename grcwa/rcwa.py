@@ -91,6 +91,14 @@ class obj:
 
         # set up reciprocal lattice
         self.Lk1, self.Lk2 = Lattice_Reciprocate(self.L1,self.L2)
+        onedim = False
+        if all(ny == 1 for _, ny in self.GridLayer_Nxy_list):
+            onedim = True
+            self.Lk2 = bd.zeros_like(self.Lk2)
+        elif all(nx == 1 for nx, _ in self.GridLayer_Nxy_list):
+            onedim = True
+            self.Lk1 = bd.zeros_like(self.Lk1)
+
         self.G,self.nG = Lattice_getG(self.nG,self.Lk1,self.Lk2,method=Gmethod)
         
         self.Lk1 = self.Lk1/Pscale
@@ -169,10 +177,23 @@ class obj:
             Ny = self.GridLayer_Nxy_list[ptri][1]
             dN = 1./Nx/Ny
 
-            if len(ep_all) == 3 and ep_all[0].ndim>0:
-                ep_grid = [bd.reshape(ep_all[0][ptr:ptr+Nx*Ny],[Nx,Ny]),bd.reshape(ep_all[1][ptr:ptr+Nx*Ny],[Nx,Ny]),bd.reshape(ep_all[2][ptr:ptr+Nx*Ny],[Nx,Ny])]
+            if len(ep_all) == 3 and ep_all[0].ndim > 0:
+                ep_grid = [bd.reshape(ep_all[0][ptr:ptr + Nx * Ny], [Nx, Ny]),
+                           bd.reshape(ep_all[1][ptr:ptr + Nx * Ny], [Nx, Ny]),
+                           bd.reshape(ep_all[2][ptr:ptr + Nx * Ny], [Nx, Ny])]
             else:
-                ep_grid = bd.reshape(ep_all[ptr:ptr+Nx*Ny],[Nx,Ny])
+                ep_grid = bd.reshape(ep_all[ptr:ptr + Nx * Ny], [Nx, Ny])
+
+            if Ny == 1:
+                if isinstance(ep_grid, list):
+                    ep_grid = [g.reshape(g.shape[0]) for g in ep_grid]
+                else:
+                    ep_grid = ep_grid.reshape(ep_grid.shape[0])
+            elif Nx == 1:
+                if isinstance(ep_grid, list):
+                    ep_grid = [g.reshape(g.shape[1]) for g in ep_grid]
+                else:
+                    ep_grid = ep_grid.reshape(ep_grid.shape[1])
             
             epinv, ep2 = Epsilon_fft(dN,ep_grid,self.G)
 

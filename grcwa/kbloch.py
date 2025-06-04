@@ -27,12 +27,21 @@ def Lattice_getG(nG,Lk1,Lk2,method=0):
     if not isinstance(nG, (int, np.integer)):
         raise TypeError('nG must be an integer')
     
-    if method == 0:
-        G,nG = Gsel_circular(nG, Lk1, Lk2)
-    elif method == 1:
-        G,nG = Gsel_parallelogramic(nG, Lk1, Lk2)
+    if np.linalg.norm(Lk1) == 0 or np.linalg.norm(Lk2) == 0:
+        M = nG // 2
+        orders = np.arange(-M, nG - M)
+        G = np.zeros((nG, 2), dtype=int)
+        if np.linalg.norm(Lk1) != 0:
+            G[:, 0] = orders
+        else:
+            G[:, 1] = orders
     else:
-        raise Exception('Truncation scheme is not included')
+        if method == 0:
+            G, nG = Gsel_circular(nG, Lk1, Lk2)
+        elif method == 1:
+            G, nG = Gsel_parallelogramic(nG, Lk1, Lk2)
+        else:
+            raise Exception('Truncation scheme is not included')
 
     return G,nG
 
