@@ -88,6 +88,12 @@ def test_rcwa():
     Tx,Ty,Tz = obj.Solve_ZStressTensorIntegral(0)
     assert Tz<0
 
+def test_phi_inv_cache():
+    obj = rcwa_assembly(epgrid,freq,theta,phi,planewave,pthick,Pscale=1.)
+    for l in range(obj.Layer_N):
+        recomputed = np.linalg.inv(obj.phi_list[l])
+        assert np.allclose(obj.phi_inv_list[l], recomputed)
+
 if AG_AVAILABLE:
     grcwa.set_backend('autograd')
     def test_epsgrad():

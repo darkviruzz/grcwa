@@ -33,6 +33,7 @@ class obj:
         self.kp_list = []                
         self.q_list = []  # eigenvalues
         self.phi_list = [] #eigenvectors
+        self.phi_inv_list = [] # inverse of eigenvectors
 
         # Uniform layer
         self.Uniform_ep_list = []
@@ -107,20 +108,23 @@ class obj:
             print('Total nG = ',self.nG)
 
         self.Patterned_ep2_list = [None]*self.Patterned_N
-        self.Patterned_epinv_list = [None]*self.Patterned_N            
+        self.Patterned_epinv_list = [None]*self.Patterned_N
+        self.phi_inv_list = []
         for i in range(self.Layer_N):
             if self.id_list[i][0] == 0:
                 ep = self.Uniform_ep_list[self.id_list[i][2]]
                 kp = MakeKPMatrix(self.omega,0,1./ep,self.kx,self.ky)
                 self.kp_list.append(kp)
-                
+
                 q,phi = SolveLayerEigensystem_uniform(self.omega,self.kx,self.ky,ep)
                 self.q_list.append(q)
                 self.phi_list.append(phi)
+                self.phi_inv_list.append(bd.inv(phi))
             else:
                 self.kp_list.append(None)
                 self.q_list.append(None)
                 self.phi_list.append(None)
+                self.phi_inv_list.append(None)
                 
     def MakeExcitationPlanewave(self,p_amp,p_phase,s_amp,s_phase,order = 0, direction = 'forward'):
         '''
@@ -185,6 +189,7 @@ class obj:
             q,phi = SolveLayerEigensystem(self.omega,self.kx,self.ky,kp,ep2)
             self.q_list[self.id_list[i][1]] = q
             self.phi_list[self.id_list[i][1]] = phi
+            self.phi_inv_list[self.id_list[i][1]] = bd.inv(phi)
 
             ptr += Nx*Ny
             ptri += 1            
@@ -224,7 +229,7 @@ class obj:
 
         if normalize = 1, it will be divided by n[0]*cos(theta)
         '''
-        aN, b0 = SolveExterior(self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list)
+        aN, b0 = SolveExterior(self.a0,self.bN,self.q_list,self.phi_list,self.phi_inv_list,self.kp_list,self.thickness_list)
         fi,bi = GetZPoyntingFlux(self.a0,b0,self.omega,self.kp_list[0],self.phi_list[0],self.q_list[0],byorder=byorder)
         fe,be = GetZPoyntingFlux(aN,self.bN,self.omega,self.kp_list[-1],self.phi_list[-1],self.q_list[-1],byorder=byorder)
 
@@ -245,17 +250,17 @@ class obj:
         returns fourier amplitude
         '''
         if which_layer == 0 :
-            aN, b0 = SolveExterior(self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list)
+            aN, b0 = SolveExterior(self.a0,self.bN,self.q_list,self.phi_list,self.phi_inv_list,self.kp_list,self.thickness_list)
             ai = self.a0
             bi = b0
 
         elif which_layer == self.Layer_N-1:
-            aN, b0 = SolveExterior(self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list)
+            aN, b0 = SolveExterior(self.a0,self.bN,self.q_list,self.phi_list,self.phi_inv_list,self.kp_list,self.thickness_list)
             ai = aN
             bi = self.bN
 
         else:
-            ai, bi = SolveInterior(which_layer,self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list)
+            ai, bi = SolveInterior(which_layer,self.a0,self.bN,self.q_list,self.phi_list,self.phi_inv_list,self.kp_list,self.thickness_list)
         return ai,bi
     
     def GetAmplitudes(self,which_layer,z_offset):
@@ -263,17 +268,17 @@ class obj:
         returns fourier amplitude
         '''
         if which_layer == 0 :
-            aN, b0 = SolveExterior(self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list)
+            aN, b0 = SolveExterior(self.a0,self.bN,self.q_list,self.phi_list,self.phi_inv_list,self.kp_list,self.thickness_list)
             ai = self.a0
             bi = b0
 
         elif which_layer == self.Layer_N-1:
-            aN, b0 = SolveExterior(self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list)
+            aN, b0 = SolveExterior(self.a0,self.bN,self.q_list,self.phi_list,self.phi_inv_list,self.kp_list,self.thickness_list)
             ai = aN
             bi = self.bN
 
         else:
-            ai, bi = SolveInterior(which_layer,self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list)
+            ai, bi = SolveInterior(which_layer,self.a0,self.bN,self.q_list,self.phi_list,self.phi_inv_list,self.kp_list,self.thickness_list)
 
         ai, bi = TranslateAmplitudes(self.q_list[which_layer],self.thickness_list[which_layer],z_offset,ai,bi)
 
@@ -362,7 +367,7 @@ class obj:
             epinv = self.Patterned_epinv_list[self.id_list[which_layer][2]]
 
         # un-translated amplitdue
-        ai, bi = SolveInterior(which_layer,self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list)
+        ai, bi = SolveInterior(which_layer,self.a0,self.bN,self.q_list,self.phi_list,self.phi_inv_list,self.kp_list,self.thickness_list)
         ab = bd.hstack((ai,bi))
         abMatrix = bd.outer(ab,bd.conj(ab))
         
@@ -478,7 +483,7 @@ def SolveLayerEigensystem(omega,kx,ky,kp,ep2):
     q = bd.where(bd.imag(q)<0.,-q,q)
     return q,phi
 
-def GetSMatrix(indi,indj,q_list,phi_list,kp_list,thickness_list):
+def GetSMatrix(indi,indj,q_list,phi_list,phi_inv_list,kp_list,thickness_list):
     ''' S_ij: size 4n*4n
     '''
     #assert type(indi) == int, 'layer index i must be integar'
@@ -499,7 +504,7 @@ def GetSMatrix(indi,indj,q_list,phi_list,kp_list,thickness_list):
         lp1 = l+1
 
         ## Q = inv(phi_l) * phi_lp1
-        Q = bd.dot(bd.inv(phi_list[l]),  phi_list[lp1])
+        Q = bd.dot(phi_inv_list[l],  phi_list[lp1])
         ## P = ql*inv(kp_l*phi_l) * kp_lp1*phi_lp1*q_lp1^-1
         P1 = bd.dot(bd.diag(q_list[l]),   bd.inv(bd.dot(kp_list[l],phi_list[l])))
         P2 = bd.dot(bd.dot(kp_list[lp1],phi_list[lp1]),   bd.diag(1./q_list[lp1]))
@@ -536,20 +541,20 @@ def GetSMatrix(indi,indj,q_list,phi_list,kp_list,thickness_list):
         
     return S11,S12,S21,S22
 
-def SolveExterior(a0,bN,q_list,phi_list,kp_list,thickness_list):
+def SolveExterior(a0,bN,q_list,phi_list,phi_inv_list,kp_list,thickness_list):
     '''
     Given a0, bN, solve for b0, aN
     '''
 
     Nlayer = len(thickness_list) # total number of layers
-    S11, S12, S21, S22 = GetSMatrix(0,Nlayer-1,q_list,phi_list,kp_list,thickness_list)
+    S11, S12, S21, S22 = GetSMatrix(0,Nlayer-1,q_list,phi_list,phi_inv_list,kp_list,thickness_list)
 
     aN = bd.dot(S11,a0) + bd.dot(S12,bN)
     b0 = bd.dot(S21,a0) + bd.dot(S22,bN)
 
     return aN,b0
 
-def SolveInterior(which_layer,a0,bN,q_list,phi_list,kp_list,thickness_list):
+def SolveInterior(which_layer,a0,bN,q_list,phi_list,phi_inv_list,kp_list,thickness_list):
     '''
     Given a0, bN, solve for ai, bi
     Layer numbering starts from 0
@@ -557,8 +562,8 @@ def SolveInterior(which_layer,a0,bN,q_list,phi_list,kp_list,thickness_list):
     Nlayer = len(thickness_list) # total number of layers
     nG2 = len(q_list[0])
     
-    S11, S12, S21, S22 = GetSMatrix(0,which_layer,q_list,phi_list,kp_list,thickness_list)
-    pS11, pS12, pS21, pS22 = GetSMatrix(which_layer,Nlayer-1,q_list,phi_list,kp_list,thickness_list)
+    S11, S12, S21, S22 = GetSMatrix(0,which_layer,q_list,phi_list,phi_inv_list,kp_list,thickness_list)
+    pS11, pS12, pS21, pS22 = GetSMatrix(which_layer,Nlayer-1,q_list,phi_list,phi_inv_list,kp_list,thickness_list)
 
     # tmp = inv(1-S12*pS21)
     tmp = bd.inv(bd.eye(nG2)-bd.dot(S12,pS21))
