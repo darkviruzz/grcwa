@@ -37,11 +37,23 @@ def get_conv(dN,s_in,G):
     G: shape (nG,2), 2 for Lk1,Lk2
     s_out: 1/N sum a_m exp(-2pi i mk/n), shape (nGx*nGy)
     '''
-    sfft = bd.fft2(s_in) * dN
+    # handle 1-D special cases
+    if s_in.shape[0] == 1:
+        # Nx == 1, vary along y
+        sfft = bd.fft(s_in.reshape(-1)) * dN
+        gi = G[:, 1][:, None] - G[:, 1]
+        s_out = sfft[gi]
+    elif s_in.shape[1] == 1:
+        # Ny == 1, vary along x
+        sfft = bd.fft(s_in[:, 0]) * dN
+        gi = G[:, 0][:, None] - G[:, 0]
+        s_out = sfft[gi]
+    else:
+        sfft = bd.fft2(s_in) * dN
 
-    gi = G[:, 0][:, None] - G[:, 0]
-    gj = G[:, 1][:, None] - G[:, 1]
-    s_out = sfft[gi, gj]
+        gi = G[:, 0][:, None] - G[:, 0]
+        gj = G[:, 1][:, None] - G[:, 1]
+        s_out = sfft[gi, gj]
     return s_out
 
 def get_fft(dN,s_in,G):
@@ -53,8 +65,15 @@ def get_fft(dN,s_in,G):
     s_out: 1/N sum a_m exp(-2pi i mk/n), shape (nGx*nGy)
     '''
     
-    sfft = bd.fft2(s_in)*dN
-    return sfft[G[:,0],G[:,1]]
+    if s_in.shape[0] == 1:
+        sfft = bd.fft(s_in.reshape(-1)) * dN
+        return sfft[G[:,1]]
+    elif s_in.shape[1] == 1:
+        sfft = bd.fft(s_in[:,0]) * dN
+        return sfft[G[:,0]]
+    else:
+        sfft = bd.fft2(s_in)*dN
+        return sfft[G[:,0],G[:,1]]
 
 
 def get_ifft(Nx,Ny,s_in,G):
@@ -62,12 +81,18 @@ def get_ifft(Nx,Ny,s_in,G):
     Reconstruct real-space fields
     '''
     dN = 1.0 / Nx / Ny
-
-    # Directly assign each Fourier coefficient to its corresponding
-    # location in the frequency domain array.  This is equivalent to
-    # the previous explicit loop but vectorised for efficiency.
-    s0 = bd.zeros((Nx, Ny), dtype=complex)
-    s0[G[:, 0], G[:, 1]] = s_in
-
-    s_out = bd.ifft2(s0)/dN
-    return s_out
+    if Nx == 1:
+        s0 = bd.zeros(Ny, dtype=complex)
+        s0[G[:,1]] = s_in
+        sout = bd.ifft(s0)/dN
+        return sout[None, :]
+    elif Ny == 1:
+        s0 = bd.zeros(Nx, dtype=complex)
+        s0[G[:,0]] = s_in
+        sout = bd.ifft(s0)/dN
+        return sout[:, None]
+    else:
+        s0 = bd.zeros((Nx, Ny), dtype=complex)
+        s0[G[:, 0], G[:, 1]] = s_in
+        s_out = bd.ifft2(s0)/dN
+        return s_out

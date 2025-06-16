@@ -29,6 +29,13 @@ def test_getG_numpy_int():
     G2, nGout2 = grcwa.Lattice_getG(nG_np, Lk1, Lk2, method=method)
     assert nGout2 > 0
 
+def test_getG_1d():
+    Lk1d = np.array([1.0, 0.0])
+    Lk2d = np.array([2.0, 0.0])
+    Gd, nGd = grcwa.Lattice_getG(11, Lk1d, Lk2d)
+    assert np.all(Gd[:,0] == 0) or np.all(Gd[:,1] == 0)
+    assert nGd == 11
+
 if AG_AVAILABLE:
     grcwa.set_backend('autograd')
     Nx = 51
@@ -98,4 +105,44 @@ if AG_AVAILABLE:
         new = grcwa.get_conv(dN, s, G)
         ref = old_get_conv(dN, s, G)
         grcwa.set_backend('autograd')
+        assert np.allclose(ref, new)
+
+    def test_fft_1d():
+        Ny1 = 1
+        Nx1 = 51
+        dN1 = 1.0 / Nx1 / Ny1
+        s = np.random.random((Nx1, Ny1))
+        g1 = grcwa.get_fft(dN1, s, G)
+        # reference using numpy directly
+        grcwa.set_backend('numpy')
+        sfft = np.fft.fft(s[:,0]) * dN1
+        ref = sfft[G[:,0]]
+        grcwa.set_backend('autograd')
+        assert np.allclose(ref, g1)
+
+    def test_ifft_1d():
+        Ny1 = 1
+        Nx1 = 51
+        x = np.random.random(nGout)
+        grcwa.set_backend('numpy')
+        # manual reference
+        dN1 = 1.0 / Nx1
+        s0 = np.zeros(Nx1, dtype=complex)
+        s0[G[:,0]] = x
+        ref = np.fft.ifft(s0) / dN1
+        grcwa.set_backend('autograd')
+        new = grcwa.get_ifft(Nx1, Ny1, x, G)
+        assert np.allclose(ref[:, None], new)
+
+    def test_get_conv_1d():
+        Ny1 = 1
+        Nx1 = 51
+        dN1 = 1.0 / Nx1
+        s = np.random.random((Nx1, Ny1))
+        grcwa.set_backend('numpy')
+        sfft = np.fft.fft(s[:,0]) * dN1
+        gi = G[:,0][:,None] - G[:,0]
+        ref = sfft[gi]
+        grcwa.set_backend('autograd')
+        new = grcwa.get_conv(dN1, s, G)
         assert np.allclose(ref, new)

@@ -35,6 +35,8 @@ class NumpyBackend():
     outer = staticmethod(np.outer)
     conj = staticmethod(np.conj)
     trace = staticmethod(np.trace)
+    fft = staticmethod(np.fft.fft)
+    ifft = staticmethod(np.fft.ifft)
     fft2 = staticmethod(np.fft.fft2)
     ifft2 = staticmethod(np.fft.ifft2)
 
@@ -75,6 +77,8 @@ if AG_AVAILABLE:
         outer = staticmethod(npa.outer)
         conj = staticmethod(npa.conj)
         trace = staticmethod(npa.trace)
+        fft = staticmethod(npa.fft.fft)
+        ifft = staticmethod(npa.fft.ifft)
         fft2 = staticmethod(npa.fft.fft2)
         ifft2 = staticmethod(npa.fft.ifft2)
 
