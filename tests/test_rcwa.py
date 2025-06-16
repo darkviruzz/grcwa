@@ -88,6 +88,25 @@ def test_rcwa():
     Tx,Ty,Tz = obj.Solve_ZStressTensorIntegral(0)
     assert Tz<0
 
+def test_rcwa_1d():
+    Ny1 = 1
+    Nx1 = 120
+    nG1 = 5
+    obj = grcwa.obj(nG1, L1, L2, freq, theta, phi, verbose=0)
+    obj.Add_LayerUniform(thick0, epsuniform0)
+    obj.Add_LayerGrid(pthick[0], Nx1, Ny1)
+    obj.Add_LayerUniform(thickN, epsuniformN)
+    obj.nG = nG1
+    obj.Init_Setup()
+    obj.MakeExcitationPlanewave(planewave['p_amp'], planewave['p_phase'],
+                                planewave['s_amp'], planewave['s_phase'],
+                                order=0)
+    grid = np.ones((Nx1, Ny1))
+    grid[:Nx1//2, 0] = 12.0
+    obj.GridLayer_geteps(grid.flatten())
+    R, T = obj.RT_Solve(normalize=1)
+    assert np.isclose(R+T, 1.0, atol=1e-5)
+
 if AG_AVAILABLE:
     grcwa.set_backend('autograd')
     def test_epsgrad():
