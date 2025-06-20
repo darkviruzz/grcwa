@@ -1,5 +1,6 @@
 import numpy as np
 import grcwa
+import pytest
 from .utils import t_grad
 
 try:
@@ -61,6 +62,19 @@ def rcwa_assembly(epgrid,freq,theta,phi,planewave,pthick,Pscale=1.):
     
     return obj
 
+
+def rcwa_assembly_1d(Nx, Ny):
+    obj = grcwa.obj(21, [0.5, 0] if Ny==1 else [0,0], [0,0.5] if Nx==1 else [0,0],
+                    freq, 0, 0, verbose=0, mode='1D')
+    obj.Add_LayerUniform(1., 1.)
+    obj.Add_LayerGrid(0.2, Nx, Ny)
+    obj.Add_LayerUniform(1., 1.)
+    obj.Init_Setup()
+    obj.MakeExcitationPlanewave(1,0,0,0,order=0)
+    ep = np.ones((Nx, Ny))
+    obj.GridLayer_geteps(ep.flatten())
+    return obj
+
    
 def test_rcwa():
     ## compared to S4
@@ -87,6 +101,21 @@ def test_rcwa():
 
     Tx,Ty,Tz = obj.Solve_ZStressTensorIntegral(0)
     assert Tz<0
+
+def test_addlayergrid_error():
+    obj = grcwa.obj(11, [0.5,0], [0,0], freq, 0, 0, verbose=0, mode='1D')
+    with pytest.raises(ValueError):
+        obj.Add_LayerGrid(0.1, 3, 3)
+
+def test_rcwa_1d_x():
+    obj = rcwa_assembly_1d(40,1)
+    R,T = obj.RT_Solve(normalize=1)
+    assert np.isfinite(R)
+
+def test_rcwa_1d_y():
+    obj = rcwa_assembly_1d(1,40)
+    R,T = obj.RT_Solve(normalize=1)
+    assert np.isfinite(R)
 
 if AG_AVAILABLE:
     grcwa.set_backend('autograd')
