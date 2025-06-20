@@ -12,7 +12,11 @@ To enable autograd::
 
 To initialize the RCWA::
 
-  obj = grcwa.obj(nG,L1,L2,freq,theta,phi,verbose=0) # verbose=1 for output the actual nG
+  obj = grcwa.obj(nG, L1, L2, freq, theta, phi, verbose=0)
+
+The constructor accepts ``mode='2D'`` by default.  Set ``mode='1D'`` when one
+lattice vector is zero and grid layers use ``Nx=1`` or ``Ny=1`` to model
+1‑D gratings.
 
 To add layers, the order of adding will determine the layer order (1st added layer is 0-th layer, 2nd to be 1st layer, and so forth)::
   

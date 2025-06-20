@@ -3,7 +3,7 @@ from .fft_funs import Epsilon_fft,get_ifft
 from .kbloch import Lattice_Reciprocate,Lattice_getG,Lattice_SetKs
 
 class obj:
-    def __init__(self,nG,L1,L2,freq,theta,phi,verbose=1):
+    def __init__(self,nG,L1,L2,freq,theta,phi,verbose=1,mode="2D"):
         '''The time harmonic convention is exp(-i omega t), speed of light = 1
 
         Two kinds of layers are currently supported: uniform layer,
@@ -23,6 +23,11 @@ class obj:
         self.theta = theta
         self.nG = nG
         self.verbose = verbose
+        if mode not in ["1D", "2D"]:
+            raise ValueError("mode must be '1D' or '2D'")
+        self.mode = mode
+        if self.mode == "1D" and not ((L1[0]==0 and L1[1]==0) or (L2[0]==0 and L2[1]==0)):
+            raise ValueError("One lattice vector must be zero in 1D mode")
         self.Layer_N = 0  # total number of layers
       
         # the length of the following variables = number of total layers
@@ -62,6 +67,8 @@ class obj:
         self.Uniform_N += 1
 
     def Add_LayerGrid(self,thickness,Nx,Ny):
+        if self.mode == "1D" and not (Nx == 1 or Ny == 1):
+            raise ValueError("Nx or Ny must be 1 in 1D mode")
         self.thickness_list.append(thickness)
         self.GridLayer_Nxy_list.append([Nx,Ny])
         self.id_list.append([1,self.Layer_N,self.Patterned_N,self.GridLayer_N])
@@ -90,7 +97,19 @@ class obj:
         ky0 = self.omega*bd.sin(self.theta)*bd.sin(self.phi)*bd.sqrt(self.Uniform_ep_list[0])
 
         # set up reciprocal lattice
-        self.Lk1, self.Lk2 = Lattice_Reciprocate(self.L1,self.L2)
+        if self.mode == "1D":
+            if self.L1[0]==0 and self.L1[1]==0:
+                self.Lk1 = bd.array([0.,0.])
+                self.Lk2 = bd.array([
+                    1./self.L2[0] if self.L2[0]!=0 else 0.,
+                    1./self.L2[1] if self.L2[1]!=0 else 0.])
+            else:
+                self.Lk2 = bd.array([0.,0.])
+                self.Lk1 = bd.array([
+                    1./self.L1[0] if self.L1[0]!=0 else 0.,
+                    1./self.L1[1] if self.L1[1]!=0 else 0.])
+        else:
+            self.Lk1, self.Lk2 = Lattice_Reciprocate(self.L1,self.L2)
         self.G,self.nG = Lattice_getG(self.nG,self.Lk1,self.Lk2,method=Gmethod)
         
         self.Lk1 = self.Lk1/Pscale

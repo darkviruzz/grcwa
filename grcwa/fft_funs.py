@@ -37,11 +37,16 @@ def get_conv(dN,s_in,G):
     G: shape (nG,2), 2 for Lk1,Lk2
     s_out: 1/N sum a_m exp(-2pi i mk/n), shape (nGx*nGy)
     '''
-    sfft = bd.fft2(s_in) * dN
-
-    gi = G[:, 0][:, None] - G[:, 0]
-    gj = G[:, 1][:, None] - G[:, 1]
-    s_out = sfft[gi, gj]
+    Nx, Ny = s_in.shape
+    if Ny == 1 or Nx == 1 or G.ndim == 1:
+        sfft = bd.fft(s_in.reshape(Nx * Ny)) * dN
+        gi = G[:, None] - G[None, :]
+        s_out = sfft[gi]
+    else:
+        sfft = bd.fft2(s_in) * dN
+        gi = G[:, 0][:, None] - G[:, 0]
+        gj = G[:, 1][:, None] - G[:, 1]
+        s_out = sfft[gi, gj]
     return s_out
 
 def get_fft(dN,s_in,G):
@@ -53,8 +58,13 @@ def get_fft(dN,s_in,G):
     s_out: 1/N sum a_m exp(-2pi i mk/n), shape (nGx*nGy)
     '''
     
-    sfft = bd.fft2(s_in)*dN
-    return sfft[G[:,0],G[:,1]]
+    Nx, Ny = s_in.shape
+    if Ny == 1 or Nx == 1 or G.ndim == 1:
+        sfft = bd.fft(s_in.reshape(Nx * Ny)) * dN
+        return sfft[G]
+    else:
+        sfft = bd.fft2(s_in) * dN
+        return sfft[G[:,0],G[:,1]]
 
 
 def get_ifft(Nx,Ny,s_in,G):
@@ -63,11 +73,14 @@ def get_ifft(Nx,Ny,s_in,G):
     '''
     dN = 1.0 / Nx / Ny
 
-    # Directly assign each Fourier coefficient to its corresponding
-    # location in the frequency domain array.  This is equivalent to
-    # the previous explicit loop but vectorised for efficiency.
-    s0 = bd.zeros((Nx, Ny), dtype=complex)
-    s0[G[:, 0], G[:, 1]] = s_in
-
-    s_out = bd.ifft2(s0)/dN
-    return s_out
+    if Ny == 1 or Nx == 1 or G.ndim == 1:
+        N = Nx * Ny
+        s0 = bd.zeros(N, dtype=complex)
+        s0[G] = s_in
+        s_out = bd.ifft(s0) / dN
+        return bd.reshape(s_out, (Nx, Ny))
+    else:
+        s0 = bd.zeros((Nx, Ny), dtype=complex)
+        s0[G[:, 0], G[:, 1]] = s_in
+        s_out = bd.ifft2(s0) / dN
+        return s_out

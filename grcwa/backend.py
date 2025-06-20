@@ -37,6 +37,8 @@ class NumpyBackend():
     trace = staticmethod(np.trace)
     fft2 = staticmethod(np.fft.fft2)
     ifft2 = staticmethod(np.fft.ifft2)
+    fft = staticmethod(np.fft.fft)
+    ifft = staticmethod(np.fft.ifft)
 
     sin = staticmethod(np.sin)
     cos = staticmethod(np.cos)
@@ -77,6 +79,8 @@ if AG_AVAILABLE:
         trace = staticmethod(npa.trace)
         fft2 = staticmethod(npa.fft.fft2)
         ifft2 = staticmethod(npa.fft.ifft2)
+        fft = staticmethod(npa.fft.fft)
+        ifft = staticmethod(npa.fft.ifft)
 
         sin = staticmethod(npa.sin)
         cos = staticmethod(npa.cos)

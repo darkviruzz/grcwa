@@ -99,3 +99,35 @@ if AG_AVAILABLE:
         ref = old_get_conv(dN, s, G)
         grcwa.set_backend('autograd')
         assert np.allclose(ref, new)
+
+    def test_getG_1d():
+        Lk1 = np.array([1.0, 0.0])
+        Lk2 = np.array([0.0, 0.0])
+        G1, n1 = grcwa.Lattice_getG(5, Lk1, Lk2, method=0)
+        assert G1.ndim == 1
+        assert n1 == len(G1)
+        assert G1[0] == -2 and G1[-1] == 2
+
+    def test_fft_1d():
+        N = 16
+        dN1 = 1.0 / N
+        G1 = np.arange(-2, 3)
+        s = np.random.random((N, 1))
+        grcwa.set_backend('numpy')
+        new = grcwa.get_fft(dN1, s, G1)
+        ref = np.fft.fft(s.flatten()) * dN1
+        grcwa.set_backend('autograd')
+        assert np.allclose(ref[G1], new)
+
+    def test_ifft_1d():
+        N = 8
+        dN1 = 1.0 / N
+        G1 = np.arange(-2, 3)
+        x = np.random.random(len(G1))
+        grcwa.set_backend('numpy')
+        new = grcwa.get_ifft(1, N, x, G1)
+        ref_full = np.zeros(N, dtype=complex)
+        ref_full[G1] = x
+        ref = np.fft.ifft(ref_full) / dN1
+        grcwa.set_backend('autograd')
+        assert np.allclose(ref.reshape(1, N), new)

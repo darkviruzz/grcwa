@@ -27,12 +27,15 @@ def Lattice_getG(nG,Lk1,Lk2,method=0):
     if not isinstance(nG, (int, np.integer)):
         raise TypeError('nG must be an integer')
     
-    if method == 0:
-        G,nG = Gsel_circular(nG, Lk1, Lk2)
-    elif method == 1:
-        G,nG = Gsel_parallelogramic(nG, Lk1, Lk2)
+    if np.linalg.norm(Lk1)==0 or np.linalg.norm(Lk2)==0:
+        G,nG = Gsel_1d(nG,method)
     else:
-        raise Exception('Truncation scheme is not included')
+        if method == 0:
+            G,nG = Gsel_circular(nG, Lk1, Lk2)
+        elif method == 1:
+            G,nG = Gsel_parallelogramic(nG, Lk1, Lk2)
+        else:
+            raise Exception('Truncation scheme is not included')
 
     return G,nG
 
@@ -42,10 +45,32 @@ def Lattice_SetKs(G, kx0, ky0, Lk1, Lk2):
     2pi factor is now included in the returned kx,ky
     '''
 
-    kx = kx0 + 2*np.pi*(Lk1[0]*G[:,0]+Lk2[0]*G[:,1])
-    ky = ky0 + 2*np.pi*(Lk1[1]*G[:,0]+Lk2[1]*G[:,1])
+    if G.ndim == 1:
+        if np.linalg.norm(Lk1) != 0:
+            kx = kx0 + 2*np.pi*Lk1[0]*G
+            ky = ky0 + 2*np.pi*Lk1[1]*G
+        else:
+            kx = kx0 + 2*np.pi*Lk2[0]*G
+            ky = ky0 + 2*np.pi*Lk2[1]*G
+    else:
+        kx = kx0 + 2*np.pi*(Lk1[0]*G[:,0]+Lk2[0]*G[:,1])
+        ky = ky0 + 2*np.pi*(Lk1[1]*G[:,0]+Lk2[1]*G[:,1])
 
     return kx,ky
+
+
+def Gsel_1d(nG, method):
+    """Generate 1-D G orders."""
+    m = nG // 2
+    if method == 0:
+        G = np.arange(-m, m + 1, dtype=int)
+    elif method == 1:
+        pos = np.arange(1, m + 1, dtype=int)
+        G = np.concatenate(([0], pos, -pos))
+    else:
+        raise Exception('Truncation scheme is not included')
+    nG = len(G)
+    return G, nG
 
 
 def Gsel_parallelogramic(nG, Lk1, Lk2):
