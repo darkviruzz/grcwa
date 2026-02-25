@@ -49,7 +49,10 @@ class obj:
 
         # layers of analytic Fourier series (e.g. circles)
         self.FourierLayer_N = 0
-        self.FourierLayer_params = []        
+        self.FourierLayer_params = []
+
+        # cache for repeated S-matrix assembly
+        self._smatrix_cache = None
         
     def Add_LayerUniform(self,thickness,epsilon):
         #assert type(thickness) == float, 'thickness should be a float'
@@ -121,7 +124,36 @@ class obj:
                 self.kp_list.append(None)
                 self.q_list.append(None)
                 self.phi_list.append(None)
-                
+
+        self._invalidate_smatrix_cache()
+
+    def _invalidate_smatrix_cache(self):
+        self._smatrix_cache = None
+
+    def _get_smatrix_cache(self):
+        if self._smatrix_cache is not None:
+            return self._smatrix_cache
+
+        if len(self.phi_list) != self.Layer_N or len(self.kp_list) != self.Layer_N:
+            return None
+
+        phi_inv_list = [None] * self.Layer_N
+        kpphi_inv_list = [None] * self.Layer_N
+
+        for i in range(self.Layer_N):
+            phi = self.phi_list[i]
+            kp = self.kp_list[i]
+            if bd.isinstance(phi, type(None)) or bd.isinstance(kp, type(None)):
+                return None
+            phi_inv_list[i] = bd.inv(phi)
+            kpphi_inv_list[i] = bd.inv(bd.dot(kp, phi))
+
+        self._smatrix_cache = {
+            'phi_inv_list': phi_inv_list,
+            'kpphi_inv_list': kpphi_inv_list,
+        }
+        return self._smatrix_cache
+
     def MakeExcitationPlanewave(self,p_amp,p_phase,s_amp,s_phase,order = 0, direction = 'forward'):
         '''
         Front incidence
@@ -159,6 +191,8 @@ class obj:
         '''
         Fourier transform + eigenvalue for grid layer
         '''
+        self._invalidate_smatrix_cache()
+
         ptri = 0
         ptr = 0
         for i in range(self.Layer_N):
@@ -224,7 +258,7 @@ class obj:
 
         if normalize = 1, it will be divided by n[0]*cos(theta)
         '''
-        aN, b0 = SolveExterior(self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list)
+        aN, b0 = SolveExterior(self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list,self._get_smatrix_cache())
         fi,bi = GetZPoyntingFlux(self.a0,b0,self.omega,self.kp_list[0],self.phi_list[0],self.q_list[0],byorder=byorder)
         fe,be = GetZPoyntingFlux(aN,self.bN,self.omega,self.kp_list[-1],self.phi_list[-1],self.q_list[-1],byorder=byorder)
 
@@ -245,17 +279,17 @@ class obj:
         returns fourier amplitude
         '''
         if which_layer == 0 :
-            aN, b0 = SolveExterior(self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list)
+            aN, b0 = SolveExterior(self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list,self._get_smatrix_cache())
             ai = self.a0
             bi = b0
 
         elif which_layer == self.Layer_N-1:
-            aN, b0 = SolveExterior(self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list)
+            aN, b0 = SolveExterior(self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list,self._get_smatrix_cache())
             ai = aN
             bi = self.bN
 
         else:
-            ai, bi = SolveInterior(which_layer,self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list)
+            ai, bi = SolveInterior(which_layer,self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list,self._get_smatrix_cache())
         return ai,bi
     
     def GetAmplitudes(self,which_layer,z_offset):
@@ -263,17 +297,17 @@ class obj:
         returns fourier amplitude
         '''
         if which_layer == 0 :
-            aN, b0 = SolveExterior(self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list)
+            aN, b0 = SolveExterior(self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list,self._get_smatrix_cache())
             ai = self.a0
             bi = b0
 
         elif which_layer == self.Layer_N-1:
-            aN, b0 = SolveExterior(self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list)
+            aN, b0 = SolveExterior(self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list,self._get_smatrix_cache())
             ai = aN
             bi = self.bN
 
         else:
-            ai, bi = SolveInterior(which_layer,self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list)
+            ai, bi = SolveInterior(which_layer,self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list,self._get_smatrix_cache())
 
         ai, bi = TranslateAmplitudes(self.q_list[which_layer],self.thickness_list[which_layer],z_offset,ai,bi)
 
@@ -362,7 +396,7 @@ class obj:
             epinv = self.Patterned_epinv_list[self.id_list[which_layer][2]]
 
         # un-translated amplitdue
-        ai, bi = SolveInterior(which_layer,self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list)
+        ai, bi = SolveInterior(which_layer,self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list,self._get_smatrix_cache())
         ab = bd.hstack((ai,bi))
         abMatrix = bd.outer(ab,bd.conj(ab))
         
@@ -478,7 +512,7 @@ def SolveLayerEigensystem(omega,kx,ky,kp,ep2):
     q = bd.where(bd.imag(q)<0.,-q,q)
     return q,phi
 
-def GetSMatrix(indi,indj,q_list,phi_list,kp_list,thickness_list):
+def GetSMatrix(indi,indj,q_list,phi_list,kp_list,thickness_list,smatrix_cache=None):
     ''' S_ij: size 4n*4n
     '''
     #assert type(indi) == int, 'layer index i must be integar'
@@ -499,9 +533,16 @@ def GetSMatrix(indi,indj,q_list,phi_list,kp_list,thickness_list):
         lp1 = l+1
 
         ## Q = inv(phi_l) * phi_lp1
-        Q = bd.dot(bd.inv(phi_list[l]),  phi_list[lp1])
+        if smatrix_cache is None:
+            phi_inv_l = bd.inv(phi_list[l])
+            kpphi_inv_l = bd.inv(bd.dot(kp_list[l],phi_list[l]))
+        else:
+            phi_inv_l = smatrix_cache['phi_inv_list'][l]
+            kpphi_inv_l = smatrix_cache['kpphi_inv_list'][l]
+
+        Q = bd.dot(phi_inv_l, phi_list[lp1])
         ## P = ql*inv(kp_l*phi_l) * kp_lp1*phi_lp1*q_lp1^-1
-        P1 = bd.dot(bd.diag(q_list[l]),   bd.inv(bd.dot(kp_list[l],phi_list[l])))
+        P1 = bd.dot(bd.diag(q_list[l]), kpphi_inv_l)
         P2 = bd.dot(bd.dot(kp_list[lp1],phi_list[lp1]),   bd.diag(1./q_list[lp1]))
         P = bd.dot(P1,P2)
         # P1 = bd.dot(kp_list[l],phi_list[l])
@@ -536,20 +577,20 @@ def GetSMatrix(indi,indj,q_list,phi_list,kp_list,thickness_list):
         
     return S11,S12,S21,S22
 
-def SolveExterior(a0,bN,q_list,phi_list,kp_list,thickness_list):
+def SolveExterior(a0,bN,q_list,phi_list,kp_list,thickness_list,smatrix_cache=None):
     '''
     Given a0, bN, solve for b0, aN
     '''
 
     Nlayer = len(thickness_list) # total number of layers
-    S11, S12, S21, S22 = GetSMatrix(0,Nlayer-1,q_list,phi_list,kp_list,thickness_list)
+    S11, S12, S21, S22 = GetSMatrix(0,Nlayer-1,q_list,phi_list,kp_list,thickness_list,smatrix_cache=smatrix_cache)
 
     aN = bd.dot(S11,a0) + bd.dot(S12,bN)
     b0 = bd.dot(S21,a0) + bd.dot(S22,bN)
 
     return aN,b0
 
-def SolveInterior(which_layer,a0,bN,q_list,phi_list,kp_list,thickness_list):
+def SolveInterior(which_layer,a0,bN,q_list,phi_list,kp_list,thickness_list,smatrix_cache=None):
     '''
     Given a0, bN, solve for ai, bi
     Layer numbering starts from 0
@@ -557,8 +598,8 @@ def SolveInterior(which_layer,a0,bN,q_list,phi_list,kp_list,thickness_list):
     Nlayer = len(thickness_list) # total number of layers
     nG2 = len(q_list[0])
     
-    S11, S12, S21, S22 = GetSMatrix(0,which_layer,q_list,phi_list,kp_list,thickness_list)
-    pS11, pS12, pS21, pS22 = GetSMatrix(which_layer,Nlayer-1,q_list,phi_list,kp_list,thickness_list)
+    S11, S12, S21, S22 = GetSMatrix(0,which_layer,q_list,phi_list,kp_list,thickness_list,smatrix_cache=smatrix_cache)
+    pS11, pS12, pS21, pS22 = GetSMatrix(which_layer,Nlayer-1,q_list,phi_list,kp_list,thickness_list,smatrix_cache=smatrix_cache)
 
     # tmp = inv(1-S12*pS21)
     tmp = bd.inv(bd.eye(nG2)-bd.dot(S12,pS21))

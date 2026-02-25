@@ -1,5 +1,6 @@
 import numpy as np
 import grcwa
+import grcwa.rcwa as rcwa_core
 from .utils import t_grad
 
 try:
@@ -87,6 +88,88 @@ def test_rcwa():
 
     Tx,Ty,Tz = obj.Solve_ZStressTensorIntegral(0)
     assert Tz<0
+
+
+def test_smatrix_cache_unavailable_before_patterned_setup():
+    planewave={'p_amp':1,'s_amp':0,'p_phase':0,'s_phase':0}
+    obj = grcwa.obj(nG, L1, L2, freq, theta, phi, verbose=0)
+    obj.Add_LayerUniform(thick0, epsuniform0)
+    obj.Add_LayerGrid(pthick[0], Nx, Ny)
+    obj.Add_LayerUniform(thickN, epsuniformN)
+    obj.Init_Setup(Pscale=1., Gmethod=0)
+    obj.MakeExcitationPlanewave(planewave['p_amp'],planewave['p_phase'],
+                                planewave['s_amp'],planewave['s_phase'],order=0)
+
+    # Patterned layer eigensystem not yet available
+    assert obj._get_smatrix_cache() is None
+
+
+def test_getsmatrix_cached_vs_uncached_identical():
+    planewave={'p_amp':1,'s_amp':0,'p_phase':0,'s_phase':0}
+    obj = rcwa_assembly(epgrid, freq, theta, phi, planewave, pthick, Pscale=1.)
+
+    cache = obj._get_smatrix_cache()
+    assert cache is not None
+    assert len(cache['phi_inv_list']) == obj.Layer_N
+    assert len(cache['kpphi_inv_list']) == obj.Layer_N
+
+    s_cached = rcwa_core.GetSMatrix(0, obj.Layer_N-1, obj.q_list, obj.phi_list,
+                                    obj.kp_list, obj.thickness_list,
+                                    smatrix_cache=cache)
+    s_plain = rcwa_core.GetSMatrix(0, obj.Layer_N-1, obj.q_list, obj.phi_list,
+                                   obj.kp_list, obj.thickness_list,
+                                   smatrix_cache=None)
+
+    for blk_cached, blk_plain in zip(s_cached, s_plain):
+        assert np.allclose(blk_cached, blk_plain)
+
+
+def test_exterior_interior_cached_vs_uncached_identical():
+    planewave={'p_amp':1,'s_amp':0,'p_phase':0,'s_phase':0}
+    obj = rcwa_assembly(epgrid, freq, theta, phi, planewave, pthick, Pscale=1.)
+
+    cache = obj._get_smatrix_cache()
+    aN_c, b0_c = rcwa_core.SolveExterior(obj.a0, obj.bN, obj.q_list, obj.phi_list,
+                                         obj.kp_list, obj.thickness_list,
+                                         smatrix_cache=cache)
+    aN_p, b0_p = rcwa_core.SolveExterior(obj.a0, obj.bN, obj.q_list, obj.phi_list,
+                                         obj.kp_list, obj.thickness_list,
+                                         smatrix_cache=None)
+    assert np.allclose(aN_c, aN_p)
+    assert np.allclose(b0_c, b0_p)
+
+    ai_c, bi_c = rcwa_core.SolveInterior(1, obj.a0, obj.bN, obj.q_list, obj.phi_list,
+                                         obj.kp_list, obj.thickness_list,
+                                         smatrix_cache=cache)
+    ai_p, bi_p = rcwa_core.SolveInterior(1, obj.a0, obj.bN, obj.q_list, obj.phi_list,
+                                         obj.kp_list, obj.thickness_list,
+                                         smatrix_cache=None)
+    assert np.allclose(ai_c, ai_p)
+    assert np.allclose(bi_c, bi_p)
+
+def test_smatrix_cache_reuse_and_invalidate():
+    planewave={'p_amp':1,'s_amp':0,'p_phase':0,'s_phase':0}
+    obj = rcwa_assembly(epgrid,freq,theta,phi,planewave,pthick,Pscale=1.)
+
+    # First solve builds cache
+    R1, T1 = obj.RT_Solve(normalize=0)
+    assert obj._smatrix_cache is not None
+    old_kpphi = np.array(obj._smatrix_cache['kpphi_inv_list'][1], copy=True)
+
+    # Repeated solve should reuse the same cache object and result
+    R2, T2 = obj.RT_Solve(normalize=0)
+    assert np.allclose([R1, T1], [R2, T2])
+
+    # Updating patterned epsilon should invalidate and rebuild cache
+    epgrid2 = np.array(epgrid, copy=True)
+    epgrid2[0, 0] = epgrid2[0, 0] + 0.5
+    obj.GridLayer_geteps(epgrid2.flatten())
+    assert obj._smatrix_cache is None
+
+    obj.RT_Solve(normalize=0)
+    assert obj._smatrix_cache is not None
+    assert not np.allclose(obj._smatrix_cache['kpphi_inv_list'][1], old_kpphi)
+
 
 if AG_AVAILABLE:
     grcwa.set_backend('autograd')
