@@ -53,6 +53,9 @@ class obj:
 
         # cache for repeated S-matrix assembly
         self._smatrix_cache = None
+
+        # inferred periodic dimension based on grid discretization
+        self.grid_periodic_dim = '2d'
         
     def Add_LayerUniform(self,thickness,epsilon):
         #assert type(thickness) == float, 'thickness should be a float'
@@ -82,6 +85,24 @@ class obj:
         self.Patterned_N += 1
         self.FourierLayer_N += 1
 
+    def _infer_grid_periodic_dim(self):
+        # Infer effective periodicity from grid layer discretization.
+        # Returns: '2d', '1dx', or '1dy'.
+        if self.GridLayer_N == 0:
+            return '2d'
+
+        all_ny1 = True
+        all_nx1 = True
+        for Nx, Ny in self.GridLayer_Nxy_list:
+            all_ny1 = all_ny1 and (Ny == 1)
+            all_nx1 = all_nx1 and (Nx == 1)
+
+        if all_ny1 and not all_nx1:
+            return '1dx'
+        if all_nx1 and not all_ny1:
+            return '1dy'
+        return '2d'
+
     def Init_Setup(self,Pscale=1.,Gmethod=0):
         '''
         Set up reciprocal lattice (Gmethod:truncation scheme, 0 for circular, 1 for rectangular)
@@ -95,6 +116,17 @@ class obj:
         # set up reciprocal lattice
         self.Lk1, self.Lk2 = Lattice_Reciprocate(self.L1,self.L2)
         self.G,self.nG = Lattice_getG(self.nG,self.Lk1,self.Lk2,method=Gmethod)
+
+        # infer effective 1D periodicity from grid discretization when possible
+        self.grid_periodic_dim = self._infer_grid_periodic_dim()
+        if self.grid_periodic_dim == '1dx':
+            ind = self.G[:,1] == 0
+            self.G = self.G[ind]
+            self.nG = len(self.G)
+        elif self.grid_periodic_dim == '1dy':
+            ind = self.G[:,0] == 0
+            self.G = self.G[ind]
+            self.nG = len(self.G)
         
         self.Lk1 = self.Lk1/Pscale
         self.Lk2 = self.Lk2/Pscale

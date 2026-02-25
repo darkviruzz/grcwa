@@ -171,6 +171,64 @@ def test_smatrix_cache_reuse_and_invalidate():
     assert not np.allclose(obj._smatrix_cache['kpphi_inv_list'][1], old_kpphi)
 
 
+
+def _assemble_1d_compare_case(nG_case=41, Nx_case=41, Ny_case=9, freq_case=0.85):
+    L1c = [0.2, 0]
+    L2c = [0, 0.2]
+    theta_c = np.pi / 20
+    phi_c = 0.
+
+    # 1D profile varying along x only
+    x = np.linspace(0, 1., Nx_case)
+    eps_x = np.where(np.abs(x - 0.5) < 0.2, 10.0, 2.0)
+
+    ep_2d = np.repeat(eps_x[:, None], Ny_case, axis=1)
+    ep_1d = eps_x[:, None]
+
+    planewave_c = {'p_amp': 1, 's_amp': 0, 'p_phase': 0, 's_phase': 0}
+
+    # baseline 2D emulation
+    obj2 = grcwa.obj(nG_case, L1c, L2c, freq_case, theta_c, phi_c, verbose=0)
+    obj2.Add_LayerUniform(0.4, 1.0)
+    obj2.Add_LayerGrid(0.2, Nx_case, Ny_case)
+    obj2.Add_LayerUniform(0.4, 1.0)
+    obj2.Init_Setup(Gmethod=1)
+    obj2.MakeExcitationPlanewave(planewave_c['p_amp'], planewave_c['p_phase'],
+                                 planewave_c['s_amp'], planewave_c['s_phase'], order=0)
+    obj2.GridLayer_geteps(ep_2d.flatten())
+
+    # inferred 1D case (Ny=1)
+    obj1 = grcwa.obj(nG_case, L1c, L2c, freq_case, theta_c, phi_c, verbose=0)
+    obj1.Add_LayerUniform(0.4, 1.0)
+    obj1.Add_LayerGrid(0.2, Nx_case, 1)
+    obj1.Add_LayerUniform(0.4, 1.0)
+    obj1.Init_Setup(Gmethod=1)
+    obj1.MakeExcitationPlanewave(planewave_c['p_amp'], planewave_c['p_phase'],
+                                 planewave_c['s_amp'], planewave_c['s_phase'], order=0)
+    obj1.GridLayer_geteps(ep_1d.flatten())
+
+    return obj2, obj1
+
+
+def test_1d_inference_reduces_to_single_harmonic_axis():
+    obj2, obj1 = _assemble_1d_compare_case()
+
+    assert obj2.grid_periodic_dim == '2d'
+    assert obj1.grid_periodic_dim == '1dx'
+    assert np.all(obj1.G[:, 1] == 0)
+    assert obj1.nG <= obj2.nG
+
+
+def test_1d_inference_matches_2d_emulation_for_rt_points():
+    freqs = [0.7, 0.85, 1.0]
+    for f in freqs:
+        obj2, obj1 = _assemble_1d_compare_case(freq_case=f)
+        R2, T2 = obj2.RT_Solve(normalize=1)
+        R1, T1 = obj1.RT_Solve(normalize=1)
+
+        assert np.allclose(R1, R2, rtol=2e-3, atol=1e-5)
+        assert np.allclose(T1, T2, rtol=2e-3, atol=1e-5)
+
 if AG_AVAILABLE:
     grcwa.set_backend('autograd')
     def test_epsgrad():
