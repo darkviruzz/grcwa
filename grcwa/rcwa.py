@@ -24,25 +24,25 @@ class obj:
         self.nG = nG
         self.verbose = verbose
         self.Layer_N = 0  # total number of layers
-      
+
         # the length of the following variables = number of total layers
         self.thickness_list = []
         self.id_list = []  #[type, No., No. in patterned/uniform, No. in its family] starting from 0
-        # type:0 for uniform, 1 for Grids, 2 for Fourier
+        ## type:0 for uniform, 1 for Grids, 2 for Fourier
 
-        self.kp_list = []                
+        self.kp_list = []
         self.q_list = []  # eigenvalues
         self.phi_list = [] #eigenvectors
 
         # Uniform layer
         self.Uniform_ep_list = []
         self.Uniform_N = 0
-        
+
         # Patterned layer
-        self.Patterned_N = 0  # total number of patterned layers        
+        self.Patterned_N = 0  # total number of patterned layers
         self.Patterned_epinv_list = []
         self.Patterned_ep2_list = []
-        
+
         # patterned layer from Grids
         self.GridLayer_N = 0
         self.GridLayer_Nxy_list = []
@@ -56,14 +56,14 @@ class obj:
 
         # inferred periodic dimension based on grid discretization
         self.grid_periodic_dim = '2d'
-        
+
     def Add_LayerUniform(self,thickness,epsilon):
         #assert type(thickness) == float, 'thickness should be a float'
 
         self.id_list.append([0,self.Layer_N,self.Uniform_N])
         self.Uniform_ep_list.append(epsilon)
         self.thickness_list.append(thickness)
-        
+
         self.Layer_N += 1
         self.Uniform_N += 1
 
@@ -127,28 +127,28 @@ class obj:
             ind = self.G[:,0] == 0
             self.G = self.G[ind]
             self.nG = len(self.G)
-        
+
         self.Lk1 = self.Lk1/Pscale
         self.Lk2 = self.Lk2/Pscale
         # self.kx = kx0 + 2*bd.pi*(self.Lk1[0]*self.G[:,0]+self.Lk2[0]*self.G[:,1])
         # self.ky = ky0 + 2*bd.pi*(self.Lk1[1]*self.G[:,0]+self.Lk2[1]*self.G[:,1])
         self.kx,self.ky = Lattice_SetKs(self.G, kx0, ky0, self.Lk1, self.Lk2)
-        
+
         #normalization factor for energies off normal incidence
         self.normalization = bd.sqrt(self.Uniform_ep_list[0])/bd.cos(self.theta)
-        
+
         #if comm.rank == 0 and verbose>0:
         if self.verbose>0:
             print('Total nG = ',self.nG)
 
         self.Patterned_ep2_list = [None]*self.Patterned_N
-        self.Patterned_epinv_list = [None]*self.Patterned_N            
+        self.Patterned_epinv_list = [None]*self.Patterned_N
         for i in range(self.Layer_N):
             if self.id_list[i][0] == 0:
                 ep = self.Uniform_ep_list[self.id_list[i][2]]
                 kp = MakeKPMatrix(self.omega,0,1./ep,self.kx,self.ky)
                 self.kp_list.append(kp)
-                
+
                 q,phi = SolveLayerEigensystem_uniform(self.omega,self.kx,self.ky,ep)
                 self.q_list.append(q)
                 self.phi_list.append(phi)
@@ -202,7 +202,7 @@ class obj:
                         -p_amp*bd.sin(phi)*bd.exp(1j*p_phase))
 
             tmp2 = bd.zeros(2*self.nG,dtype=complex)
-            tmp2[order+self.nG] = 1.0            
+            tmp2[order+self.nG] = 1.0
             a0 = a0 + tmp2*(-s_amp*bd.cos(theta)*bd.sin(phi)*bd.exp(1j*s_phase) \
                             +p_amp*bd.cos(phi)*bd.exp(1j*p_phase))
         elif direction == 'backward':
@@ -215,10 +215,10 @@ class obj:
             tmp2[order+self.nG] = 1.0
             bN = bN + tmp2*(-s_amp*bd.cos(theta)*bd.sin(phi)*bd.exp(1j*s_phase) \
                             +p_amp*bd.cos(phi)*bd.exp(1j*p_phase))
-        
+
         self.a0 = a0
         self.bN = bN
-        
+
     def GridLayer_geteps(self,ep_all):
         '''
         Fourier transform + eigenvalue for grid layer
@@ -230,7 +230,7 @@ class obj:
         for i in range(self.Layer_N):
             if self.id_list[i][0] != 1:
                 continue
-            
+
             Nx = self.GridLayer_Nxy_list[ptri][0]
             Ny = self.GridLayer_Nxy_list[ptri][1]
             dN = 1./Nx/Ny
@@ -239,7 +239,7 @@ class obj:
                 ep_grid = [bd.reshape(ep_all[0][ptr:ptr+Nx*Ny],[Nx,Ny]),bd.reshape(ep_all[1][ptr:ptr+Nx*Ny],[Nx,Ny]),bd.reshape(ep_all[2][ptr:ptr+Nx*Ny],[Nx,Ny])]
             else:
                 ep_grid = bd.reshape(ep_all[ptr:ptr+Nx*Ny],[Nx,Ny])
-            
+
             epinv, ep2 = Epsilon_fft(dN,ep_grid,self.G)
 
             self.Patterned_epinv_list[self.id_list[i][2]] = epinv
@@ -253,7 +253,7 @@ class obj:
             self.phi_list[self.id_list[i][1]] = phi
 
             ptr += Nx*Ny
-            ptri += 1            
+            ptri += 1
 
     def Return_eps(self,which_layer,Nx,Ny,component='xx'):
         '''
@@ -278,10 +278,10 @@ class obj:
                 epk = self.Patterned_ep2_list[self.id_list[i][2]][self.nG:,:self.nG]
             elif component == 'yy':
                 epk = self.Patterned_ep2_list[self.id_list[i][2]][self.nG:,self.nG:]
-                
+
             return get_ifft(Nx,Ny,epk[0,:],self.G)
 
-            
+
     def RT_Solve(self,normalize = 0, byorder = 0):
         '''
         Reflection and transmission power computation
@@ -323,7 +323,7 @@ class obj:
         else:
             ai, bi = SolveInterior(which_layer,self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list,self._get_smatrix_cache())
         return ai,bi
-    
+
     def GetAmplitudes(self,which_layer,z_offset):
         '''
         returns fourier amplitude
@@ -344,7 +344,7 @@ class obj:
         ai, bi = TranslateAmplitudes(self.q_list[which_layer],self.thickness_list[which_layer],z_offset,ai,bi)
 
         return ai,bi
-    
+
     def Solve_FieldFourier(self,which_layer,z_offset):
         '''
         returns field amplitude in fourier space: [ex,ey,ez], [hx,hy,hz]
@@ -371,7 +371,7 @@ class obj:
             fexy = bd.dot(self.kp_list[which_layer],tmp2)
             fey = - fexy[:self.nG]
             fex = fexy[self.nG:]
-        
+
             #hz in Fourier space
             fhz = (self.kx*fey - self.ky*fex)/self.omega
 
@@ -415,7 +415,7 @@ class obj:
 
     def Volume_integral(self,which_layer,Mx,My,Mz,normalize=0):
         '''Mxyz is convolution matrix.
-        This function computes 1/A\int_V Mx|Ex|^2+My|Ey|^2+Mz|Ez|^2
+        This function computes 1/A\\int_V Mx|Ex|^2+My|Ey|^2+Mz|Ez|^2
         To be consistent with Poynting vector defintion here, the absorbed power will be just omega*output
         '''
         kp = self.kp_list[which_layer]
@@ -431,7 +431,7 @@ class obj:
         ai, bi = SolveInterior(which_layer,self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list,self._get_smatrix_cache())
         ab = bd.hstack((ai,bi))
         abMatrix = bd.outer(ab,bd.conj(ab))
-        
+
         Mt = Matrix_zintegral(q,self.thickness_list[which_layer])
         # overall
         abM = abMatrix * Mt
@@ -452,14 +452,14 @@ class obj:
                             bd.hstack((Mzeros,My,Mzeros)),\
                             bd.hstack((Mzeros,Mzeros,Mz))))
 
-        # integral = Tr[ abMatrix * F^\dagger *  Matconv *F ] 
+        # integral = Tr[ abMatrix * F^\dagger *  Matconv *F ]
         tmp = bd.dot(bd.dot(bd.conj(bd.transpose(F)),Mtotal),F)
         val = bd.trace(bd.dot(abM,tmp))
 
         if normalize == 1:
             val = val*self.normalization
         return val
-        
+
     def Solve_ZStressTensorIntegral(self,which_layer):
         '''
         returns 2F_x,2F_y,2F_z, integrated over z-plane
@@ -502,7 +502,7 @@ class obj:
 
 def MakeKPMatrix(omega,layer_type,epinv,kx,ky):
     nG = len(kx)
-    
+
     # uniform layer, epinv has length 1
     if layer_type == 0:
         # JkkJT = np.block([[np.diag(ky*ky), np.diag(-ky*kx)],
@@ -510,14 +510,14 @@ def MakeKPMatrix(omega,layer_type,epinv,kx,ky):
 
         Jk = bd.vstack((bd.diag(-ky),bd.diag(kx)))
         JkkJT = bd.dot(Jk,bd.transpose(Jk))
-        
+
         kp = omega**2*bd.eye(2*nG) - epinv*JkkJT
     # patterned layer
     else:
         Jk = bd.vstack((bd.diag(-ky),bd.diag(kx)))
         tmp = bd.dot(Jk,epinv)
         kp = omega**2*bd.eye(2*nG) - bd.dot(tmp,bd.transpose(Jk))
-        
+
     return kp
 
 def SolveLayerEigensystem_uniform(omega,kx,ky,epsilon):
@@ -532,11 +532,11 @@ def SolveLayerEigensystem_uniform(omega,kx,ky,epsilon):
 
 def SolveLayerEigensystem(omega,kx,ky,kp,ep2):
     nG = len(kx)
-    
+
     k = bd.vstack((bd.diag(kx),bd.diag(ky)))
     kkT = bd.dot(k,bd.transpose(k))
     M = bd.dot(ep2,kp) - kkT
-    
+
     q,phi = bd.eig(M)
 
     q = bd.sqrt(q)
@@ -549,7 +549,7 @@ def GetSMatrix(indi,indj,q_list,phi_list,kp_list,thickness_list,smatrix_cache=No
     '''
     #assert type(indi) == int, 'layer index i must be integar'
     #assert type(indj) == int, 'layer index j must be integar'
-    
+
     nG2 = len(q_list[0])
     S11 = bd.eye(nG2,dtype=complex)
     S12 = bd.zeros_like(S11)
@@ -559,7 +559,7 @@ def GetSMatrix(indi,indj,q_list,phi_list,kp_list,thickness_list,smatrix_cache=No
         return S11,S12,S21,S22
     elif indi>indj:
         raise Exception('indi must be < indj')
-   
+
     for l in range(indi,indj):
         ## next layer
         lp1 = l+1
@@ -606,7 +606,7 @@ def GetSMatrix(indi,indj,q_list,phi_list,kp_list,thickness_list,smatrix_cache=No
         P2 = bd.dot(S22,bd.dot(T12,S12))
         P1 = bd.dot(S22,bd.dot(T11,d2))
         S22 = P1 + P2
-        
+
     return S11,S12,S21,S22
 
 def SolveExterior(a0,bN,q_list,phi_list,kp_list,thickness_list,smatrix_cache=None):
@@ -629,7 +629,7 @@ def SolveInterior(which_layer,a0,bN,q_list,phi_list,kp_list,thickness_list,smatr
     '''
     Nlayer = len(thickness_list) # total number of layers
     nG2 = len(q_list[0])
-    
+
     S11, S12, S21, S22 = GetSMatrix(0,which_layer,q_list,phi_list,kp_list,thickness_list,smatrix_cache=smatrix_cache)
     pS11, pS12, pS21, pS22 = GetSMatrix(which_layer,Nlayer-1,q_list,phi_list,kp_list,thickness_list,smatrix_cache=smatrix_cache)
 
@@ -639,14 +639,14 @@ def SolveInterior(which_layer,a0,bN,q_list,phi_list,kp_list,thickness_list,smatr
     ai = bd.dot(tmp,  bd.dot(S11,a0)+bd.dot(S12,bd.dot(pS22,bN)))
     # bi = pS21 ai + pS22 bN
     bi = bd.dot(pS21,ai) + bd.dot(pS22,bN)
-    
+
     return ai,bi
 
 def TranslateAmplitudes(q,thickness,dz,ai,bi):
     aim = ai*bd.exp(1j*q*dz)
     bim = bi*bd.exp(1j*q*(thickness-dz))
     return aim,bim
-        
+
 
 def GetZPoyntingFlux(ai,bi,omega,kp,phi,q,byorder=0):
     '''
