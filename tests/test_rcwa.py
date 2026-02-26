@@ -1,5 +1,6 @@
 import numpy as np
 import grcwa
+import grcwa.rcwa as rcwa_core
 from .utils import t_grad
 
 try:
@@ -87,6 +88,146 @@ def test_rcwa():
 
     Tx,Ty,Tz = obj.Solve_ZStressTensorIntegral(0)
     assert Tz<0
+
+
+def test_smatrix_cache_unavailable_before_patterned_setup():
+    planewave={'p_amp':1,'s_amp':0,'p_phase':0,'s_phase':0}
+    obj = grcwa.obj(nG, L1, L2, freq, theta, phi, verbose=0)
+    obj.Add_LayerUniform(thick0, epsuniform0)
+    obj.Add_LayerGrid(pthick[0], Nx, Ny)
+    obj.Add_LayerUniform(thickN, epsuniformN)
+    obj.Init_Setup(Pscale=1., Gmethod=0)
+    obj.MakeExcitationPlanewave(planewave['p_amp'],planewave['p_phase'],
+                                planewave['s_amp'],planewave['s_phase'],order=0)
+
+    # Patterned layer eigensystem not yet available
+    assert obj._get_smatrix_cache() is None
+
+
+def test_getsmatrix_cached_vs_uncached_identical():
+    planewave={'p_amp':1,'s_amp':0,'p_phase':0,'s_phase':0}
+    obj = rcwa_assembly(epgrid, freq, theta, phi, planewave, pthick, Pscale=1.)
+
+    cache = obj._get_smatrix_cache()
+    assert cache is not None
+    assert len(cache['phi_inv_list']) == obj.Layer_N
+    assert len(cache['kpphi_inv_list']) == obj.Layer_N
+
+    s_cached = rcwa_core.GetSMatrix(0, obj.Layer_N-1, obj.q_list, obj.phi_list,
+                                    obj.kp_list, obj.thickness_list,
+                                    smatrix_cache=cache)
+    s_plain = rcwa_core.GetSMatrix(0, obj.Layer_N-1, obj.q_list, obj.phi_list,
+                                   obj.kp_list, obj.thickness_list,
+                                   smatrix_cache=None)
+
+    for blk_cached, blk_plain in zip(s_cached, s_plain):
+        assert np.allclose(blk_cached, blk_plain)
+
+
+def test_exterior_interior_cached_vs_uncached_identical():
+    planewave={'p_amp':1,'s_amp':0,'p_phase':0,'s_phase':0}
+    obj = rcwa_assembly(epgrid, freq, theta, phi, planewave, pthick, Pscale=1.)
+
+    cache = obj._get_smatrix_cache()
+    aN_c, b0_c = rcwa_core.SolveExterior(obj.a0, obj.bN, obj.q_list, obj.phi_list,
+                                         obj.kp_list, obj.thickness_list,
+                                         smatrix_cache=cache)
+    aN_p, b0_p = rcwa_core.SolveExterior(obj.a0, obj.bN, obj.q_list, obj.phi_list,
+                                         obj.kp_list, obj.thickness_list,
+                                         smatrix_cache=None)
+    assert np.allclose(aN_c, aN_p)
+    assert np.allclose(b0_c, b0_p)
+
+    ai_c, bi_c = rcwa_core.SolveInterior(1, obj.a0, obj.bN, obj.q_list, obj.phi_list,
+                                         obj.kp_list, obj.thickness_list,
+                                         smatrix_cache=cache)
+    ai_p, bi_p = rcwa_core.SolveInterior(1, obj.a0, obj.bN, obj.q_list, obj.phi_list,
+                                         obj.kp_list, obj.thickness_list,
+                                         smatrix_cache=None)
+    assert np.allclose(ai_c, ai_p)
+    assert np.allclose(bi_c, bi_p)
+
+def test_smatrix_cache_reuse_and_invalidate():
+    planewave={'p_amp':1,'s_amp':0,'p_phase':0,'s_phase':0}
+    obj = rcwa_assembly(epgrid,freq,theta,phi,planewave,pthick,Pscale=1.)
+
+    # First solve builds cache
+    R1, T1 = obj.RT_Solve(normalize=0)
+    assert obj._smatrix_cache is not None
+    old_kpphi = np.array(obj._smatrix_cache['kpphi_inv_list'][1], copy=True)
+
+    # Repeated solve should reuse the same cache object and result
+    R2, T2 = obj.RT_Solve(normalize=0)
+    assert np.allclose([R1, T1], [R2, T2])
+
+    # Updating patterned epsilon should invalidate and rebuild cache
+    epgrid2 = np.array(epgrid, copy=True)
+    epgrid2[0, 0] = epgrid2[0, 0] + 0.5
+    obj.GridLayer_geteps(epgrid2.flatten())
+    assert obj._smatrix_cache is None
+
+    obj.RT_Solve(normalize=0)
+    assert obj._smatrix_cache is not None
+    assert not np.allclose(obj._smatrix_cache['kpphi_inv_list'][1], old_kpphi)
+
+
+
+def _assemble_1d_compare_case(nG_case=41, Nx_case=41, Ny_case=9, freq_case=0.85):
+    L1c = [0.2, 0]
+    L2c = [0, 0.2]
+    theta_c = np.pi / 20
+    phi_c = 0.
+
+    # 1D profile varying along x only
+    x = np.linspace(0, 1., Nx_case)
+    eps_x = np.where(np.abs(x - 0.5) < 0.2, 10.0, 2.0)
+
+    ep_2d = np.repeat(eps_x[:, None], Ny_case, axis=1)
+    ep_1d = eps_x[:, None]
+
+    planewave_c = {'p_amp': 1, 's_amp': 0, 'p_phase': 0, 's_phase': 0}
+
+    # baseline 2D emulation
+    obj2 = grcwa.obj(nG_case, L1c, L2c, freq_case, theta_c, phi_c, verbose=0)
+    obj2.Add_LayerUniform(0.4, 1.0)
+    obj2.Add_LayerGrid(0.2, Nx_case, Ny_case)
+    obj2.Add_LayerUniform(0.4, 1.0)
+    obj2.Init_Setup(Gmethod=1)
+    obj2.MakeExcitationPlanewave(planewave_c['p_amp'], planewave_c['p_phase'],
+                                 planewave_c['s_amp'], planewave_c['s_phase'], order=0)
+    obj2.GridLayer_geteps(ep_2d.flatten())
+
+    # inferred 1D case (Ny=1)
+    obj1 = grcwa.obj(nG_case, L1c, L2c, freq_case, theta_c, phi_c, verbose=0)
+    obj1.Add_LayerUniform(0.4, 1.0)
+    obj1.Add_LayerGrid(0.2, Nx_case, 1)
+    obj1.Add_LayerUniform(0.4, 1.0)
+    obj1.Init_Setup(Gmethod=1)
+    obj1.MakeExcitationPlanewave(planewave_c['p_amp'], planewave_c['p_phase'],
+                                 planewave_c['s_amp'], planewave_c['s_phase'], order=0)
+    obj1.GridLayer_geteps(ep_1d.flatten())
+
+    return obj2, obj1
+
+
+def test_1d_inference_reduces_to_single_harmonic_axis():
+    obj2, obj1 = _assemble_1d_compare_case()
+
+    assert obj2.grid_periodic_dim == '2d'
+    assert obj1.grid_periodic_dim == '1dx'
+    assert np.all(obj1.G[:, 1] == 0)
+    assert obj1.nG <= obj2.nG
+
+
+def test_1d_inference_matches_2d_emulation_for_rt_points():
+    freqs = [0.7, 0.85, 1.0]
+    for f in freqs:
+        obj2, obj1 = _assemble_1d_compare_case(freq_case=f)
+        R2, T2 = obj2.RT_Solve(normalize=1)
+        R1, T1 = obj1.RT_Solve(normalize=1)
+
+        assert np.allclose(R1, R2, rtol=2e-3, atol=1e-5)
+        assert np.allclose(T1, T2, rtol=2e-3, atol=1e-5)
 
 if AG_AVAILABLE:
     grcwa.set_backend('autograd')

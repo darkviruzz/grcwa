@@ -51,6 +51,7 @@ directions, and invariant along the vertical direction.
    installation
    usage
    convention   
+   optimization_tasks
    contributing
    authors
    history
