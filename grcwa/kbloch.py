@@ -16,25 +16,66 @@ def Lattice_Reciprocate(L1,L2):
 
     return Lk1,Lk2
 
-def Lattice_getG(nG,Lk1,Lk2,method=0):
+def Lattice_getG(nG,Lk1,Lk2,method=0,dim=2):
     '''
     The G is defined to produce the following reciprocal vector:
     k = G[:,0] Lk1 + G[:,1] Lk2 (both k and Lk don't include the 2pi factor)
-    
-    method:0 for circular truncation, 1 for parallelogramic truncation
+
+    dim: structural dimensionality of the reciprocal basis
+         0 -> single order (0,0): planar multilayer (reduces to TMM)
+         1 -> line of orders (m,0): 1D grating, nG -> 2M+1
+         2 -> 2D area of orders (default)
+    method: truncation scheme, ONLY used for dim==2
+            0 for circular truncation, 1 for parallelogramic truncation
     '''
     # allow numpy integer types as well as builtin int
     if not isinstance(nG, (int, np.integer)):
         raise TypeError('nG must be an integer')
-    
-    if method == 0:
-        G,nG = Gsel_circular(nG, Lk1, Lk2)
-    elif method == 1:
-        G,nG = Gsel_parallelogramic(nG, Lk1, Lk2)
+
+    if dim == 0:
+        G,nG = Gsel_0D()
+    elif dim == 1:
+        G,nG = Gsel_1D(nG, Lk1)
+    elif dim == 2:
+        if method == 0:
+            G,nG = Gsel_circular(nG, Lk1, Lk2)
+        elif method == 1:
+            G,nG = Gsel_parallelogramic(nG, Lk1, Lk2)
+        else:
+            raise Exception('Truncation scheme is not included')
     else:
-        raise Exception('Truncation scheme is not included')
+        raise ValueError('dim must be 0, 1, or 2')
 
     return G,nG
+
+
+def Gsel_1D(nG, Lk1):
+    '''1D truncation: keep orders (m,0), m = -M..M, with nG = 2M+1.
+
+    The reciprocal basis is a line along Lk1 (the grating vector); the
+    invariant in-plane direction carries no orders (Gy = 0). The (0,0)
+    order is placed at index 0 so that order=0 is the specular order,
+    consistent with the 2D Gsel functions. Lk1 is accepted only for
+    signature symmetry; the order count is deterministic in nG.
+    '''
+    M = (int(nG) - 1) // 2
+    # order by |m| with (0,0) first: 0, 1, -1, 2, -2, ...
+    ms = [0]
+    for k in range(1, M + 1):
+        ms.append(k)
+        ms.append(-k)
+
+    nG = len(ms)
+    G = np.zeros((nG, 2), dtype=int)
+    G[:, 0] = np.array(ms, dtype=int)
+    return G, nG
+
+
+def Gsel_0D():
+    '''0D truncation: a single order (0,0). RCWA then reduces exactly to the
+    transfer-matrix method for a planar (unstructured) multilayer.'''
+    G = np.zeros((1, 2), dtype=int)
+    return G, 1
 
 def Lattice_SetKs(G, kx0, ky0, Lk1, Lk2):
     '''
