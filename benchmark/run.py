@@ -7,17 +7,21 @@ subprocesses, then:
   * compares wall-clock timing,
 and exports everything to benchmark/results.{json,csv}.
 
-The four "suites" compared (when their paths are available):
-  1. orig-0.1.2  : weiliang's original PyPI release, BEFORE the Pol update.
-  2. forkmaster  : darkviruzz fork, before this work (Laurent only).
-  3. fork[Laurent]: this branch, default factorization.
-  4. fork[Pol]   : this branch with fmm_method='pol' (the upstream Pol
-                   algorithm, faithfully ported).
+The "suites" compared (when their paths are available):
+  1. orig-0.1.2    : weiliang's original PyPI release, BEFORE the Pol update.
+  2. weiliang-0.1.3: weiliang's upstream master WITH his own Pol commits
+                     (Laurent + Pol) -- the reference for the Pol method.
+  3. forkmaster    : darkviruzz fork, before this work (Laurent only).
+  4. fork[Laurent] : this branch, default factorization.
+  5. fork[Pol]     : this branch with fmm_method='pol' (the upstream Pol
+                     algorithm, ported into this branch).
 
 Variant package locations are taken from environment variables so the harness
 stays portable:
   GRCWA_ORIG_PATH       parent dir of an `orig_grcwa` package (pip download
                         grcwa==0.1.2, rename the package dir to orig_grcwa)
+  GRCWA_WEILIANG_PATH   parent dir of a `wl_grcwa` package checked out at
+                        weiliang's upstream master (with the Pol commits)
   GRCWA_FORKMASTER_PATH parent dir of a `grcwa` package checked out at the
                         fork's master (git archive origin/master)
 The current branch (fork) is auto-detected as the repo root.
@@ -36,6 +40,8 @@ WORKER = os.path.join(HERE, "worker.py")
 VARIANTS = []
 if os.environ.get("GRCWA_ORIG_PATH"):
     VARIANTS.append(("orig-0.1.2", os.environ["GRCWA_ORIG_PATH"], "orig_grcwa", False))
+if os.environ.get("GRCWA_WEILIANG_PATH"):
+    VARIANTS.append(("weiliang-0.1.3", os.environ["GRCWA_WEILIANG_PATH"], "wl_grcwa", True))
 if os.environ.get("GRCWA_FORKMASTER_PATH"):
     VARIANTS.append(("forkmaster", os.environ["GRCWA_FORKMASTER_PATH"], "grcwa", False))
 VARIANTS.append(("fork", REPO, "grcwa", True))
