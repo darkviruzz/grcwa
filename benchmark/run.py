@@ -7,24 +7,15 @@ subprocesses, then:
   * compares wall-clock timing,
 and exports everything to benchmark/results.{json,csv}.
 
-The "suites" compared (when their paths are available):
-  1. orig-0.1.2    : weiliang's original PyPI release, BEFORE the Pol update.
-  2. weiliang-0.1.3: weiliang's upstream master WITH his own Pol commits
-                     (Laurent + Pol) -- the reference for the Pol method.
-  3. forkmaster    : darkviruzz fork, before this work (Laurent only).
-  4. fork[Laurent] : this branch, default factorization.
-  5. fork[Pol]     : this branch with fmm_method='pol' (the upstream Pol
-                     algorithm, ported into this branch).
+Variants are auto-discovered: every `benchmark/grcwa*` directory that is an
+importable package becomes a suite, plus the current branch (`fork`) at the repo
+root. Each variant is run with Laurent's rule, and additionally with the Pol
+method (`fmm_method='pol'`) if its `obj` supports it -- so Pol columns appear
+only for the versions that actually implement it (no hand-maintained list).
 
-Variant package locations are taken from environment variables so the harness
-stays portable:
-  GRCWA_ORIG_PATH       parent dir of an `orig_grcwa` package (pip download
-                        grcwa==0.1.2, rename the package dir to orig_grcwa)
-  GRCWA_WEILIANG_PATH   parent dir of a `wl_grcwa` package checked out at
-                        weiliang's upstream master (with the Pol commits)
-  GRCWA_FORKMASTER_PATH parent dir of a `grcwa` package checked out at the
-                        fork's master (git archive origin/master)
-The current branch (fork) is auto-detected as the repo root.
+Drop a package into benchmark/ (e.g. `grcwa-weiliang-013`, `grcwa-codex`, ...)
+and it shows up automatically; the label is the directory name with the leading
+`grcwa` stripped (`grcwa-weiliang-013` -> `weiliang-013`).
 """
 import os
 import sys
@@ -36,32 +27,32 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 WORKER = os.path.join(HERE, "worker.py")
 
-# (label, package-parent path, module name, run_pol)
-VARIANTS = []
-# if os.environ.get("GRCWA_ORIG_PATH"):
-#     VARIANTS.append(("orig-0.1.2", os.environ["GRCWA_ORIG_PATH"], "orig_grcwa", False))
-# if os.environ.get("GRCWA_WEILIANG_PATH"):
-#     VARIANTS.append(("weiliang-0.1.3", os.environ["GRCWA_WEILIANG_PATH"], "wl_grcwa", True))
-# if os.environ.get("GRCWA_FORKMASTER_PATH"):
-#     VARIANTS.append(("forkmaster", os.environ["GRCWA_FORKMASTER_PATH"], "grcwa", False))
-# (label, package-parent path, module name, run_pol)
-for name in sorted(os.listdir(HERE)):
-    path = os.path.join(HERE, name)
-    if os.path.isdir(path) and name.startswith("grcwa") and name != "grcwa":
-        VARIANTS.append((
-            name.removeprefix("grcwa").lstrip("-_") or name,
-            path,
-            name,
-            False,
-        ))
 
-VARIANTS.append(('weiliang-013-POL', 'C:\\Users\\mwalther\\PycharmProjects\\grcwa\\benchmark\\grcwa-weiliang-013', 'grcwa-weiliang-013', True))
-VARIANTS.append(("fork", REPO, "grcwa", True))
+def discover_variants():
+    """Return [(label, package-parent-dir, module-name)] for every vendored
+    grcwa* package in benchmark/, plus the current branch at the repo root.
+
+    Each worker runs as a script whose sys.path[0] is benchmark/, so a vendored
+    package is importable by its directory name; we still set PYTHONPATH to the
+    parent dir so the choice is explicit and robust to the launch cwd. Distinct
+    directory names keep the variants isolated from each other on import."""
+    variants = []
+    for name in sorted(os.listdir(HERE)):
+        path = os.path.join(HERE, name)
+        if (os.path.isdir(path) and name.startswith("grcwa") and name != "grcwa"
+                and os.path.isfile(os.path.join(path, "__init__.py"))):
+            label = name.removeprefix("grcwa").lstrip("-_") or name
+            variants.append((label, HERE, name))
+    variants.append(("fork", REPO, "grcwa"))
+    return variants
+
+
+VARIANTS = discover_variants()
 
 
 def run_variant(path, modname, fmm):
     env = os.environ.copy()
-    env["PYTHONPATH"] = path            # isolate: only this package on the path
+    env["PYTHONPATH"] = path            # parent dir; variants kept apart by name
     env["GRCWA_MOD"] = modname
     env["FMM"] = fmm
     p = subprocess.run([sys.executable, WORKER], env=env,
@@ -82,17 +73,26 @@ def airy_R(n0, n1, ns, d, freq):
     return abs((r01 + r12 * ph) / (1 + r01 * r12 * ph)) ** 2
 
 
+def _has_results(res):
+    """True if a worker result dict carries at least one solved case."""
+    return isinstance(res, dict) and any(
+        isinstance(v, dict) and "R" in v for v in res.values())
+
+
 def main():
     # column label -> {case: result dict}
     columns = []
     data = {}
-    for label, path, mod, run_pol in VARIANTS:
+    for label, path, mod in VARIANTS:
         res = run_variant(path, mod, "none")
         col = f"{label}[Laurent]"
         columns.append(col); data[col] = res
-        if run_pol:
+        # attempt Pol for every variant; keep the column only if this version
+        # actually implements fmm_method='pol' (otherwise the worker skips it).
+        pol = run_variant(path, mod, "pol")
+        if _has_results(pol):
             colp = f"{label}[Pol]"
-            columns.append(colp); data[colp] = run_variant(path, mod, "pol")
+            columns.append(colp); data[colp] = pol
 
     # collect case order from any successful column
     case_names = []

@@ -5,14 +5,12 @@ grcwa installations and factorization modes (isolated subprocesses), attaches
 analytic references where they exist, cross-checks, and exports everything to
 benchmark/conv_results.{json,csv}.
 
-The interesting comparison is the *factorization rule* (Laurent vs Pol): all the
-Laurent codes are bit-identical, so we only run
-
-  weiliang-0.1.3[Laurent], weiliang-0.1.3[Pol]   (independent codebase; if path set)
-  fork[Laurent],           fork[Pol]              (this branch)
-
-That gives, per structure: the convergence rate of each rule, and a check that
-the two independent codebases agree for each rule.
+The interesting comparison is the *factorization rule* (Laurent vs Pol). Variants
+are auto-discovered the same way as in run.py: every `benchmark/grcwa*` package is
+a suite, plus the current branch (`fork`). Each is run with Laurent, and with Pol
+if its `obj` supports `fmm_method='pol'` -- so Pol columns appear only where the
+method is actually implemented. The Laurent codes are mutually bit-identical, so
+their convergence curves overlay; the Pol curves are what differ.
 
 Reference per case:
   * A1/A1b  : exact thin-film Airy result.
@@ -22,10 +20,6 @@ Reference per case:
   * B/C     : no closed form -> a shared reference taken from the highest-nG
               Laurent run (the rule guaranteed correct in the limit). Drop in
               your external-RCWA value later by editing the 'ref' field.
-
-Env vars (parent dir of the named package):
-  GRCWA_WEILIANG_PATH  ->  wl_grcwa  (weiliang upstream master, with Pol)
-The current branch (fork) is auto-detected as the repo root.
 """
 import os
 import sys
@@ -38,11 +32,22 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 WORKER = os.path.join(HERE, "conv_worker.py")
 
-# (label, package-parent path, module name)
-VARIANTS = []
-if os.environ.get("GRCWA_WEILIANG_PATH"):
-    VARIANTS.append(("weiliang-0.1.3", os.environ["GRCWA_WEILIANG_PATH"], "wl_grcwa"))
-VARIANTS.append(("fork", REPO, "grcwa"))
+def discover_variants():
+    """Auto-discover vendored grcwa* packages in benchmark/, plus the current
+    branch at the repo root. Returns [(label, package-parent-dir, module-name)].
+    (Same convention as run.py.)"""
+    variants = []
+    for name in sorted(os.listdir(HERE)):
+        path = os.path.join(HERE, name)
+        if (os.path.isdir(path) and name.startswith("grcwa") and name != "grcwa"
+                and os.path.isfile(os.path.join(path, "__init__.py"))):
+            label = name.removeprefix("grcwa").lstrip("-_") or name
+            variants.append((label, HERE, name))
+    variants.append(("fork", REPO, "grcwa"))
+    return variants
+
+
+VARIANTS = discover_variants()
 
 
 def run_variant(path, modname, fmm):
@@ -107,14 +112,23 @@ def analytic_ref(name, info):
     return None
 
 
+def _has_sweep(res):
+    """True if a worker result carries at least one solved sweep point."""
+    return isinstance(res, dict) and "_error" not in res and any(
+        any("R" in p for p in c.get("sweep", []))
+        for c in res.values() if isinstance(c, dict))
+
+
 def main():
     # column label -> worker output {case: {info, sweep}}
     columns, data = [], {}
     for label, path, mod in VARIANTS:
-        for fmm, tag in (("none", "Laurent"), ("pol", "Pol")):
-            col = f"{label}[{tag}]"
-            columns.append(col)
-            data[col] = run_variant(path, mod, fmm)
+        lau = run_variant(path, mod, "none")
+        columns.append(f"{label}[Laurent]"); data[f"{label}[Laurent]"] = lau
+        # attempt Pol; keep the column only if this version implements it
+        pol = run_variant(path, mod, "pol")
+        if _has_sweep(pol):
+            columns.append(f"{label}[Pol]"); data[f"{label}[Pol]"] = pol
 
     # case order + info from the first good column
     cases, infos = [], {}

@@ -30,10 +30,26 @@ with open(JSON) as f:
 columns = J["columns"]
 cases = J["cases"]
 
+# one color per codebase (text before the [rule]); linestyle encodes the rule.
+# fork stays red and weiliang* blue for continuity with the earlier plots; every
+# other codebase takes the next free palette colour.
+_codes = list(dict.fromkeys(c.split("[")[0] for c in columns))
+_palette = ["#2ca02c", "#ff7f0e", "#9467bd", "#8c564b", "#17becf", "#e377c2",
+            "#7f7f7f", "#bcbd22"]
+_code_color, _i = {}, 0
+for code in _codes:
+    if code == "fork":
+        _code_color[code] = "#d62728"
+    elif code.startswith("weiliang"):
+        _code_color[code] = "#1f77b4"
+    else:
+        _code_color[code] = _palette[_i % len(_palette)]
+        _i += 1
+
 def style(col):
     rule = "Pol" if col.endswith("[Pol]") else "Laurent"
     code = col.split("[")[0]
-    color = {"fork": "#d62728", "weiliang-0.1.3": "#1f77b4"}.get(code, "#555")
+    color = _code_color.get(code, "#555")
     ls = "--" if rule == "Pol" else "-"
     mk = "o" if rule == "Laurent" else "s"
     return color, ls, mk
