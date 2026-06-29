@@ -38,12 +38,24 @@ WORKER = os.path.join(HERE, "worker.py")
 
 # (label, package-parent path, module name, run_pol)
 VARIANTS = []
-if os.environ.get("GRCWA_ORIG_PATH"):
-    VARIANTS.append(("orig-0.1.2", os.environ["GRCWA_ORIG_PATH"], "orig_grcwa", False))
-if os.environ.get("GRCWA_WEILIANG_PATH"):
-    VARIANTS.append(("weiliang-0.1.3", os.environ["GRCWA_WEILIANG_PATH"], "wl_grcwa", True))
-if os.environ.get("GRCWA_FORKMASTER_PATH"):
-    VARIANTS.append(("forkmaster", os.environ["GRCWA_FORKMASTER_PATH"], "grcwa", False))
+# if os.environ.get("GRCWA_ORIG_PATH"):
+#     VARIANTS.append(("orig-0.1.2", os.environ["GRCWA_ORIG_PATH"], "orig_grcwa", False))
+# if os.environ.get("GRCWA_WEILIANG_PATH"):
+#     VARIANTS.append(("weiliang-0.1.3", os.environ["GRCWA_WEILIANG_PATH"], "wl_grcwa", True))
+# if os.environ.get("GRCWA_FORKMASTER_PATH"):
+#     VARIANTS.append(("forkmaster", os.environ["GRCWA_FORKMASTER_PATH"], "grcwa", False))
+# (label, package-parent path, module name, run_pol)
+for name in sorted(os.listdir(HERE)):
+    path = os.path.join(HERE, name)
+    if os.path.isdir(path) and name.startswith("grcwa") and name != "grcwa":
+        VARIANTS.append((
+            name.removeprefix("grcwa").lstrip("-_") or name,
+            path,
+            name,
+            False,
+        ))
+
+VARIANTS.append(('weiliang-013-POL', 'C:\\Users\\mwalther\\PycharmProjects\\grcwa\\benchmark\\grcwa-weiliang-013', 'grcwa-weiliang-013', True))
 VARIANTS.append(("fork", REPO, "grcwa", True))
 
 
