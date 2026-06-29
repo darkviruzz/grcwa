@@ -73,3 +73,37 @@ If an env var is not set, that suite is simply skipped (the `fork` columns are
 always produced). Each variant runs in its own subprocess (isolated
 `PYTHONPATH`) so multiple grcwa versions never clash on import — that is why the
 external packages are imported under distinct names (`orig_grcwa`, `wl_grcwa`).
+
+## Convergence study (R vs truncation order nG)
+
+`conv_run.py` + `conv_worker.py` sweep the truncation order over a battery of
+physically-motivated structures (planar slab and form-birefringent film with
+*analytic* references; 1D Si/metal gratings TE/TM; 2D rectangular Si/metal
+pillars) and track how fast `R(nG)` settles, comparing the Laurent and Pol
+factorizations in two independent codebases. Materials are given as `(n, k)` at
+`lambda = 1 um`. It uses `GRCWA_WEILIANG_PATH` (same setup as above) and writes
+`conv_results.{json,csv}`.
+
+```bash
+export GRCWA_WEILIANG_PATH=/tmp/gwl       # optional second codebase
+python benchmark/conv_run.py
+```
+
+For the gratings the reference is the highest-nG Laurent result (the rule that
+provably converges in the limit); to use your own external RCWA instead, edit
+the `ref` field of a case in `conv_results.json` before plotting.
+
+## Plotting
+
+After a run, the two plotters read the exported files and write PNGs next to
+themselves (both are git-ignored):
+
+```bash
+python benchmark/plot_benchmark.py   # reads results.csv      -> bench_*.png
+python benchmark/plot_conv.py        # reads conv_results.json -> conv_*.png
+```
+
+`plot_benchmark.py` shows R/T/A per suite, timing, the Pol-port-faithfulness and
+Laurent-agreement cross-checks, and Laurent-vs-Pol reflectance. `plot_conv.py`
+shows the error-decay (log-log), the raw `R(nG)` settling, accuracy-vs-walltime
+for the hardest cases, and the 0D analytic anchors.
