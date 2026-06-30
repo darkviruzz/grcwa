@@ -1,17 +1,18 @@
 """Convergence vs the external 'Moose' reference (benchmark/moose_reference.json).
 
-Runs grcwa (Laurent and the fixed Pol) on the same structures Moose was run on and
-overlays all three converging to the Moose reference. Writes moose_compare_error.png
-(error |R(nG) - R_ref| vs total retained orders, log-log) and moose_compare_raw.png
-(raw R), and prints a converged-value table.
+Runs grcwa (Laurent and the fixed Pol) on the same structures Moose was run on
+(via the shared benchmark/structures.py) and overlays all three converging to the
+Moose reference. Writes moose_compare_error.png and moose_compare_raw.png and
+prints a converged-value table.
 
 Fully dynamic w.r.t. moose_reference.json: each case's `sweep` may use 1D keys
-("50") or 2D keys ("(nGx,nGy)"); the x-axis is the total retained order count. For
-2D, (nGx,nGy) is read as the max order per axis, i.e. (2*nGx+1)*(2*nGy+1) orders.
+("50") or 2D keys ("(m,m)"). Convention (matching structures.py): the value is the
+PER-AXIS order count, so a 1D key N -> N total orders and a 2D key (m,m) -> m*m
+total orders (a m x m square block). The x-axis is the total retained order count.
 The reference is the case's `ref` field, or (if absent) the highest-order sweep
-value -- so appending more Moose points later just works. grcwa is run at each
-Moose order count up to GRCWA_MAX_NG (env, default 500); beyond that only Moose is
-plotted. The A/B/C structure registry mirrors conv_worker.py.
+value, so appending more Moose points later needs no code change. grcwa is run at
+each Moose order count up to GRCWA_MAX_NG (env, default 700); beyond that only
+Moose is plotted.
 """
 import os
 import json
@@ -20,122 +21,63 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import grcwa
+import structures as ST
 
 grcwa.set_backend("numpy")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = HERE
-FREQC = 1.0 * (1 + 1j / 2 / 1e7)
-NX_1D, NX_2D = 2048, 256
-MAX_NG = int(os.environ.get("GRCWA_MAX_NG", "500"))
-
-AIR, SIO2, SI, AU = (1.0, 0.0), (1.5, 0.0), (3.5, 0.0), (0.3, 7.0)
-
-
-def eps(nk):
-    n, k = nk
-    return (n + 1j * k) ** 2
-
-
-# name -> geometry. pol 'p'=TM, 's'=TE. Mirrors conv_worker.py.
-REG = {
-    "A1_slab_air":      dict(dim=0, pol="s", film=SI, d=0.20, sub=AIR),
-    "A1b_slab_glass":   dict(dim=0, pol="s", film=SI, d=0.20, sub=SIO2),
-    "A2_formbiref_TE":  dict(dim=1, pol="s", hi=SI, lo=AIR, period=0.20, ff=0.5, d=0.30, sub=AIR),
-    "A2_formbiref_TM":  dict(dim=1, pol="p", hi=SI, lo=AIR, period=0.20, ff=0.5, d=0.30, sub=AIR),
-    "B1_Si_grating_TE": dict(dim=1, pol="s", hi=SI, lo=AIR, period=1.5, ff=0.5, d=0.50, sub=AIR),
-    "B1_Si_grating_TM": dict(dim=1, pol="p", hi=SI, lo=AIR, period=1.5, ff=0.5, d=0.50, sub=AIR),
-    "B2_HCG_TM":        dict(dim=1, pol="p", hi=SI, lo=AIR, period=0.80, ff=0.5, d=0.30, sub=AIR),
-    "B3_Au_slits_TM":   dict(dim=1, pol="p", hi=AU, lo=AIR, period=0.50, ff=0.8, d=0.20, sub=AIR),
-    "C1_Si_pillars":         dict(dim=2, pol="s", pillar=SI, bg=AIR, period=0.50, ax=0.30, ay=0.30, d=0.40, sub=SIO2),
-    "C1b_Si_pillars_diffract": dict(dim=2, pol="s", pillar=SI, bg=AIR, period=1.50, ax=0.60, ay=0.60, d=0.40, sub=SIO2),
-    "C2_Au_holes":           dict(dim=2, pol="s", pillar=AIR, bg=AU, period=0.60, ax=0.30, ay=0.30, d=0.20, sub=SIO2),
-}
-
-
-def total_orders(key):
-    """Total retained orders for a Moose sweep key. '50' -> 50;
-    '(nGx,nGy)' -> (2*nGx+1)*(2*nGy+1)."""
-    key = key.strip()
-    if key.startswith("("):
-        a, b = key.strip("()").split(",")
-        return (2 * int(a) + 1) * (2 * int(b) + 1)
-    return int(key)
-
-
-def run(case, nG, fmm):
-    s = REG[case]
-    if s["dim"] == 0:
-        o = grcwa.obj(1, None, None, FREQC, 0., 0., verbose=0, fmm_method=fmm)
-        o.Add_LayerUniform(1.0, eps(AIR))
-        o.Add_LayerUniform(s["d"], eps(s["film"]))
-        o.Add_LayerUniform(1.0, eps(s["sub"]))
-        o.Init_Setup()
-        o.MakeExcitationPlanewave(0., 0., 1., 0., order=0)
-        R, T = o.RT_Solve(normalize=1)
-        return float(np.real(R)), 1
-    if s["dim"] == 1:
-        xs = np.linspace(0, 1, NX_1D, endpoint=False)
-        prof = np.where(xs < s["ff"], eps(s["hi"]), eps(s["lo"])).astype(complex)
-        o = grcwa.obj(nG, [s["period"], 0], None, FREQC, 0., 0., verbose=0, fmm_method=fmm)
-        o.Add_LayerUniform(1.0, eps(AIR))
-        o.Add_LayerGrid(s["d"], NX_1D)
-        o.Add_LayerUniform(1.0, eps(s["sub"]))
-        flat = prof
-    else:
-        x = np.linspace(0, 1, NX_2D, endpoint=False)
-        X, Y = np.meshgrid(x, x, indexing="ij")
-        eg = np.ones((NX_2D, NX_2D), dtype=complex) * eps(s["bg"])
-        inside = (np.abs(X - 0.5) < s["ax"] / (2 * s["period"])) & \
-                 (np.abs(Y - 0.5) < s["ay"] / (2 * s["period"]))
-        eg[inside] = eps(s["pillar"])
-        o = grcwa.obj(nG, [s["period"], 0], [0, s["period"]], FREQC, 0., 0.,
-                      verbose=0, fmm_method=fmm)
-        o.Add_LayerUniform(1.0, eps(AIR))
-        o.Add_LayerGrid(s["d"], NX_2D, NX_2D)
-        o.Add_LayerUniform(1.0, eps(s["sub"]))
-        flat = eg.flatten()
-    o.Init_Setup()
-    pa, sa = (1., 0.) if s["pol"] == "p" else (0., 1.)
-    o.MakeExcitationPlanewave(pa, 0., sa, 0., order=0)
-    o.GridLayer_geteps(flat)
-    R, T = o.RT_Solve(normalize=1)
-    return float(np.real(R)), int(o.nG)
-
-
-M = json.load(open(os.path.join(HERE, "moose_reference.json")))
-CASES = {k: v for k, v in M["cases"].items() if k in REG}
+MAX_NG = int(os.environ.get("GRCWA_MAX_NG", "700"))
 FLOOR = 1e-7
 
 
+def parse_key(key):
+    """(per-axis q, total orders) for a Moose sweep key."""
+    key = key.strip()
+    if key.startswith("("):
+        a, b = key.strip("()").split(",")
+        m = int(a)
+        return m, int(a) * int(b)      # m x m square block -> m*n total
+    n = int(key)
+    return n, n                         # 1D: n orders
+
+
+M = json.load(open(os.path.join(HERE, "moose_reference.json")))
+CASES = {k: v for k, v in M["cases"].items() if k in ST.STRUCT}
+
+
 def moose_points(case):
-    """Sorted [(total_orders, R)] for a case's Moose sweep."""
-    return sorted((total_orders(k), v) for k, v in CASES[case]["sweep"].items())
+    return sorted((parse_key(k)[1], v) for k, v in CASES[case]["sweep"].items())
 
 
 def ref_of(case):
     c = CASES[case]
-    if "ref" in c and c["ref"] is not None:
+    if c.get("ref") is not None:
         return c["ref"]
-    return moose_points(case)[-1][1]   # highest-order value
+    return moose_points(case)[-1][1]
 
 
-# gather grcwa data at the Moose order counts (capped)
-print("Running grcwa (Laurent + fixed Pol); MAX_NG=%d ..." % MAX_NG)
+# run grcwa at the Moose order counts (capped)
+print("Running grcwa (Laurent + fixed Pol) via structures.py; MAX_NG=%d ..." % MAX_NG)
 gr = {}
 for case in CASES:
-    dim = REG[case]["dim"]
-    if dim == 0:
-        gr[case] = {"laurent": [(1, run(case, 1, None)[0])],
-                    "pol": [(1, run(case, 1, "pol")[0])]}
+    s = ST.STRUCT[case]
+    if s["dim"] == 0:
+        rl = ST.solve(grcwa, s, 1, None, True)[0]
+        rp = ST.solve(grcwa, s, 1, "pol", True)[0]
+        gr[case] = {"laurent": [(1, rl)], "pol": [(1, rp)]}
         continue
     lau, pol = [], []
-    for tot, _ in moose_points(case):
-        if tot > MAX_NG:
+    seen = set()
+    for k in CASES[case]["sweep"]:
+        q, tot = parse_key(k)
+        if tot > MAX_NG or q in seen:
             continue
-        rl, n1 = run(case, tot, None)
-        rp, n2 = run(case, tot, "pol")
+        seen.add(q)
+        rl, T, n1, _ = ST.solve(grcwa, s, q, None, True)
+        rp, T, n2, _ = ST.solve(grcwa, s, q, "pol", True)
         lau.append((n1, rl)); pol.append((n2, rp))
+    lau.sort(); pol.sort()
     gr[case] = {"laurent": lau, "pol": pol}
 
 # console table
@@ -161,7 +103,7 @@ def grid_fig(kind):
         ref = ref_of(case)
         mp = moose_points(case)
         mx, mr = [p[0] for p in mp], [p[1] for p in mp]
-        gl = gr[case]["laurent"]; gp = gr[case]["pol"]
+        gl, gp = gr[case]["laurent"], gr[case]["pol"]
         if kind == "error":
             ax.loglog(mx, [max(abs(r - ref), FLOOR) for r in mr], "-D", color="k",
                       ms=4, lw=1.6, label="Moose (self)")

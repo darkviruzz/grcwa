@@ -154,18 +154,20 @@ def main():
         info = infos.get(case, {})
         ref = analytic_ref(case, info)
 
-        # self-reference for B/C: highest-nG Laurent value (correct in the limit)
+        # self-reference for B/C: highest-order Laurent value (correct in the limit)
         if ref is None:
             best = None
             for col in laurent_cols:
                 sw = data.get(col, {}).get(case, {}).get("sweep", [])
                 good = [p for p in sw if "R" in p]
                 if good:
-                    best = good[-1]
+                    cand = max(good, key=lambda p: p["nG"])
+                    if best is None or cand["nG"] > best["nG"]:
+                        best = cand
             if best is not None:
                 ref = {"type": "self_highnG_Laurent", "R": best["R"],
                        "T": best["T"], "at_nG": best["nG"],
-                       "note": "highest-nG Laurent run (replace with external RCWA)"}
+                       "note": "highest-order Laurent run (replace with external RCWA)"}
 
         centry = {"info": info, "ref": ref, "columns": {}}
         print(f"\n{case}   [{info.get('desc','')}]")
@@ -174,26 +176,26 @@ def main():
                   + (f"  note: {ref['note']}" if ref.get('note') else ""))
         for col in columns:
             sw = data.get(col, {}).get(case, {}).get("sweep", [])
-            skip = data.get(col, {}).get(case, {}).get("skipped")
-            if skip and not sw:
-                print(f"   {col:<24} -- {skip}")
+            skip = next((p.get("skipped") for p in sw if p.get("skipped")), None)
+            good = [p for p in sw if "R" in p]
+            if not good:
+                if skip:
+                    print(f"   {col:<24} -- {skip}")
                 continue
             centry["columns"][col] = sw
-            for p in sw:
-                if "R" not in p:
-                    continue
+            for p in good:
                 err = abs(p["R"] - ref["R"]) if ref else None
-                rows.append(dict(case=case, column=col, nG_req=p["nG_req"],
-                                 nG=p["nG"], R=p["R"], T=p["T"], A=p["A"],
-                                 err_R=err,
+                rows.append(dict(case=case, column=col, q=p.get("q"),
+                                 label=p.get("label"), nG=p["nG"], R=p["R"],
+                                 T=p["T"], A=p["A"], err_R=err,
                                  time_ms=p.get("time_ms"), mode=p["mode"]))
-            # compact line: error at the smallest and largest nG
-            good = [p for p in sw if "R" in p]
-            if good and ref:
-                e0 = abs(good[0]["R"] - ref["R"])
-                e1 = abs(good[-1]["R"] - ref["R"])
-                print(f"   {col:<24} nG {good[0]['nG']:>4}->{good[-1]['nG']:<4}"
-                      f"  |dR| {e0:.2e} -> {e1:.2e}  [{good[-1]['mode']}]")
+            # compact line: error at the smallest and largest order count
+            lo = min(good, key=lambda p: p["nG"])
+            hi = max(good, key=lambda p: p["nG"])
+            if ref:
+                e0 = abs(lo["R"] - ref["R"]); e1 = abs(hi["R"] - ref["R"])
+                print(f"   {col:<24} nG {lo['nG']:>5}->{hi['nG']:<5}"
+                      f"  |dR| {e0:.2e} -> {e1:.2e}  [{hi['mode']}]")
         merged["cases"][case] = centry
 
     out_json = os.path.join(HERE, "conv_results.json")
@@ -201,8 +203,8 @@ def main():
     with open(out_json, "w") as f:
         json.dump(merged, f, indent=2)
     with open(out_csv, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=["case", "column", "nG_req", "nG", "R",
-                                          "T", "A", "err_R", "time_ms", "mode"])
+        w = csv.DictWriter(f, fieldnames=["case", "column", "q", "label", "nG",
+                                          "R", "T", "A", "err_R", "time_ms", "mode"])
         w.writeheader()
         for r in rows:
             w.writerow(r)

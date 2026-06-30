@@ -55,22 +55,23 @@ def style(col):
     return color, ls, mk
 
 def ref_R(case):
-    """Exact analytic if available, else fork[Laurent] highest-nG value."""
+    """Exact analytic if available, else fork[Laurent] highest-order value."""
     ref = cases[case].get("ref")
     if ref and ref.get("type") == "analytic_exact":
         return ref["R"], "analytic"
-    sw = cases[case]["columns"].get("fork[Laurent]", [])
-    good = [p for p in sw if "R" in p]
-    if good:
-        return good[-1]["R"], "self(fork Laurent, high nG)"
+    sw = [p for p in cases[case]["columns"].get("fork[Laurent]", []) if "R" in p]
+    if sw:
+        return max(sw, key=lambda p: p["nG"])["R"], "self(fork Laurent, high order)"
     if ref:
         return ref["R"], ref.get("type", "ref")
     return None, None
 
 def sweeps(case):
+    """{col: points sorted by total order count nG}. 1D has q and q**2 points."""
     out = {}
     for col in columns:
-        sw = [p for p in cases[case]["columns"].get(col, []) if "R" in p]
+        sw = sorted((p for p in cases[case]["columns"].get(col, []) if "R" in p),
+                    key=lambda p: p["nG"])
         if len(sw) >= 2:
             out[col] = sw
     return out
@@ -89,7 +90,7 @@ ncol = 3
 nrow = int(np.ceil(n / ncol))
 fig, axes = plt.subplots(nrow, ncol, figsize=(6.2 * ncol, 4.0 * nrow),
                          squeeze=False)
-fig.suptitle("Convergence: |R(nG) - R_ref| vs truncation order   "
+fig.suptitle("Convergence: |R(N) - R_ref| vs total retained orders   "
              "(solid = Laurent, dashed = Pol; red = fork, blue = weiliang)",
              fontsize=13, fontweight="bold")
 for i, case in enumerate(sweep_cases):
@@ -102,7 +103,7 @@ for i, case in enumerate(sweep_cases):
         ax.loglog(ng, err, ls=ls, marker=mk, color=c, ms=4, lw=1.6,
                   label=col, alpha=0.9)
     ax.set_title(title(case), fontsize=8.5)
-    ax.set_xlabel("nG (retained orders)", fontsize=8)
+    ax.set_xlabel("total retained orders", fontsize=8)
     ax.set_ylabel("|R(nG) - R_ref|", fontsize=8)
     ax.grid(True, which="both", alpha=0.3)
     ax.tick_params(labelsize=7)
@@ -136,7 +137,7 @@ for i, case in enumerate(sweep_cases):
         ax.axhline(ref["R"], color="green", ls=":", lw=1.3,
                    label=f"EMT n_eff={ref.get('n_eff', 0):.2f}")
     ax.set_title(title(case), fontsize=8.5)
-    ax.set_xlabel("nG", fontsize=8)
+    ax.set_xlabel("total retained orders", fontsize=8)
     ax.set_ylabel("R", fontsize=8)
     ax.grid(True, which="both", alpha=0.3)
     ax.tick_params(labelsize=7)

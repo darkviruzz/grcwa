@@ -111,10 +111,11 @@ def main():
             r = data[col].get(name, {}) if isinstance(data[col], dict) else {}
             if "R" in r:
                 print(f"   {col:<22} R={r['R']:.5f}  T={r['T']:.5f}  A={r['A']:+.5f}"
-                      f"  R+T={r['R']+r['T']:.5f}  nG={r['nG']:<4} "
-                      f"{r['time_ms']:8.2f} ms  [{r['mode']}]")
-                rows.append(dict(case=name, column=col, **{k: r[k] for k in
-                            ("R", "T", "A", "nG", "time_ms", "mode")}))
+                      f"  R+T={r['R']+r['T']:.5f}  orders={r.get('label',''):<8} "
+                      f"nG={r['nG']:<5} {r['time_ms']:8.2f} ms  [{r['mode']}]")
+                rows.append(dict(case=name, column=col, label=r.get("label"),
+                            **{k: r[k] for k in
+                               ("R", "T", "A", "nG", "time_ms", "mode")}))
             else:
                 tag = r.get("skipped") or r.get("error") or "n/a"
                 print(f"   {col:<22} -- {tag}")
@@ -131,15 +132,15 @@ def main():
         if any_r is not None:
             rt = any_r["R"] + any_r["T"]
             print(f"   |  R+T={rt:.4f}  A={any_r['A']:+.4f}")
-    # absolute anchor for the slab
-    print(f"\n0D_slab analytic (Airy) R = {airy_R(1.0, 2.0, 1.0, 0.30, 1.0):.5f}")
+    # absolute anchor for the slab (A1_slab_air: air/Si(3.5)/air, d=0.20)
+    print(f"\nA1_slab_air analytic (Airy) R = {airy_R(1.0, 3.5, 1.0, 0.20, 1.0):.5f}")
 
     out_json = os.path.join(HERE, "results.json")
     out_csv = os.path.join(HERE, "results.csv")
     with open(out_json, "w") as f:
         json.dump(data, f, indent=2)
     with open(out_csv, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=["case", "column", "R", "T", "A", "nG", "time_ms", "mode"])
+        w = csv.DictWriter(f, fieldnames=["case", "column", "label", "R", "T", "A", "nG", "time_ms", "mode"])
         w.writeheader()
         for row in rows:
             w.writerow(row)
