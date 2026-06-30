@@ -26,10 +26,15 @@ Drop the versions you want to compare into `benchmark/`, e.g.:
 | `grcwa_original-grcwaProjects`| `original-grcwaProjects`  | no   |
 | *(repo root, this branch)*    | `fork`                    | yes  |
 
-Including a known-Pol version (e.g. `weiliang-013`) lets you validate that the
-Pol code in this fork is a faithful port: on the 2D cases (identical geometry and
-order count) `fork[Pol]` reproduces `weiliang-013[Pol]` bit-for-bit, so the
-Pol/Laurent *difference* is intrinsic to the algorithm, not a port bug.
+Including a known-Pol version (e.g. `weiliang-013`) lets you compare Pol
+implementations. Note: `fork[Pol]` was originally a faithful port of the upstream
+Pol method and reproduced `weiliang-013[Pol]` bit-for-bit -- but that upstream Pol
+did **not** converge for TM (it oscillated over nG). The fork has since **fixed**
+two bugs in it (the ``epsinv`` convention and the tangent-field normalization; see
+`tests/test_pol_correctness.py`), so `fork[Pol]` now converges to the Laurent
+limit faster than Laurent and **intentionally differs** from `weiliang-013[Pol]`
+on TM/metal cases. The remaining hard case is a 2D metal grating with sharp
+corners (field singularities), where *neither* rule converges at practical nG.
 
 Versions without dimensionality inference have no native 1D/0D; for the 1D cases
 they fall back to the historical *degenerate-2D* setup (a tiny second period so

@@ -77,13 +77,15 @@ def Epsilon_fft_pol(dN, eps_grid, G, pol_sigma=3.0, pol_niter=20):
     V. Liu & S. Fan, Comp. Phys. Comm. 183, 2233 (2012), Eq. 51.
     """
 
-    # --- epsinv: inverse rule for Ez (always normal to layers) ---
-    inveps_grid = 1.0 / eps_grid
-    eta_hat = get_conv(dN, inveps_grid, G)  # Toeplitz(1/eps)
-    epsinv = eta_hat
-
-    # --- eps2: Pol-corrected in-plane epsilon ---
-    eps_hat = get_conv(dN, eps_grid, G)  # Toeplitz(eps)
+    # --- epsinv: for the Ez/kp term, use the SAME convention as Laurent,
+    # epsinv = inv([[eps]]).  (The earlier code used the reciprocal Toeplitz
+    # [[1/eps]] here, which is inconsistent with how kp couples into the
+    # eigenproblem M = ep2*kp - kkT and destroyed TM convergence -- Pol oscillated
+    # instead of settling.  With inv([[eps]]) the kp matrix matches the Laurent
+    # baseline that the eps2 correction is built on top of.) ---
+    eps_hat = get_conv(dN, eps_grid, G)     # Toeplitz(eps)
+    eta_hat = get_conv(dN, 1.0 / eps_grid, G)  # Toeplitz(1/eps), used in mDelta
+    epsinv = bd.inv(eps_hat)
 
     # Tangent-field projection operators P_ij (autograd-compatible)
     P_xx, P_xy, P_yx, P_yy = _compute_tangent_field_pol(
@@ -131,8 +133,11 @@ def _compute_tangent_field_pol(eps_grid, pol_sigma=3.0, pol_niter=20):
          this approximates a Laplace solve (smooth harmonic extension from
          interface pixels).  If pol_niter=0, a single blur is applied with
          no reset (original behaviour).
-      4. Normalize so max|t| = 1 (Pol scaling, as in S4).
-      5. Form P_ij = t_i * t_j (no division by |t|^2).
+      4. Per-pixel unit normalization (|t| = 1 at every point) so that
+         P = t t^T is a true projection.  (A previous version used a single
+         global max-normalization, which left |t| < 1 across the cell and made
+         the inverse-rule correction vanish -- Pol then just reproduced Laurent.)
+      5. Form P_ij = t_i * t_j.
 
     All operations use the ``bd`` backend so autograd can differentiate
     through them.  The only raw-numpy operations are the Gaussian kernel
@@ -186,7 +191,10 @@ def _compute_tangent_field_pol(eps_grid, pol_sigma=3.0, pol_niter=20):
     grad_x = grad_x_re + grad_x_im
     grad_y = grad_y_re + grad_y_im
 
-    # --- 2. Tangent = 90-deg rotated gradient: t = (-grad_y, grad_x) ---
+    # --- 2. Tangent field = 90-deg rotated gradient: t = (-grad_y, grad_x).
+    # This is the projection that leaves the continuous tangential (TE) field on
+    # Laurent's rule untouched while steering the inverse-rule correction onto
+    # the discontinuous (TM) component (verified: TE Pol == Laurent to ~1e-15).
     tx_raw = -grad_y
     ty_raw = grad_x
 
@@ -200,7 +208,7 @@ def _compute_tangent_field_pol(eps_grid, pol_sigma=3.0, pol_niter=20):
     blur_kernel = np.exp(-2 * np.pi**2 * pol_sigma**2 * (KX**2 + KY**2))
 
     if pol_niter <= 0:
-        # Single blur, no reset (original behaviour).
+        # Single blur, no reset.
         tx = bd.real(bd.ifft2(bd.fft2(tx_raw) * blur_kernel))
         ty = bd.real(bd.ifft2(bd.fft2(ty_raw) * blur_kernel))
     else:
@@ -220,18 +228,25 @@ def _compute_tangent_field_pol(eps_grid, pol_sigma=3.0, pol_niter=20):
             tx = mask * tx_raw + mask_inv * bd.real(bd.ifft2(bd.fft2(tx) * blur_kernel))
             ty = mask * ty_raw + mask_inv * bd.real(bd.ifft2(bd.fft2(ty) * blur_kernel))
 
-    # --- 4. Pol scaling: max|t| = 1 ---
+    # --- 4. PER-PIXEL unit normalization -> a true projection (|t| = 1).
+    # Li's method needs a unit tangent at every point.  The previous global
+    # max-normalization left |t| < 1 across most of the cell, so P = t t^T was
+    # not a projection and the inverse-rule correction was negligible everywhere
+    # except the single peak-gradient pixel (Pol then just reproduced Laurent).
     t_mag_sq = tx * tx + ty * ty
-    # Detached check only -- the normalisation itself is differentiable.
     _raw_mag = np.real(np.asarray(t_mag_sq._value if hasattr(t_mag_sq, "_value") else t_mag_sq))
     if np.max(_raw_mag) < POL_GRAD_TOL**2:
         z = bd.zeros_like(eps_re)
         return z, z, z, z
-    max_field = bd.sqrt(bd.max(t_mag_sq))
-    tx = tx / max_field
-    ty = ty / max_field
+    # Small floor (relative to the peak field) avoids 0/0 at the few pixels the
+    # extension leaves at zero; eps is uniform there so the correction Delta ~ 0
+    # and the projection there is irrelevant.
+    t_floor = POL_GRAD_TOL * float(np.sqrt(np.max(_raw_mag)))
+    t_mag = bd.sqrt(t_mag_sq) + t_floor
+    tx = tx / t_mag
+    ty = ty / t_mag
 
-    # --- 5. Projection operators ---
+    # --- 5. Projection operators P_ij = t_i t_j ---
     P_xx = tx * tx
     P_xy = tx * ty
     P_yy = ty * ty
