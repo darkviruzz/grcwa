@@ -55,6 +55,7 @@ def run_variant(path, modname, fmm):
     env["PYTHONPATH"] = path            # parent dir; variants kept apart by name
     env["GRCWA_MOD"] = modname
     env["FMM"] = fmm
+    print(f"run process worker: {modname} ({fmm})")
     p = subprocess.run([sys.executable, WORKER], env=env,
                        capture_output=True, text=True)
     if p.returncode != 0:
