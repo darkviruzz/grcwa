@@ -1,147 +1,203 @@
-"""Convergence vs the external 'Moose' reference (benchmark/moose_reference.json).
+"""Overlay the convergence-study results (benchmark/conv_results.json) with the
+external 'Moose' reference (benchmark/moose_reference.json).
 
-Runs grcwa (Laurent and the fixed Pol) on the same structures Moose was run on
-(via the shared benchmark/structures.py) and overlays all three converging to the
-Moose reference. Writes moose_compare_error.png and moose_compare_raw.png and
-prints a converged-value table.
+This does NOT recompute anything -- it plots the values already produced by
+conv_run.py plus the Moose reference. Run conv_run.py first, then
+`python benchmark/plot_moose.py`.
 
-Fully dynamic w.r.t. moose_reference.json: each case's `sweep` may use 1D keys
-("50") or 2D keys ("(m,m)"). Convention (matching structures.py): the value is the
-PER-AXIS order count, so a 1D key N -> N total orders and a 2D key (m,m) -> m*m
-total orders (a m x m square block). The x-axis is the total retained order count.
-The reference is the case's `ref` field, or (if absent) the highest-order sweep
-value, so appending more Moose points later needs no code change. grcwa is run at
-each Moose order count up to GRCWA_MAX_NG (env, default 700); beyond that only
-Moose is plotted.
+Which conv_results columns are drawn is controlled by WHITELIST below:
+  * an entry with a rule, e.g. "grcwaProjects[Laurent]", matches that column only;
+  * an entry without "[...]", e.g. "fork", matches ALL variants of that codebase
+    (both [Laurent] and [Pol]).
+Set WHITELIST = None to draw every column present. Moose is always overlaid.
+
+x-axis = total retained orders. Moose 2D keys "(m,m)" are read as m per-axis
+orders -> m*m total (matching the (q,q) convention in structures.py); 1D keys
+"N" -> N. If Moose actually means max-order m (2m+1 per axis), change parse_key.
 """
 import os
 import json
-import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import grcwa
-import structures as ST
+import numpy as np
 
-grcwa.set_backend("numpy")
+# ---- which conv_results columns to draw ------------------------------------
+WHITELIST = ["grcwaProjects[Laurent]", "weiliang-013[Pol]", "fork"]
+# WHITELIST = None   # <- draw ALL columns present in conv_results
+# WHITELIST = ["orig-0.1.2", "weiliang-013", "grcwaProjects", "codex",
+#              "original-grcwaProjects", "fork"]   # every variant, both rules
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = HERE
-MAX_NG = int(os.environ.get("GRCWA_MAX_NG", "700"))
 FLOOR = 1e-7
 
+CONV = json.load(open(os.path.join(HERE, "conv_results.json")))
+MOOSE = json.load(open(os.path.join(HERE, "moose_reference.json")))
+conv_cases = CONV["cases"]
+moose_cases = MOOSE["cases"]
+all_cols = CONV["columns"]
 
-def parse_key(key):
-    """(per-axis q, total orders) for a Moose sweep key."""
+
+def selected(col):
+    if WHITELIST is None:
+        return True
+    for spec in WHITELIST:
+        if "[" in spec:
+            if col == spec:
+                return True
+        elif col.split("[")[0] == spec:
+            return True
+    return False
+
+
+COLS = [c for c in all_cols if selected(c)]
+
+# ---- styling: colour = codebase, linestyle = rule; Moose = black -----------
+_codes = list(dict.fromkeys(c.split("[")[0] for c in COLS))
+_palette = ["#2ca02c", "#ff7f0e", "#9467bd", "#8c564b", "#17becf", "#e377c2",
+            "#7f7f7f", "#bcbd22"]
+_code_color, _i = {}, 0
+for code in _codes:
+    if code == "fork":
+        _code_color[code] = "#d62728"
+    elif code.startswith("weiliang"):
+        _code_color[code] = "#1f77b4"
+    else:
+        _code_color[code] = _palette[_i % len(_palette)]
+        _i += 1
+
+
+def style(col):
+    rule = "Pol" if col.endswith("[Pol]") else "Laurent"
+    color = _code_color.get(col.split("[")[0], "#555")
+    ls = "--" if rule == "Pol" else "-"
+    mk = "s" if rule == "Pol" else "o"
+    return color, ls, mk
+
+
+def parse_total(key):
     key = key.strip()
     if key.startswith("("):
         a, b = key.strip("()").split(",")
-        m = int(a)
-        return m, int(a) * int(b)      # m x m square block -> m*n total
-    n = int(key)
-    return n, n                         # 1D: n orders
+        return int(a) * int(b)
+    return int(key)
 
 
-M = json.load(open(os.path.join(HERE, "moose_reference.json")))
-CASES = {k: v for k, v in M["cases"].items() if k in ST.STRUCT}
+def conv_points(case, col):
+    """sorted [(nG, R)] for a conv column."""
+    pts = [(p["nG"], p["R"]) for p in conv_cases[case]["columns"].get(col, [])
+           if "R" in p]
+    return sorted(pts)
 
 
 def moose_points(case):
-    return sorted((parse_key(k)[1], v) for k, v in CASES[case]["sweep"].items())
+    if case not in moose_cases:
+        return []
+    return sorted((parse_total(k), v) for k, v in moose_cases[case]["sweep"].items())
 
 
 def ref_of(case):
-    c = CASES[case]
-    if c.get("ref") is not None:
-        return c["ref"]
-    return moose_points(case)[-1][1]
+    """Moose reference if present, else highest-order value of a selected
+    Laurent column."""
+    if case in moose_cases and moose_cases[case].get("ref") is not None:
+        return moose_cases[case]["ref"]
+    best = None
+    for col in COLS:
+        if col.endswith("[Laurent]"):
+            pts = conv_points(case, col)
+            if pts:
+                best = pts[-1][1]
+    if best is not None:
+        return best
+    mp = moose_points(case)
+    return mp[-1][1] if mp else None
 
 
-# run grcwa at the Moose order counts (capped)
-print("Running grcwa (Laurent + fixed Pol) via structures.py; MAX_NG=%d ..." % MAX_NG)
-gr = {}
-for case in CASES:
-    s = ST.STRUCT[case]
-    if s["dim"] == 0:
-        rl = ST.solve(grcwa, s, 1, None, True)[0]
-        rp = ST.solve(grcwa, s, 1, "pol", True)[0]
-        gr[case] = {"laurent": [(1, rl)], "pol": [(1, rp)]}
-        continue
-    lau, pol = [], []
-    seen = set()
-    for k in CASES[case]["sweep"]:
-        q, tot = parse_key(k)
-        if tot > MAX_NG or q in seen:
-            continue
-        seen.add(q)
-        rl, T, n1, _ = ST.solve(grcwa, s, q, None, True)
-        rp, T, n2, _ = ST.solve(grcwa, s, q, "pol", True)
-        lau.append((n1, rl)); pol.append((n2, rp))
-    lau.sort(); pol.sort()
-    gr[case] = {"laurent": lau, "pol": pol}
+# cases that have a real sweep in at least one selected column
+def has_sweep(case):
+    if len(moose_points(case)) >= 2:
+        return True
+    return any(len(conv_points(case, c)) >= 2 for c in COLS)
 
-# console table
-print("\n%-24s %10s %10s %10s   %10s %10s" %
-      ("case", "ref", "grcwaLau", "grcwaPol", "Lau-ref", "Pol-ref"))
-for case in CASES:
+
+cases = [c for c in conv_cases if conv_cases[c]["info"].get("dim", 2) != 0
+         and has_sweep(c)]
+
+# ---- console table ---------------------------------------------------------
+print("WHITELIST ->", COLS if WHITELIST else "ALL columns")
+print("\n%-24s %10s   %s" % ("case", "ref(Moose)", "selected columns @ highest order"))
+for case in cases:
     ref = ref_of(case)
-    rl = gr[case]["laurent"][-1][1]
-    rp = gr[case]["pol"][-1][1]
-    flag = " (prov.ref)" if CASES[case].get("ref_provisional") else ""
-    print("%-24s %10.6f %10.6f %10.6f   %+10.2e %+10.2e%s" %
-          (case, ref, rl, rp, rl - ref, rp - ref, flag))
+    parts = []
+    for col in COLS:
+        pts = conv_points(case, col)
+        if pts:
+            parts.append("%s=%.5f" % (col, pts[-1][1]))
+    print("%-24s %10.5f   %s" % (case, ref if ref is not None else float("nan"),
+                                 "  ".join(parts)))
 
-sweep_cases = [c for c in CASES if len(CASES[c]["sweep"]) > 2]
+# ---- figures ---------------------------------------------------------------
 ncol = 3
-nrow = int(np.ceil(len(sweep_cases) / ncol))
+nrow = int(np.ceil(len(cases) / ncol))
 
 
-def grid_fig(kind):
-    fig, axes = plt.subplots(nrow, ncol, figsize=(6.2 * ncol, 4.0 * nrow), squeeze=False)
-    for i, case in enumerate(sweep_cases):
+def grid(kind):
+    fig, axes = plt.subplots(nrow, ncol, figsize=(6.4 * ncol, 4.1 * nrow),
+                             squeeze=False)
+    for i, case in enumerate(cases):
         ax = axes[i // ncol][i % ncol]
         ref = ref_of(case)
+        # conv columns
+        for col in COLS:
+            pts = conv_points(case, col)
+            if len(pts) < 1:
+                continue
+            c, lstyle, mk = style(col)
+            x = [p[0] for p in pts]
+            if kind == "error":
+                y = [max(abs(p[1] - ref), FLOOR) for p in pts]
+                ax.loglog(x, y, ls=lstyle, marker=mk, color=c, ms=4, lw=1.5,
+                          label=col, alpha=0.9)
+            else:
+                ax.semilogx(x, [p[1] for p in pts], ls=lstyle, marker=mk, color=c,
+                            ms=4, lw=1.5, label=col, alpha=0.9)
+        # Moose
         mp = moose_points(case)
-        mx, mr = [p[0] for p in mp], [p[1] for p in mp]
-        gl, gp = gr[case]["laurent"], gr[case]["pol"]
-        if kind == "error":
-            ax.loglog(mx, [max(abs(r - ref), FLOOR) for r in mr], "-D", color="k",
-                      ms=4, lw=1.6, label="Moose (self)")
-            if gl:
-                ax.loglog([n for n, _ in gl], [max(abs(r - ref), FLOOR) for _, r in gl],
-                          "-o", color="#8172b3", ms=4, lw=1.6, label="grcwa Laurent")
-                ax.loglog([n for n, _ in gp], [max(abs(r - ref), FLOOR) for _, r in gp],
-                          "--s", color="#d62728", ms=4, lw=1.6, label="grcwa Pol (fixed)")
-            ax.set_ylabel("|R - R_ref|", fontsize=8)
-        else:
-            ax.semilogx(mx, mr, "-D", color="k", ms=4, lw=1.6, label="Moose")
-            if gl:
-                ax.semilogx([n for n, _ in gl], [r for _, r in gl], "-o", color="#8172b3",
-                            ms=4, lw=1.6, label="grcwa Laurent")
-                ax.semilogx([n for n, _ in gp], [r for _, r in gp], "--s", color="#d62728",
-                            ms=4, lw=1.6, label="grcwa Pol (fixed)")
-            ax.axhline(ref, color="k", ls="--", lw=0.9, alpha=0.6)
-            ax.set_ylabel("R", fontsize=8)
-        prov = "  (prov. ref)" if CASES[case].get("ref_provisional") else ""
+        if mp:
+            mx = [p[0] for p in mp]
+            if kind == "error":
+                ax.loglog(mx, [max(abs(p[1] - ref), FLOOR) for p in mp], "-D",
+                          color="k", ms=4, lw=1.8, label="Moose", zorder=5)
+            else:
+                ax.semilogx(mx, [p[1] for p in mp], "-D", color="k", ms=4, lw=1.8,
+                            label="Moose", zorder=5)
+        if kind != "error" and ref is not None:
+            ax.axhline(ref, color="k", ls="--", lw=0.8, alpha=0.6)
+        prov = ""
+        if case in moose_cases and moose_cases[case].get("ref_provisional"):
+            prov = "  (prov. ref)"
         ax.set_title(case + prov, fontsize=9)
         ax.set_xlabel("total retained orders", fontsize=8)
-        ax.grid(True, which="both", alpha=0.3); ax.tick_params(labelsize=7)
+        ax.set_ylabel("|R - R_ref|" if kind == "error" else "R", fontsize=8)
+        ax.grid(True, which="both", alpha=0.3)
+        ax.tick_params(labelsize=7)
         if i == 0:
-            ax.legend(fontsize=7.5)
-    for j in range(len(sweep_cases), nrow * ncol):
+            ax.legend(fontsize=7)
+    for j in range(len(cases), nrow * ncol):
         axes[j // ncol][j % ncol].axis("off")
     return fig
 
 
-f1 = grid_fig("error")
-f1.suptitle("Convergence to the Moose reference   |R(N) - R_ref|   "
-            "(x = total retained orders)", fontsize=13, fontweight="bold")
+f1 = grid("error")
+f1.suptitle("conv_results vs Moose: |R(N) - R_ref|   (x = total retained orders)",
+            fontsize=13, fontweight="bold")
 f1.tight_layout()
 f1.savefig(f"{OUT}/moose_compare_error.png", dpi=150, bbox_inches="tight")
 
-f2 = grid_fig("raw")
-f2.suptitle("Raw R: grcwa Laurent / grcwa Pol(fixed) / Moose   "
-            "(black dashed = Moose reference)", fontsize=13, fontweight="bold")
+f2 = grid("raw")
+f2.suptitle("conv_results vs Moose: raw R   (black = Moose; dashed line = reference)",
+            fontsize=13, fontweight="bold")
 f2.tight_layout()
 f2.savefig(f"{OUT}/moose_compare_raw.png", dpi=150, bbox_inches="tight")
 
