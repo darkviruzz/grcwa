@@ -80,8 +80,14 @@ def parse_total(key):
     key = key.strip()
     if key.startswith("("):
         a, b = key.strip("()").split(",")
-        return int(a) * int(b)
-    return int(key)
+        m = int(a)
+        n = int(b)
+        m = 2 * m + 1       # moose uses m as maximum order symmetrically → 2m+1
+        n = 2 * n + 1
+        return m * n      # m x m square block -> m*n total
+    n = int(key)
+    n = 2 * n + 1
+    return n                         # 1D: n orders
 
 
 def conv_points(case, col):
