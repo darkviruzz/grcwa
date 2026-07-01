@@ -85,7 +85,7 @@ def supports_native_dim(grcwa):
         o.Add_LayerUniform(1.0, 1.0)
         o.Add_LayerGrid(0.1, 4)
         o.Add_LayerUniform(1.0, 1.0)
-        o.Init_Setup()
+        o.Init_Setup(Gmethod=1)
         return True
     except Exception:
         return False
@@ -141,7 +141,7 @@ def solve(grcwa, s, q, fmm, native):
             o.Add_LayerGrid(s["d"], NX_1D, 1)
             o.Add_LayerUniform(1.0, eps(s["sub"]))
             mode = "degenerate-2D"
-        o.Init_Setup()
+        o.Init_Setup(Gmethod=1)
         eps_flat = prof
     else:  # dim == 2: q x q square block via parallelogramic truncation
         Lam = s["period"]
