@@ -12,8 +12,10 @@ grating, and puts **grcwa** in the direct-rule column of its Table 1:
     grcwa              direct rule    17.5 %
 
 This script re-derives every line of that table from the shared battery
-(structure ``D1_ikarus_hcg_TM`` in benchmark/structures.py) and checks three
-things the table cannot show on its own:
+(structure ``D1_ikarus_hcg_TM`` in benchmark/structures.py), then does the same
+for the paper's second cross-code case, the curved cylinder
+``D2_ikarus_cylinder_TE``. Along the way it checks three things the table cannot
+show on its own:
 
 1. **Is the physics claim right?**  Two independent codes must agree on the
    direct-rule value -- otherwise the disagreement is a bug, not a rule.
@@ -45,7 +47,13 @@ import ikarus_suite as IK                                          # noqa: E402
 grcwa.set_backend("numpy")
 
 CASE = ST.STRUCT["D1_ikarus_hcg_TM"]
+CYL = ST.STRUCT["D2_ikarus_cylinder_TE"]
 FAITHFUL = 0.100            # the whitepaper's "true value" (FMMax, converged)
+# The paper's second cross-code claim, on the curved boundary: FMMax's NORMAL
+# lands in 0.92 < R < 0.96 (its test suite's window), and Li's separable rule
+# lags well behind there. Orders for the 2D case stay modest -- cost is O(M^6).
+CYL_WINDOW = (0.92, 0.96)
+CYL_QS = (11, 15, 21)
 
 # The whitepaper's Table 1 quotes the direct rule "at a truncation a user would
 # actually pick"; 16.3 % is Ikarus laurent at M=12, i.e. 2*12+1 = 25 orders.
@@ -57,13 +65,13 @@ PUBLISHED = {"FMMax (NORMAL)": (0.100, "faithful"),
              "grcwa": (0.175, "direct rule")}
 
 
-def fork_R(q, fmm):
-    R, T, nG, _ = ST.solve(grcwa, CASE, q, fmm, True)
+def fork_R(case, q, fmm):
+    R, T, nG, _ = ST.solve(grcwa, case, q, fmm, True)
     return R, nG
 
 
-def ikarus_R(q, factorization):
-    R, T, nG, _ = IK.solve(CASE, q, factorization)
+def ikarus_R(case, q, factorization):
+    R, T, nG, _ = IK.solve(case, q, factorization)
     return R, nG
 
 
@@ -121,11 +129,12 @@ def main():
           f"{'ik laurent':>10} {'ik li':>9} {'ik normal':>9}")
     sweep = {}
     for q in (5, 11, 15, 21, 25, 31, 41, 61, 101, 201):
-        row = {"fork[Laurent]": fork_R(q, None)[0], "fork[Pol]": fork_R(q, "pol")[0]}
+        row = {"fork[Laurent]": fork_R(CASE, q, None)[0],
+               "fork[Pol]": fork_R(CASE, q, "pol")[0]}
         if have_ikarus:
             for f, key in (("laurent", "ik[Laurent]"), ("li", "ik[Li]"),
                            ("normal", "ik[NV]")):
-                row[key] = ikarus_R(q, f)[0]
+                row[key] = ikarus_R(CASE, q, f)[0]
         sweep[q] = row
         print(f"{q:>5} | {_fmt(row['fork[Laurent]'])} {_fmt(row['fork[Pol]'])} | "
               f"{_fmt(row.get('ik[Laurent]'), 10)} {_fmt(row.get('ik[Li]'))} "
@@ -153,7 +162,7 @@ def main():
                   f"   ({rule})")
     print(f"\n   the paper's grcwa harness: nG={wp_nG} in a SQUARE 2D lattice "
           f"-> only {wp_nx} x-orders")
-    native = fork_R(wp_nx if wp_nx % 2 else wp_nx + 1, None)[0]
+    native = fork_R(CASE, wp_nx if wp_nx % 2 else wp_nx + 1, None)[0]
     print(f"   this fork, native 1D at q={wp_nx if wp_nx % 2 else wp_nx + 1} "
           f"(the same x-truncation): R = {native:.4f}")
     print(f"   -> the 17.5 % is the Laurent rule at ~{wp_nx} x-orders, not at "
@@ -162,7 +171,30 @@ def main():
 
     # ---------------------------------------------------------------- part 3
     print("\n" + "-" * 78)
-    print("3. Verdicts")
+    print(f"3. The curved boundary  ({CYL['name']}, TE)")
+    print("-" * 78)
+    cyl = {}
+    if have_ikarus:
+        print(f"{'q':>5} {'nG':>6} | {'fork Laur':>9} {'fork Pol':>9} | "
+              f"{'ik laurent':>10} {'ik li':>9} {'ik normal':>9}")
+        for q in CYL_QS:
+            row = {"fork[Laurent]": fork_R(CYL, q, None)[0],
+                   "fork[Pol]": fork_R(CYL, q, "pol")[0],
+                   "ik[Laurent]": ikarus_R(CYL, q, "laurent")[0],
+                   "ik[Li]": ikarus_R(CYL, q, "li")[0],
+                   "ik[NV]": ikarus_R(CYL, q, "normal")[0]}
+            cyl[q] = row
+            print(f"{q:>5} {q*q:>6} | {_fmt(row['fork[Laurent]'])} "
+                  f"{_fmt(row['fork[Pol]'])} | {_fmt(row['ik[Laurent]'], 10)} "
+                  f"{_fmt(row['ik[Li]'])} {_fmt(row['ik[NV]'])}")
+        print(f"\n   the paper's window for the faithful answer here (FMMax "
+              f"NORMAL): {CYL_WINDOW[0]} .. {CYL_WINDOW[1]}")
+    else:
+        print("   skipped (needs ikarus-rcwa)")
+
+    # ---------------------------------------------------------------- part 4
+    print("\n" + "-" * 78)
+    print("4. Verdicts")
     print("-" * 78)
     hi = max(sweep)
     checks = []
@@ -184,6 +216,19 @@ def main():
                    f"(q={hi}: {pol:.4f}) -- so Table 1's grcwa row does not\n"
                    f"      describe this fork, only the Laurent-only upstream",
                    abs(pol - FAITHFUL) < 5e-3))
+    if cyl:
+        qc = max(cyl)
+        nv, li, cpol = (cyl[qc]["ik[NV]"], cyl[qc]["ik[Li]"], cyl[qc]["fork[Pol]"])
+        checks.append((f"curved boundary: Ikarus NV lands in the paper's window "
+                       f"(q={qc}: {nv:.4f} in {CYL_WINDOW})",
+                       CYL_WINDOW[0] < nv < CYL_WINDOW[1]))
+        checks.append((f"curved boundary: Li's separable rule lags the "
+                       f"normal-vector method (Li {li:.4f} vs NV {nv:.4f})",
+                       nv - li > 0.02))
+        checks.append((f"curved boundary: fork Pol behaves like a normal-vector "
+                       f"method, not a separable one\n      "
+                       f"(Pol {cpol:.4f}: NV {nv:.4f}, Li {li:.4f})",
+                       abs(cpol - nv) < abs(cpol - li)))
     ok = True
     for text, passed in checks:
         ok &= passed

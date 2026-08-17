@@ -140,10 +140,12 @@ Run `python benchmark/ikarus_whitepaper_check.py` for the live version of this.
 4. **But that grcwa row does not describe this fork.** It describes the
    Laurent-only upstream. This fork's *fixed* Pol factorization converges to
    0.1001 — onto the faithful value, not Laurent's wrong one. On the curved case
-   `D2_ikarus_cylinder_TE` the fork's Pol lands at 0.9286, next to Ikarus's
-   normal-vector 0.9265 and far from its Li 0.8732: the fork's tangent field is
-   built from the rendered `eps` grid, so it behaves like a normal-vector method
-   rather than like a separable one.
+   `D2_ikarus_cylinder_TE` (441 orders) the fork's Pol lands at 0.9430, on top of
+   Ikarus's normal-vector 0.9431 and 3.7 points away from its Li 0.9058: the
+   fork's tangent field is built from the rendered `eps` grid, so it behaves like
+   a normal-vector method rather than like a separable one. That case also
+   confirms the paper's other claim — the normal-vector method really does beat
+   Li's separable rule on a boundary oblique to both axes.
 5. **Ikarus still wins the convergence *rate*, decisively.** Its normal-vector
    default is settled by `q ≈ 15`; the fork's Pol oscillates around the limit
    until `q ≈ 100`. Per solve at matched `nG` the fork is ~2-5× faster, which the

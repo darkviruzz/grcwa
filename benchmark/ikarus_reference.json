@@ -34,14 +34,34 @@
     "practical_order_count_inferred": 25,
     "_note": "The paper does not state Table 1's truncation. 25 retained x-orders (its M=12) reproduces the quoted Ikarus-laurent value to 1e-4, so that is the count recorded here; torcwa is quoted at the same 16.3% and the paper's own test asserts it matches Ikarus laurent at matched M, but it was not re-run here.",
     "rows": {
-      "FMMax (NORMAL)": {"factorization": "faithful", "R_published": 0.100, "R_measured": null,
-                         "_note": "not re-run here; FMMax is not a dependency of this benchmark"},
-      "Ikarus (default)": {"factorization": "faithful", "R_published": 0.100, "R_measured": 0.1001},
-      "Ikarus (laurent)": {"factorization": "direct rule", "R_published": 0.163, "R_measured": 0.1631},
-      "torcwa": {"factorization": "direct rule", "R_published": 0.163, "R_measured": null,
-                 "_note": "not re-run here; torcwa needs a GPU torch stack"},
-      "grcwa": {"factorization": "direct rule", "R_published": 0.175, "R_measured": 0.1747,
-                "_note": "measured through the paper's OWN grcwa harness -- see grcwa_row_audit"}
+      "FMMax (NORMAL)": {
+        "factorization": "faithful",
+        "R_published": 0.1,
+        "R_measured": null,
+        "_note": "not re-run here; FMMax is not a dependency of this benchmark"
+      },
+      "Ikarus (default)": {
+        "factorization": "faithful",
+        "R_published": 0.1,
+        "R_measured": 0.1001
+      },
+      "Ikarus (laurent)": {
+        "factorization": "direct rule",
+        "R_published": 0.163,
+        "R_measured": 0.1631
+      },
+      "torcwa": {
+        "factorization": "direct rule",
+        "R_published": 0.163,
+        "R_measured": null,
+        "_note": "not re-run here; torcwa needs a GPU torch stack"
+      },
+      "grcwa": {
+        "factorization": "direct rule",
+        "R_published": 0.175,
+        "R_measured": 0.1747,
+        "_note": "measured through the paper's OWN grcwa harness -- see grcwa_row_audit"
+      }
     }
   },
   "published_claims": {
@@ -53,7 +73,7 @@
     "faithful_converges_by_M10": {
       "claim": "the faithful methods reach the true value by M ~ 10",
       "verdict": "confirmed for Ikarus",
-      "evidence": "Ikarus NV is at 0.1003 by q = 15 (M = 7) and flat thereafter"
+      "evidence": "Ikarus NV is at 0.1003 by q = 15 (M = 7) and flat thereafter; on the 2D curved case it needs more (0.9265 at q=11 -> 0.9431 at q=21)"
     },
     "direct_rule_is_O_1_over_M": {
       "claim": "the direct rule crawls in from above and is still a quarter too high at M = 30",
@@ -68,7 +88,12 @@
     "grcwa_is_a_direct_rule_solver": {
       "claim": "grcwa uses the direct rule and so misses the faithful value by 60-75%",
       "verdict": "true of upstream grcwa, NOT of this fork",
-      "evidence": "upstream is Laurent-only (its Pol did not converge for TM; see tests/test_pol_correctness.py). This fork's FIXED Pol converges to 0.1001, i.e. onto the faithful value, and on the curved 2D case D2 it tracks Ikarus's normal-vector result (0.9286 vs 0.9265) rather than its Li result (0.8732)."
+      "evidence": "upstream is Laurent-only (its Pol did not converge for TM; see tests/test_pol_correctness.py). This fork's FIXED Pol converges to 0.1001 on D1, i.e. onto the faithful value, and on the curved 2D case D2 at q=21 it gives 0.9430 against Ikarus's normal-vector 0.9431 -- not its Li 0.9058."
+    },
+    "normal_vector_beats_li_on_curved_boundary": {
+      "claim": "on a curved 2D boundary the normal-vector method beats even Li's separable inverse rule; FMMax's NORMAL lands in 0.92 < R < 0.96",
+      "verdict": "confirmed",
+      "evidence": "D2 at q=21 (441 orders): Ikarus NV 0.9431 (inside the window), Ikarus Li 0.9058 -- 3.7 points behind. This fork's Pol is at 0.9430, i.e. on top of NV to 1e-4, because it builds its tangent field from the rendered eps grid rather than separably. Laurent sits at 0.9609 and is still drifting."
     }
   },
   "grcwa_row_audit": {
@@ -86,8 +111,14 @@
   },
   "performance": {
     "note": "min-of-3 wall time per solve at nG = 121, from benchmark/results.csv on one machine -- indicative only, not a controlled comparison.",
-    "fork_ms_range": [148, 190],
-    "ikarus_ms_range": [260, 1030],
+    "fork_ms_range": [
+      148,
+      190
+    ],
+    "ikarus_ms_range": [
+      260,
+      1030
+    ],
     "comment": "Ikarus's NumPy core costs roughly 2-5x grcwa per solve at matched order count; on the high-contrast TM cases that is bought back many times over, since it needs ~15 orders where Laurent needs far more than 200."
   }
 }
