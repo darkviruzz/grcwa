@@ -9,8 +9,9 @@ and produces:
   2. raw R(nG) grid        R vs nG with ref/analytic line (semilogx) -> settling
   3. accuracy vs wall-time for the headline cases         (log-log)
   4. 0D analytic anchors   |R - R_analytic|               (bars)
-Style: color = codebase (red fork / blue weiliang), linestyle = rule
-(solid Laurent / dashed Pol).
+Style: color = codebase (red fork / blue weiliang / orange ikarus), linestyle =
+factorization rule -- solid for the direct (Laurent) rule, and a distinct broken
+style for each faithful one (-- Pol, -. Li, : NV).
 """
 import os
 import json
@@ -107,7 +108,8 @@ nrow = int(np.ceil(n / ncol))
 fig, axes = plt.subplots(nrow, ncol, figsize=(6.2 * ncol, 4.0 * nrow),
                          squeeze=False)
 fig.suptitle("Convergence: |R(N) - R_ref| vs total retained orders   "
-             "(solid = Laurent, dashed = Pol; red = fork, blue = weiliang)",
+             "(solid = direct/Laurent; -- Pol, -. Li, : NV  |  "
+             "red = fork, blue = weiliang, orange = ikarus)",
              fontsize=13, fontweight="bold")
 for i, case in enumerate(sweep_cases):
     ax = axes[i // ncol][i % ncol]
@@ -165,12 +167,16 @@ plt.savefig(f"{OUT}/conv_raw_R.png", dpi=150, bbox_inches="tight")
 plt.close()
 
 # ---- Figure 3: accuracy vs wall-time (headline cases) -----------------------
-headline = [c for c in ["B1_Si_grating_TM", "B2_HCG_TM", "B3_Au_slits_TM",
-                        "C2_Au_holes"] if c in cases and sweeps(c)]
+# D1 leads: it is the whitepaper's factorization case, and the one where the
+# accuracy-per-second gap between the rules is widest.
+headline = [c for c in ["D1_ikarus_hcg_TM", "B1_Si_grating_TM", "B2_HCG_TM",
+                        "B3_Au_slits_TM", "C2_Au_holes"]
+            if c in cases and sweeps(c)]
 if headline:
     m = len(headline)
     fig, axes = plt.subplots(1, m, figsize=(5.2 * m, 4.6), squeeze=False)
-    fig.suptitle("Accuracy vs wall-time - does Pol reach a target error faster?",
+    fig.suptitle("Accuracy vs wall-time - does a faithful rule reach a target "
+                 "error faster?",
                  fontsize=12, fontweight="bold")
     for i, case in enumerate(headline):
         ax = axes[0][i]

@@ -110,15 +110,49 @@
     "conclusion": "The physics claim stands -- Laurent really is O(1/M) and really is ~75% high at that truncation. Only the framing overstates it: 'still badly off even at 400 orders' is off at 23 effective orders. Given a native 1D truncation of 385 orders the same code gives 0.1037."
   },
   "performance": {
-    "note": "min-of-3 wall time per solve at nG = 121, from benchmark/results.csv on one machine -- indicative only, not a controlled comparison.",
-    "fork_ms_range": [
-      148,
-      190
-    ],
-    "ikarus_ms_range": [
-      260,
-      1030
-    ],
-    "comment": "Ikarus's NumPy core costs roughly 2-5x grcwa per solve at matched order count; on the high-contrast TM cases that is bought back many times over, since it needs ~15 orders where Laurent needs far more than 200."
+    "note": "Two different questions, with opposite answers. Per solve at a matched order count, from benchmark/results.csv (nG=121, min of 3, one machine). Time-to-accuracy on D1, from benchmark/conv_results.csv -- the number that actually matters.",
+    "per_solve_at_nG121_ms": {
+      "fork": [
+        148,
+        190
+      ],
+      "ikarus": [
+        260,
+        1030
+      ]
+    },
+    "time_to_1e-3_on_D1": {
+      "ikarus[Li]": {
+        "nG": 17,
+        "ms": 7.0
+      },
+      "ikarus[NV]": {
+        "nG": 17,
+        "ms": 12.8
+      },
+      "fork[Pol]": {
+        "nG": 169,
+        "ms": 436.9
+      },
+      "fork[Laurent]": {
+        "nG": null,
+        "ms": null,
+        "_note": "never reaches 1e-3; best 2.04e-3 at nG=625"
+      },
+      "ikarus[Laurent]": {
+        "nG": null,
+        "ms": null,
+        "_note": "same, as it is the same rule"
+      }
+    },
+    "best_error_at_nG625_on_D1": {
+      "fork[Laurent]": 0.00204,
+      "ikarus[Laurent]": 0.00204,
+      "fork[Pol]": 1.79e-07,
+      "ikarus[Li]": 5.35e-11,
+      "ikarus[NV]": 0.0,
+      "_note": "ikarus[NV] is the reference column here, so its own error is 0 by construction"
+    },
+    "comment": "Ikarus's NumPy core costs 2-5x grcwa per solve, and gives it back roughly 35-fold: it is inside 1e-3 of the faithful answer in 7-13 ms at 17 orders, where this fork's Pol needs 169 orders and 437 ms, and where the direct rule never arrives at all. Per-solve speed is the wrong axis to compare these on."
   }
 }

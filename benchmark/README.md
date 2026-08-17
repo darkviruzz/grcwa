@@ -146,10 +146,20 @@ Run `python benchmark/ikarus_whitepaper_check.py` for the live version of this.
    a normal-vector method rather than like a separable one. That case also
    confirms the paper's other claim — the normal-vector method really does beat
    Li's separable rule on a boundary oblique to both axes.
-5. **Ikarus still wins the convergence *rate*, decisively.** Its normal-vector
-   default is settled by `q ≈ 15`; the fork's Pol oscillates around the limit
-   until `q ≈ 100`. Per solve at matched `nG` the fork is ~2-5× faster, which the
-   order count gives straight back on the high-contrast TM cases.
+5. **Ikarus still wins the convergence *rate*, decisively** — and per-solve speed
+   is the wrong axis to compare these on. At matched `nG` the fork is ~2-5×
+   faster per solve, but time-to-accuracy on `D1` runs the other way:
+
+   | column | first inside 1e-3 of the faithful answer |
+   |---|---|
+   | `ikarus[Li]` | 17 orders, **7 ms** |
+   | `ikarus[NV]` | 17 orders, **13 ms** |
+   | `fork[Pol]` | 169 orders, **437 ms** |
+   | `fork[Laurent]`, `ikarus[Laurent]` | never — best 2.0e-3 at 625 orders |
+
+   So Ikarus buys back its per-solve cost about 35-fold, and the direct rule
+   never arrives at all. At 625 orders the two faithful families do agree to
+   1.8e-7, which is the real cross-code result on this case.
 6. **One framing caveat.** The paper's grcwa harness drives this 1D grating
    through a *square 2D lattice*, so of a nominal `nG = 400` only 23 orders lie
    on `Gy = 0` and do any work; "still badly off even at 400 orders" is measured
