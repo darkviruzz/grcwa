@@ -1,24 +1,9 @@
-import warnings
-
-import numpy as np
-
 from . import backend as bd
-from .fft_funs import Epsilon_fft,Epsilon_fft_pol,get_ifft
+from .fft_funs import Epsilon_fft,get_ifft
 from .kbloch import Lattice_Reciprocate,Lattice_getG,Lattice_SetKs
 
-
-def _is_tensor_eps(ep):
-    '''True if ``ep`` specifies a diagonal tensor [epx,epy,epz] rather than a
-    scalar (isotropic) permittivity.'''
-    try:
-        return len(ep) == 3
-    except TypeError:
-        return False
-
-
 class obj:
-    def __init__(self,nG,L1,L2,freq,theta,phi,verbose=1,
-                 fmm_method=None,pol_sigma=3.0,pol_niter=20):
+    def __init__(self,nG,L1,L2,freq,theta,phi,verbose=1):
         '''The time harmonic convention is exp(-i omega t), speed of light = 1
 
         Two kinds of layers are currently supported: uniform layer,
@@ -29,101 +14,45 @@ class obj:
         nG: truncation order, but the actual truncation order might not be nG
         L1,L2: lattice vectors, in the list format, (x,y)
 
-        Dimensionality is inferred from the lattice specification:
-          * L1 and L2 given      -> 2D grating (general, full Fourier area)
-          * L1 given, L2 = None  -> 1D grating: periodic along L1, invariant
-                                    along the 2nd in-plane axis. Only orders
-                                    (m,0) are kept, so nG -> 2M+1.
-          * L1 = None, L2 = None -> 0D planar multilayer (reduces to the
-                                    transfer-matrix method). nG is forced to 1;
-                                    only uniform layers are meaningful.
-        The dimensionality determines the reciprocal basis (point/line/area);
-        it is independent of the incidence angle (theta,phi only set kx0,ky0)
-        and of material anisotropy (the epsilon tensor lives in the lab frame).
-
-        fmm_method: None for Laurent's rule (default), or 'pol' for the Pol
-                    method (S4 Eq. 51, faster Fourier convergence for
-                    discontinuous/high-contrast/absorbing patterns).
-        pol_sigma, pol_niter: smoothing parameters for the Pol tangent field
-                    (only used when fmm_method='pol').
         '''
         self.freq = freq
         self.omega = 2*bd.pi*freq+0.j
-
-        # --- dimensionality inference from the lattice specification ---
-        if L1 is None and L2 is None:
-            self.dim = 0
-            # dummy lattice; never enters the physics (only G=(0,0) is kept)
-            L1 = [1.0, 0.0]
-            L2 = [0.0, 1.0]
-            if nG != 1 and verbose > 0:
-                print('0D simulation (no lattice): nG forced to 1')
-            nG = 1
-        elif L1 is not None and L2 is None:
-            self.dim = 1
-            # synthesize a unit lattice vector perpendicular to L1 so that
-            # Lattice_Reciprocate is well-defined; it never enters the physics
-            # because only Gy=0 orders are kept (Gsel_1D), i.e. the 2nd-axis
-            # period drops out.
-            a = np.asarray(L1, dtype=float)
-            norm = np.linalg.norm(a)
-            if norm == 0:
-                raise ValueError("L1 must be a nonzero vector.")
-            perp = np.array([-a[1], a[0]]) / norm
-            L2 = [float(perp[0]), float(perp[1])]
-        elif L1 is not None and L2 is not None:
-            self.dim = 2
-        else:
-            raise ValueError("L1=None with L2 given is invalid. Use both for "
-                             "2D, L1 only for 1D, or both None for 0D.")
-
         self.L1 = L1
         self.L2 = L2
         self.phi = phi
         self.theta = theta
         self.nG = nG
         self.verbose = verbose
-        self.fmm_method = fmm_method
-        self.pol_sigma = pol_sigma
-        self.pol_niter = pol_niter
         self.Layer_N = 0  # total number of layers
-      
+
         # the length of the following variables = number of total layers
         self.thickness_list = []
         self.id_list = []  #[type, No., No. in patterned/uniform, No. in its family] starting from 0
         # type:0 for uniform, 1 for Grids, 2 for Fourier
 
-        self.kp_list = []                
+        self.kp_list = []
         self.q_list = []  # eigenvalues
         self.phi_list = [] #eigenvectors
 
         # Uniform layer
         self.Uniform_ep_list = []
         self.Uniform_N = 0
-        
+
         # Patterned layer
-        self.Patterned_N = 0  # total number of patterned layers        
+        self.Patterned_N = 0  # total number of patterned layers
         self.Patterned_epinv_list = []
         self.Patterned_ep2_list = []
-        
+
         # patterned layer from Grids
         self.GridLayer_N = 0
         self.GridLayer_Nxy_list = []
 
         # layers of analytic Fourier series (e.g. circles)
         self.FourierLayer_N = 0
-        self.FourierLayer_params = []        
-        
-    def Add_LayerUniform(self,thickness,epsilon):
-        '''Add an unstructured (homogeneous) layer.
+        self.FourierLayer_params = []
 
-        epsilon: scalar for an isotropic layer, or a length-3 list/array
-                 [epx,epy,epz] for a diagonal-anisotropic layer (principal
-                 axes aligned with x,y,z in the lab frame). Anisotropy does
-                 not increase the number of Fourier orders.
-        '''
-        if _is_tensor_eps(epsilon) and len(epsilon) != 3:
-            raise ValueError("Anisotropic uniform epsilon must be [epx,epy,epz].")
+    def Add_LayerUniform(self,thickness,epsilon):
+        #assert type(thickness) == float, 'thickness should be a float'
 
         self.id_list.append([0,self.Layer_N,self.Uniform_N])
         self.Uniform_ep_list.append(epsilon)
@@ -132,24 +61,7 @@ class obj:
         self.Layer_N += 1
         self.Uniform_N += 1
 
-    def Add_LayerGrid(self,thickness,Nx,Ny=1):
-        '''Add a patterned layer defined on an Nx-by-Ny real-space grid.
-
-        For a 1D simulation (L2=None) the structure is invariant along the
-        2nd in-plane axis, so Ny must be 1 (the default). In a 2D simulation
-        Ny=1 is also allowed (a layer that happens to be uniform along y).
-        '''
-        if self.dim == 0:
-            raise ValueError(
-                "0D simulation (no lattice): grid layers are not supported. "
-                "Use Add_LayerUniform (optionally with an anisotropic "
-                "[epx,epy,epz] tensor).")
-        if self.dim == 1 and Ny != 1:
-            raise ValueError(
-                "1D simulation (L2=None): grid layer must have Ny=1 because "
-                "the structure is invariant along the 2nd axis (no Gy orders "
-                "are kept). Got Ny=%d. For y-variation provide L2 (2D)." % Ny)
-
+    def Add_LayerGrid(self,thickness,Nx,Ny):
         self.thickness_list.append(thickness)
         self.GridLayer_Nxy_list.append([Nx,Ny])
         self.id_list.append([1,self.Layer_N,self.Patterned_N,self.GridLayer_N])
@@ -174,60 +86,42 @@ class obj:
         Compute eigenvalues for uniform layers
         Initialize vectors for patterned layers
         '''
-        if _is_tensor_eps(self.Uniform_ep_list[0]):
-            raise ValueError("The incident medium (first layer) must be "
-                             "isotropic; got an anisotropic tensor.")
         kx0 = self.omega*bd.sin(self.theta)*bd.cos(self.phi)*bd.sqrt(self.Uniform_ep_list[0])
         ky0 = self.omega*bd.sin(self.theta)*bd.sin(self.phi)*bd.sqrt(self.Uniform_ep_list[0])
 
         # set up reciprocal lattice
         self.Lk1, self.Lk2 = Lattice_Reciprocate(self.L1,self.L2)
-        self.G,self.nG = Lattice_getG(self.nG,self.Lk1,self.Lk2,method=Gmethod,dim=self.dim)
-        
+        self.G,self.nG = Lattice_getG(self.nG,self.Lk1,self.Lk2,method=Gmethod)
+
         self.Lk1 = self.Lk1/Pscale
         self.Lk2 = self.Lk2/Pscale
         # self.kx = kx0 + 2*bd.pi*(self.Lk1[0]*self.G[:,0]+self.Lk2[0]*self.G[:,1])
         # self.ky = ky0 + 2*bd.pi*(self.Lk1[1]*self.G[:,0]+self.Lk2[1]*self.G[:,1])
         self.kx,self.ky = Lattice_SetKs(self.G, kx0, ky0, self.Lk1, self.Lk2)
-        
+
         #normalization factor for energies off normal incidence
         self.normalization = bd.sqrt(self.Uniform_ep_list[0])/bd.cos(self.theta)
-        
+
         #if comm.rank == 0 and verbose>0:
         if self.verbose>0:
             print('Total nG = ',self.nG)
 
         self.Patterned_ep2_list = [None]*self.Patterned_N
-        self.Patterned_epinv_list = [None]*self.Patterned_N            
+        self.Patterned_epinv_list = [None]*self.Patterned_N
         for i in range(self.Layer_N):
             if self.id_list[i][0] == 0:
                 ep = self.Uniform_ep_list[self.id_list[i][2]]
-                if _is_tensor_eps(ep):
-                    # diagonal-anisotropic uniform layer: constant (diagonal in
-                    # G) convolution matrices feed the general eigensolver.
-                    epx,epy,epz = ep
-                    eyeG = bd.eye(self.nG)
-                    zeroG = bd.zeros_like(eyeG)
-                    ep2 = bd.hstack((bd.vstack((epx*eyeG,zeroG)),
-                                     bd.vstack((zeroG,epy*eyeG))))
-                    epinv = (1./epz)*eyeG
-                    kp = MakeKPMatrix(self.omega,1,epinv,self.kx,self.ky)
-                    self.kp_list.append(kp)
-                    q,phi = SolveLayerEigensystem(self.omega,self.kx,self.ky,kp,ep2)
-                    self.q_list.append(q)
-                    self.phi_list.append(phi)
-                else:
-                    kp = MakeKPMatrix(self.omega,0,1./ep,self.kx,self.ky)
-                    self.kp_list.append(kp)
+                kp = MakeKPMatrix(self.omega,0,1./ep,self.kx,self.ky)
+                self.kp_list.append(kp)
 
-                    q,phi = SolveLayerEigensystem_uniform(self.omega,self.kx,self.ky,ep)
-                    self.q_list.append(q)
-                    self.phi_list.append(phi)
+                q,phi = SolveLayerEigensystem_uniform(self.omega,self.kx,self.ky,ep)
+                self.q_list.append(q)
+                self.phi_list.append(phi)
             else:
                 self.kp_list.append(None)
                 self.q_list.append(None)
                 self.phi_list.append(None)
-                
+
     def MakeExcitationPlanewave(self,p_amp,p_phase,s_amp,s_phase,order = 0, direction = 'forward'):
         '''
         Front incidence
@@ -244,7 +138,7 @@ class obj:
                         -p_amp*bd.sin(phi)*bd.exp(1j*p_phase))
 
             tmp2 = bd.zeros(2*self.nG,dtype=complex)
-            tmp2[order+self.nG] = 1.0            
+            tmp2[order+self.nG] = 1.0
             a0 = a0 + tmp2*(-s_amp*bd.cos(theta)*bd.sin(phi)*bd.exp(1j*s_phase) \
                             +p_amp*bd.cos(phi)*bd.exp(1j*p_phase))
         elif direction == 'backward':
@@ -257,52 +151,14 @@ class obj:
             tmp2[order+self.nG] = 1.0
             bN = bN + tmp2*(-s_amp*bd.cos(theta)*bd.sin(phi)*bd.exp(1j*s_phase) \
                             +p_amp*bd.cos(phi)*bd.exp(1j*p_phase))
-        
+
         self.a0 = a0
         self.bN = bN
-        
-    def _is_aniso_grid(self,ep_all):
-        '''True if ep_all is an anisotropic input [epx,epy,epz] (list of 3
-        arrays) rather than a single flattened isotropic grid.'''
-        return len(ep_all) == 3 and getattr(ep_all[0],'ndim',0) > 0
-
-    @staticmethod
-    def _eps_count(x):
-        '''Total number of elements in x (works for flattened or 2D arrays,
-        numpy or autograd-tracked, without detaching).'''
-        shape = getattr(x,'shape',None)
-        if shape is not None and len(shape) > 0:
-            n = 1
-            for d in shape:
-                n *= int(d)
-            return n
-        return len(x)
-
-    def _validate_grid_eps(self,ep_all):
-        '''Check that the supplied epsilon matches the declared grid layers.
-        Accepts a flattened array, a single 2D grid, or (anisotropic) a list
-        of three such arrays.'''
-        expected = sum(nx*ny for nx,ny in self.GridLayer_Nxy_list)
-        if self._is_aniso_grid(ep_all):
-            for comp in ep_all:
-                if self._eps_count(comp) != expected:
-                    raise ValueError(
-                        "Each anisotropic epsilon component must have %d "
-                        "elements (sum of Nx*Ny over grid layers); got %d."
-                        % (expected,self._eps_count(comp)))
-        else:
-            if self._eps_count(ep_all) != expected:
-                raise ValueError(
-                    "epsilon has %d elements but the grid layers need %d "
-                    "(sum of Nx*Ny). For a 1D simulation each grid layer has "
-                    "Ny=1." % (self._eps_count(ep_all),expected))
 
     def GridLayer_geteps(self,ep_all):
         '''
         Fourier transform + eigenvalue for grid layer
         '''
-        self._validate_grid_eps(ep_all)
-        is_anisotropic = self._is_aniso_grid(ep_all)
         ptri = 0
         ptr = 0
         for i in range(self.Layer_N):
@@ -313,25 +169,12 @@ class obj:
             Ny = self.GridLayer_Nxy_list[ptri][1]
             dN = 1./Nx/Ny
 
-            if is_anisotropic:
+            if len(ep_all) == 3 and ep_all[0].ndim>0:
                 ep_grid = [bd.reshape(ep_all[0][ptr:ptr+Nx*Ny],[Nx,Ny]),bd.reshape(ep_all[1][ptr:ptr+Nx*Ny],[Nx,Ny]),bd.reshape(ep_all[2][ptr:ptr+Nx*Ny],[Nx,Ny])]
             else:
                 ep_grid = bd.reshape(ep_all[ptr:ptr+Nx*Ny],[Nx,Ny])
 
-            # Pol method: faster Fourier convergence for discontinuous eps.
-            # Falls back to Laurent's rule for anisotropic (3-component) grids,
-            # which the Pol formulation does not currently support.
-            if self.fmm_method == "pol" and not is_anisotropic:
-                epinv, ep2 = Epsilon_fft_pol(
-                    dN, ep_grid, self.G,
-                    pol_sigma=self.pol_sigma, pol_niter=self.pol_niter)
-            else:
-                if self.fmm_method == "pol" and is_anisotropic:
-                    warnings.warn(
-                        "fmm_method='pol' is not supported for anisotropic "
-                        "(3-component) grids; falling back to standard Laurent "
-                        "factorization for this layer.", stacklevel=2)
-                epinv, ep2 = Epsilon_fft(dN,ep_grid,self.G)
+            epinv, ep2 = Epsilon_fft(dN,ep_grid,self.G)
 
             self.Patterned_epinv_list[self.id_list[i][2]] = epinv
             self.Patterned_ep2_list[self.id_list[i][2]] = ep2
@@ -346,13 +189,6 @@ class obj:
             ptr += Nx*Ny
             ptri += 1
 
-    def _uniform_tensor(self,which_layer):
-        '''Return (epx,epy,epz) for a uniform layer (scalar -> isotropic).'''
-        ep = self.Uniform_ep_list[self.id_list[which_layer][2]]
-        if _is_tensor_eps(ep):
-            return ep[0],ep[1],ep[2]
-        return ep,ep,ep
-
     def Return_eps(self,which_layer,Nx,Ny,component='xx'):
         '''
         For patterned layer component = 'xx','xy','yx','yy','zz'
@@ -362,10 +198,6 @@ class obj:
         # uniform layer
         if self.id_list[i][0] == 0:
             ep = self.Uniform_ep_list[self.id_list[i][2]]
-            if _is_tensor_eps(ep):
-                epx,epy,epz = ep
-                val = {'xx':epx,'yy':epy,'zz':epz}.get(component,0.)
-                return bd.ones((Nx,Ny))*val
             return bd.ones((Nx,Ny))*ep
 
         # patterned layer
@@ -380,10 +212,10 @@ class obj:
                 epk = self.Patterned_ep2_list[self.id_list[i][2]][self.nG:,:self.nG]
             elif component == 'yy':
                 epk = self.Patterned_ep2_list[self.id_list[i][2]][self.nG:,self.nG:]
-                
+
             return get_ifft(Nx,Ny,epk[0,:],self.G)
 
-            
+
     def RT_Solve(self,normalize = 0, byorder = 0):
         '''
         Reflection and transmission power computation
@@ -404,28 +236,10 @@ class obj:
             T = bd.real(-bi)
 
         if normalize == 1:
-            R = R*self.normalization
-            T = T*self.normalization
+            R = R*self.normalization.real
+            T = T*self.normalization.real
         return R,T
 
-    def GetAmplitudes_noTranslate(self,which_layer):
-        '''
-        returns fourier amplitude
-        '''
-        if which_layer == 0 :
-            aN, b0 = SolveExterior(self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list)
-            ai = self.a0
-            bi = b0
-
-        elif which_layer == self.Layer_N-1:
-            aN, b0 = SolveExterior(self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list)
-            ai = aN
-            bi = self.bN
-
-        else:
-            ai, bi = SolveInterior(which_layer,self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list)
-        return ai,bi
-    
     def GetAmplitudes(self,which_layer,z_offset):
         '''
         returns fourier amplitude
@@ -446,79 +260,60 @@ class obj:
         ai, bi = TranslateAmplitudes(self.q_list[which_layer],self.thickness_list[which_layer],z_offset,ai,bi)
 
         return ai,bi
-    
+
     def Solve_FieldFourier(self,which_layer,z_offset):
         '''
         returns field amplitude in fourier space: [ex,ey,ez], [hx,hy,hz]
         '''
-        ai0,bi0 = self.GetAmplitudes_noTranslate(which_layer)
-        #ai, bi = self.GetAmplitudes(which_layer,z_offset)
+        ai, bi = self.GetAmplitudes(which_layer,z_offset)
 
-        if bd.isinstance(z_offset,float) or bd.isinstance(z_offset,int):
-            zl = [z_offset]
+        # hx, hy in Fourier space
+        fhxy = bd.dot(self.phi_list[which_layer],ai+bi)
+        fhx = fhxy[:self.nG]
+        fhy = fhxy[self.nG:]
+
+        # ex,ey in Fourier space
+        tmp1 = (ai-bi)/self.omega/self.q_list[which_layer]
+        tmp2 = bd.dot(self.phi_list[which_layer],tmp1)
+        fexy = bd.dot(self.kp_list[which_layer],tmp2)
+        fey = - fexy[:self.nG]
+        fex = fexy[self.nG:]
+
+        #hz in Fourier space
+        fhz = (self.kx*fey - self.ky*fex)/self.omega
+
+        #ez in Fourier space
+        fez = (self.ky*fhx - self.kx*fhy)/self.omega
+        if self.id_list[which_layer][0] == 0:
+            fez = fez / self.Uniform_ep_list[self.id_list[which_layer][2]]
         else:
-            zl = z_offset
+            fez = bd.dot(self.Patterned_epinv_list[self.id_list[which_layer][2]],fez)
 
-        eh = []
-        for zoff in zl:
-            ai, bi = TranslateAmplitudes(self.q_list[which_layer],self.thickness_list[which_layer],zoff,ai0,bi0)
-            # hx, hy in Fourier space
-            fhxy = bd.dot(self.phi_list[which_layer],ai+bi)
-            fhx = fhxy[:self.nG]
-            fhy = fhxy[self.nG:]
+        return [fex,fey,fez],[fhx,fhy,fhz]
 
-            # ex,ey in Fourier space
-            tmp1 = (ai-bi)/self.omega/self.q_list[which_layer]
-            tmp2 = bd.dot(self.phi_list[which_layer],tmp1)
-            fexy = bd.dot(self.kp_list[which_layer],tmp2)
-            fey = - fexy[:self.nG]
-            fex = fexy[self.nG:]
-        
-            #hz in Fourier space
-            fhz = (self.kx*fey - self.ky*fex)/self.omega
+    def Solve_FieldOnGrid(self,which_layer,z_offset):
+        #assert self.id_list[which_layer][0] == 1, 'Needs to be grids layer'
 
-            #ez in Fourier space
-            fez = (self.ky*fhx - self.kx*fhy)/self.omega
-            if self.id_list[which_layer][0] == 0:
-                _,_,epz = self._uniform_tensor(which_layer)
-                fez = fez / epz
-            else:
-                fez = bd.dot(self.Patterned_epinv_list[self.id_list[which_layer][2]],fez)
-            eh.append([[fex,fey,fez],[fhx,fhy,fhz]])
-        return eh
-
-    def Solve_FieldOnGrid(self,which_layer,z_offset,Nxy=None):
-        # Nxy = [Nx,Ny], if not supplied, will use the number in patterned layer
-        # if single z_offset:  output [[ex,ey,ez],[hx,hy,hz]]
-        # if z_offset is list: output [[[ex1,ey1,ez1],[hx1,hy1,hz1]],  [[ex2,ey2,ez2],[hx2,hy2,hz2]] ...]
-
-        if bd.isinstance(Nxy,type(None)):
-            Nxy = self.GridLayer_Nxy_list[self.id_list[which_layer][3]]
+        Nxy = self.GridLayer_Nxy_list[self.id_list[which_layer][3]]
         Nx = Nxy[0]
         Ny = Nxy[1]
 
         # e,h in Fourier space
-        fehl = self.Solve_FieldFourier(which_layer,z_offset)
+        fe,fh = self.Solve_FieldFourier(which_layer,z_offset)
 
-        eh = []
-        for feh in fehl:
-            fe = feh[0]
-            fh = feh[1]
-            ex = get_ifft(Nx,Ny,fe[0],self.G)
-            ey = get_ifft(Nx,Ny,fe[1],self.G)
-            ez = get_ifft(Nx,Ny,fe[2],self.G)
+        ex = get_ifft(Nx,Ny,fe[0],self.G)
+        ey = get_ifft(Nx,Ny,fe[1],self.G)
+        ez = get_ifft(Nx,Ny,fe[2],self.G)
 
-            hx = get_ifft(Nx,Ny,fh[0],self.G)
-            hy = get_ifft(Nx,Ny,fh[1],self.G)
-            hz = get_ifft(Nx,Ny,fh[2],self.G)
-            eh.append([[ex,ey,ez],[hx,hy,hz]])
-        if bd.isinstance(z_offset,float) or bd.isinstance(z_offset,int):
-            eh = eh[0]
-        return eh
+        hx = get_ifft(Nx,Ny,fh[0],self.G)
+        hy = get_ifft(Nx,Ny,fh[1],self.G)
+        hz = get_ifft(Nx,Ny,fh[2],self.G)
+
+        return [ex,ey,ez],[hx,hy,hz]
 
     def Volume_integral(self,which_layer,Mx,My,Mz,normalize=0):
         '''Mxyz is convolution matrix.
-        This function computes 1/A\int_V Mx|Ex|^2+My|Ey|^2+Mz|Ez|^2
+        This function computes 1/A\\int_V Mx|Ex|^2+My|Ey|^2+Mz|Ez|^2
         To be consistent with Poynting vector defintion here, the absorbed power will be just omega*output
         '''
         kp = self.kp_list[which_layer]
@@ -526,8 +321,7 @@ class obj:
         phi = self.phi_list[which_layer]
 
         if self.id_list[which_layer][0] == 0:
-            _,_,epz = self._uniform_tensor(which_layer)
-            epinv = 1. / epz
+            epinv = 1. / self.Uniform_ep_list[self.id_list[which_layer][2]]
         else:
             epinv = self.Patterned_epinv_list[self.id_list[which_layer][2]]
 
@@ -535,7 +329,7 @@ class obj:
         ai, bi = SolveInterior(which_layer,self.a0,self.bN,self.q_list,self.phi_list,self.kp_list,self.thickness_list)
         ab = bd.hstack((ai,bi))
         abMatrix = bd.outer(ab,bd.conj(ab))
-        
+
         Mt = Matrix_zintegral(q,self.thickness_list[which_layer])
         # overall
         abM = abMatrix * Mt
@@ -556,22 +350,20 @@ class obj:
                             bd.hstack((Mzeros,My,Mzeros)),\
                             bd.hstack((Mzeros,Mzeros,Mz))))
 
-        # integral = Tr[ abMatrix * F^\dagger *  Matconv *F ] 
+        # integral = Tr[ abMatrix * F^\dagger *  Matconv *F ]
         tmp = bd.dot(bd.dot(bd.conj(bd.transpose(F)),Mtotal),F)
         val = bd.trace(bd.dot(abM,tmp))
 
         if normalize == 1:
             val = val*self.normalization
         return val
-        
+
     def Solve_ZStressTensorIntegral(self,which_layer):
         '''
         returns 2F_x,2F_y,2F_z, integrated over z-plane
         '''
         z_offset = 0.
-        eh = self.Solve_FieldFourier(which_layer,z_offset)
-        e = eh[0][0]
-        h = eh[0][1]
+        e,h = self.Solve_FieldFourier(which_layer,z_offset)
         ex = e[0]
         ey = e[1]
         ez = e[2]
@@ -586,9 +378,8 @@ class obj:
 
         ## Dxy = epsilon2 * Exy
         if self.id_list[which_layer][0] == 0:
-            epx,epy,_ = self._uniform_tensor(which_layer)
-            dx = ex * epx
-            dy = ey * epy
+            dx = ex * self.Uniform_ep_list[self.id_list[which_layer][2]]
+            dy = ey * self.Uniform_ep_list[self.id_list[which_layer][2]]
         else:
             exy = bd.hstack((-ey,ex))
             dxy = bd.dot(self.Patterned_ep2_list[self.id_list[which_layer][2]],exy)
@@ -607,7 +398,7 @@ class obj:
 
 def MakeKPMatrix(omega,layer_type,epinv,kx,ky):
     nG = len(kx)
-    
+
     # uniform layer, epinv has length 1
     if layer_type == 0:
         # JkkJT = np.block([[np.diag(ky*ky), np.diag(-ky*kx)],
@@ -615,14 +406,14 @@ def MakeKPMatrix(omega,layer_type,epinv,kx,ky):
 
         Jk = bd.vstack((bd.diag(-ky),bd.diag(kx)))
         JkkJT = bd.dot(Jk,bd.transpose(Jk))
-        
+
         kp = omega**2*bd.eye(2*nG) - epinv*JkkJT
     # patterned layer
     else:
         Jk = bd.vstack((bd.diag(-ky),bd.diag(kx)))
         tmp = bd.dot(Jk,epinv)
         kp = omega**2*bd.eye(2*nG) - bd.dot(tmp,bd.transpose(Jk))
-        
+
     return kp
 
 def SolveLayerEigensystem_uniform(omega,kx,ky,epsilon):
@@ -637,11 +428,11 @@ def SolveLayerEigensystem_uniform(omega,kx,ky,epsilon):
 
 def SolveLayerEigensystem(omega,kx,ky,kp,ep2):
     nG = len(kx)
-    
+
     k = bd.vstack((bd.diag(kx),bd.diag(ky)))
     kkT = bd.dot(k,bd.transpose(k))
     M = bd.dot(ep2,kp) - kkT
-    
+
     q,phi = bd.eig(M)
 
     q = bd.sqrt(q)
@@ -654,7 +445,7 @@ def GetSMatrix(indi,indj,q_list,phi_list,kp_list,thickness_list):
     '''
     #assert type(indi) == int, 'layer index i must be integar'
     #assert type(indj) == int, 'layer index j must be integar'
-    
+
     nG2 = len(q_list[0])
     S11 = bd.eye(nG2,dtype=complex)
     S12 = bd.zeros_like(S11)
@@ -664,7 +455,7 @@ def GetSMatrix(indi,indj,q_list,phi_list,kp_list,thickness_list):
         return S11,S12,S21,S22
     elif indi>indj:
         raise Exception('indi must be < indj')
-   
+
     for l in range(indi,indj):
         ## next layer
         lp1 = l+1
@@ -704,7 +495,7 @@ def GetSMatrix(indi,indj,q_list,phi_list,kp_list,thickness_list):
         P2 = bd.dot(S22,bd.dot(T12,S12))
         P1 = bd.dot(S22,bd.dot(T11,d2))
         S22 = P1 + P2
-        
+
     return S11,S12,S21,S22
 
 def SolveExterior(a0,bN,q_list,phi_list,kp_list,thickness_list):
@@ -727,7 +518,7 @@ def SolveInterior(which_layer,a0,bN,q_list,phi_list,kp_list,thickness_list):
     '''
     Nlayer = len(thickness_list) # total number of layers
     nG2 = len(q_list[0])
-    
+
     S11, S12, S21, S22 = GetSMatrix(0,which_layer,q_list,phi_list,kp_list,thickness_list)
     pS11, pS12, pS21, pS22 = GetSMatrix(which_layer,Nlayer-1,q_list,phi_list,kp_list,thickness_list)
 
@@ -737,14 +528,14 @@ def SolveInterior(which_layer,a0,bN,q_list,phi_list,kp_list,thickness_list):
     ai = bd.dot(tmp,  bd.dot(S11,a0)+bd.dot(S12,bd.dot(pS22,bN)))
     # bi = pS21 ai + pS22 bN
     bi = bd.dot(pS21,ai) + bd.dot(pS22,bN)
-    
+
     return ai,bi
 
 def TranslateAmplitudes(q,thickness,dz,ai,bi):
-    aim = ai*bd.exp(1j*q*dz)
-    bim = bi*bd.exp(1j*q*(thickness-dz))
-    return aim,bim
-        
+    ai = ai*bd.exp(1j*q*dz)
+    bi = bi*bd.exp(1j*q*(thickness-dz))
+    return ai,bi
+
 
 def GetZPoyntingFlux(ai,bi,omega,kp,phi,q,byorder=0):
     '''

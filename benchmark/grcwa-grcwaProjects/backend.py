@@ -3,14 +3,12 @@ import numpy as np
 # Import autograd if available
 try:
     import autograd.numpy as npa
-    from autograd.builtins import isinstance as aisinstance
     AG_AVAILABLE = True
 except ImportError:
     AG_AVAILABLE = False
 
 class NumpyBackend():
     """ Numpy Backend """
-    isinstance = staticmethod(isinstance)
     pi = staticmethod(np.pi)
     ndarray = staticmethod(np.ndarray)
 
@@ -26,9 +24,9 @@ class NumpyBackend():
     where = staticmethod(np.where)
     concatenate = staticmethod(np.concatenate)
     eye = staticmethod(np.eye)
-    diag = staticmethod(np.diag)        
-    transpose = staticmethod(np.transpose)                
-        
+    diag = staticmethod(np.diag)
+    transpose = staticmethod(np.transpose)
+
     eig = staticmethod(np.linalg.eig)
     inv = staticmethod(np.linalg.inv)
     dot = staticmethod(np.dot)
@@ -45,16 +43,14 @@ class NumpyBackend():
     real = staticmethod(np.real)
     imag = staticmethod(np.imag)
     abs = staticmethod(np.abs)
-    max = staticmethod(np.max)
 
 if AG_AVAILABLE:
-    from .primitives import (eig, inv)    
+    from .primitives import (eig, inv)
     class AutogradBackend():
         """ Autograd Backend """
-        isinstance = staticmethod(aisinstance)
         pi = staticmethod(npa.pi)
         ndarray = staticmethod(npa.ndarray)
-        
+
         array = staticmethod(npa.array)
         sum = staticmethod(npa.sum)
         vstack = staticmethod(npa.vstack)
@@ -67,9 +63,9 @@ if AG_AVAILABLE:
         where = staticmethod(npa.where)
         concatenate = staticmethod(npa.concatenate)
         eye = staticmethod(npa.eye)
-        diag = staticmethod(npa.diag)        
-        transpose = staticmethod(npa.transpose)                
-        
+        diag = staticmethod(npa.diag)
+        transpose = staticmethod(npa.transpose)
+
         eig = staticmethod(eig)
         inv = staticmethod(inv)
         dot = staticmethod(npa.dot)
@@ -86,7 +82,6 @@ if AG_AVAILABLE:
         real = staticmethod(npa.real)
         imag = staticmethod(npa.imag)
         abs = staticmethod(npa.abs)
-        max = staticmethod(npa.max)
 
 backend = NumpyBackend()
 
@@ -95,7 +90,7 @@ def set_backend(name):
     Set the backend for the simulations.
     This function monkey-patches the backend object by changing its class.
     This way, all methods of the backend object will be replaced.
-    
+
     Parameters
     ----------
     name : {'numpy', 'autograd'}

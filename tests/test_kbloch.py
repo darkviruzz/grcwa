@@ -29,6 +29,36 @@ def test_getG_numpy_int():
     G2, nGout2 = grcwa.Lattice_getG(nG_np, Lk1, Lk2, method=method)
     assert nGout2 > 0
 
+
+def test_gsel_1d():
+    # dim=1 keeps exactly 2M+1 orders (m,0), with (0,0) first
+    G1, nG1 = grcwa.Lattice_getG(41, Lk1, Lk2, dim=1)
+    assert nG1 == 41
+    assert np.all(G1[:, 1] == 0)            # no Gy orders
+    assert G1[0, 0] == 0 and G1[0, 1] == 0  # specular at index 0
+    assert sorted(G1[:, 0]) == list(range(-20, 21))
+    # even input -> rounded down to odd 2M+1
+    _, nG2 = grcwa.Lattice_getG(40, Lk1, Lk2, dim=1)
+    assert nG2 == 39
+
+
+def test_gsel_0d():
+    G0, nG0 = grcwa.Lattice_getG(99, Lk1, Lk2, dim=0)
+    assert nG0 == 1
+    assert G0.shape == (1, 2)
+    assert G0[0, 0] == 0 and G0[0, 1] == 0
+
+
+def test_get_conv_guard_coarse_grid():
+    # A grid too coarse for the requested G must not crash or alias: the
+    # upsampling guard handles it (works under whichever backend is active).
+    G1, nG1 = grcwa.Lattice_getG(41, Lk1, Lk2, dim=1)
+    xs = np.linspace(0, 1, 8, endpoint=False)          # coarse: 8 < needed orders
+    coarse = np.where(xs < 0.5, 3.0, 1.0).reshape(8, 1)
+    out = grcwa.get_conv(1.0 / 8, coarse, G1)           # must not raise
+    assert out.shape == (nG1, nG1)
+    assert np.all(np.isfinite(out))
+
 if AG_AVAILABLE:
     grcwa.set_backend('autograd')
     Nx = 51

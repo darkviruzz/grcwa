@@ -8,12 +8,12 @@ POL_GRAD_TOL = np.finfo(np.float32).eps  # ~1.19e-7
 
 
 def Epsilon_fft(dN, eps_grid, G):
-    '''dN = 1/Nx/Ny
+    """dN = 1/Nx/Ny
     For now, assume epsilon is diagonal; if epsilon has xz,yz component, just simply add them to off-diagonal eps2
 
     eps_grid is  (1) for isotropic, a numpy 2d array in the format of (Nx,Ny),
                  (2) for anisotropic, a list of numpy 2d array [(Nx,Ny),(Nx,Ny),(Nx,Ny)]
-    '''
+    """
 
     if len(eps_grid) == 3 and eps_grid[0].ndim == 2:
         epsx_fft = get_conv(dN, eps_grid[0], G)
@@ -77,15 +77,13 @@ def Epsilon_fft_pol(dN, eps_grid, G, pol_sigma=3.0, pol_niter=20):
     V. Liu & S. Fan, Comp. Phys. Comm. 183, 2233 (2012), Eq. 51.
     """
 
-    # --- epsinv: for the Ez/kp term, use the SAME convention as Laurent,
-    # epsinv = inv([[eps]]).  (The earlier code used the reciprocal Toeplitz
-    # [[1/eps]] here, which is inconsistent with how kp couples into the
-    # eigenproblem M = ep2*kp - kkT and destroyed TM convergence -- Pol oscillated
-    # instead of settling.  With inv([[eps]]) the kp matrix matches the Laurent
-    # baseline that the eps2 correction is built on top of.) ---
-    eps_hat = get_conv(dN, eps_grid, G)     # Toeplitz(eps)
-    eta_hat = get_conv(dN, 1.0 / eps_grid, G)  # Toeplitz(1/eps), used in mDelta
-    epsinv = bd.inv(eps_hat)
+    # --- epsinv: inverse rule for Ez (always normal to layers) ---
+    inveps_grid = 1.0 / eps_grid
+    eta_hat = get_conv(dN, inveps_grid, G)  # Toeplitz(1/eps)
+    epsinv = eta_hat
+
+    # --- eps2: Pol-corrected in-plane epsilon ---
+    eps_hat = get_conv(dN, eps_grid, G)  # Toeplitz(eps)
 
     # Tangent-field projection operators P_ij (autograd-compatible)
     P_xx, P_xy, P_yx, P_yy = _compute_tangent_field_pol(
@@ -133,11 +131,8 @@ def _compute_tangent_field_pol(eps_grid, pol_sigma=3.0, pol_niter=20):
          this approximates a Laplace solve (smooth harmonic extension from
          interface pixels).  If pol_niter=0, a single blur is applied with
          no reset (original behaviour).
-      4. Per-pixel unit normalization (|t| = 1 at every point) so that
-         P = t t^T is a true projection.  (A previous version used a single
-         global max-normalization, which left |t| < 1 across the cell and made
-         the inverse-rule correction vanish -- Pol then just reproduced Laurent.)
-      5. Form P_ij = t_i * t_j.
+      4. Normalize so max|t| = 1 (Pol scaling, as in S4).
+      5. Form P_ij = t_i * t_j (no division by |t|^2).
 
     All operations use the ``bd`` backend so autograd can differentiate
     through them.  The only raw-numpy operations are the Gaussian kernel
@@ -191,16 +186,13 @@ def _compute_tangent_field_pol(eps_grid, pol_sigma=3.0, pol_niter=20):
     grad_x = grad_x_re + grad_x_im
     grad_y = grad_y_re + grad_y_im
 
-    # --- 2. Tangent field = 90-deg rotated gradient: t = (-grad_y, grad_x).
-    # This is the projection that leaves the continuous tangential (TE) field on
-    # Laurent's rule untouched while steering the inverse-rule correction onto
-    # the discontinuous (TM) component (verified: TE Pol == Laurent to ~1e-15).
+    # --- 2. Tangent = 90-deg rotated gradient: t = (-grad_y, grad_x) ---
     tx_raw = -grad_y
     ty_raw = grad_x
 
     # --- 3. Iterative blur+reset to extend the tangent field smoothly ---
     # The blur kernel and interface mask are constant numpy arrays (not
-    # differentiated).  The iteration approximates lap(t) = 0 with Dirichlet
+    # differentiated).  The iteration approximates ∇²t = 0 with Dirichlet
     # BC at interface pixels, producing a smooth harmonic extension.
     kx_freq = np.fft.fftfreq(Nx)
     ky_freq = np.fft.fftfreq(Ny)
@@ -208,7 +200,7 @@ def _compute_tangent_field_pol(eps_grid, pol_sigma=3.0, pol_niter=20):
     blur_kernel = np.exp(-2 * np.pi**2 * pol_sigma**2 * (KX**2 + KY**2))
 
     if pol_niter <= 0:
-        # Single blur, no reset.
+        # Single blur, no reset (original behaviour).
         tx = bd.real(bd.ifft2(bd.fft2(tx_raw) * blur_kernel))
         ty = bd.real(bd.ifft2(bd.fft2(ty_raw) * blur_kernel))
     else:
@@ -228,25 +220,18 @@ def _compute_tangent_field_pol(eps_grid, pol_sigma=3.0, pol_niter=20):
             tx = mask * tx_raw + mask_inv * bd.real(bd.ifft2(bd.fft2(tx) * blur_kernel))
             ty = mask * ty_raw + mask_inv * bd.real(bd.ifft2(bd.fft2(ty) * blur_kernel))
 
-    # --- 4. PER-PIXEL unit normalization -> a true projection (|t| = 1).
-    # Li's method needs a unit tangent at every point.  The previous global
-    # max-normalization left |t| < 1 across most of the cell, so P = t t^T was
-    # not a projection and the inverse-rule correction was negligible everywhere
-    # except the single peak-gradient pixel (Pol then just reproduced Laurent).
+    # --- 4. Pol scaling: max|t| = 1 ---
     t_mag_sq = tx * tx + ty * ty
+    # Detached check only -- the normalisation itself is differentiable.
     _raw_mag = np.real(np.asarray(t_mag_sq._value if hasattr(t_mag_sq, "_value") else t_mag_sq))
     if np.max(_raw_mag) < POL_GRAD_TOL**2:
         z = bd.zeros_like(eps_re)
         return z, z, z, z
-    # Small floor (relative to the peak field) avoids 0/0 at the few pixels the
-    # extension leaves at zero; eps is uniform there so the correction Delta ~ 0
-    # and the projection there is irrelevant.
-    t_floor = POL_GRAD_TOL * float(np.sqrt(np.max(_raw_mag)))
-    t_mag = bd.sqrt(t_mag_sq) + t_floor
-    tx = tx / t_mag
-    ty = ty / t_mag
+    max_field = bd.sqrt(bd.max(t_mag_sq))
+    tx = tx / max_field
+    ty = ty / max_field
 
-    # --- 5. Projection operators P_ij = t_i t_j ---
+    # --- 5. Projection operators ---
     P_xx = tx * tx
     P_xy = tx * ty
     P_yy = ty * ty
@@ -255,27 +240,25 @@ def _compute_tangent_field_pol(eps_grid, pol_sigma=3.0, pol_niter=20):
 
 
 def get_conv(dN, s_in, G):
-    ''' Attain convolution matrix
+    """Attain convolution matrix
     dN = 1/Nx/Ny
     s_in: np.array of length Nx*Ny
     G: shape (nG,2), 2 for Lk1,Lk2
     s_out: 1/N sum a_m exp(-2pi i mk/n), shape (nGx*nGy)
 
     Auto-upsamples via nearest-neighbor when the grid is too coarse
-    for the requested G-vectors (prevents FFT index wrap-around / aliasing).
-    This is what makes 1D grids (Ny=1) and coarse grids robust.
-    '''
+    for the requested G-vectors (prevents FFT index wrap-around).
+    """
+    nG, _ = G.shape
     Nx = s_in.shape[0]
     Ny = s_in.shape[1]
 
-    # Largest G-vector difference we must index in the FFT spectrum.
+    # Check if grid is large enough for the G-vector differences
     max_gdiff_x = int(np.max(G[:, 0])) - int(np.min(G[:, 0]))
     max_gdiff_y = int(np.max(G[:, 1])) - int(np.min(G[:, 1]))
 
     if max_gdiff_x >= Nx or max_gdiff_y >= Ny:
-        # Upsample (nearest-neighbor) so every needed difference order is
-        # representable without FFT index wrap-around.  Integer-division
-        # indexing keeps this autograd-safe.
+        # Upsample via nearest-neighbor (autograd-safe integer-division indexing)
         scale_x = max(int(np.ceil((max_gdiff_x + 1) / Nx)), 1)
         scale_y = max(int(np.ceil((max_gdiff_y + 1) / Ny)), 1)
         idx_x = np.arange(Nx * scale_x) // scale_x
@@ -288,36 +271,40 @@ def get_conv(dN, s_in, G):
 
     sfft = bd.fft2(s_work) * dN_work
 
-    gi = G[:, 0][:, None] - G[:, 0]
-    gj = G[:, 1][:, None] - G[:, 1]
-    s_out = sfft[gi, gj]
+    ix = range(nG)
+    ii, jj = bd.meshgrid(ix, ix, indexing="ij")
+    s_out = sfft[G[ii, 0] - G[jj, 0], G[ii, 1] - G[jj, 1]]
     return s_out
 
 
-def get_fft(dN,s_in,G):
-    '''
+def get_fft(dN, s_in, G):
+    """
     FFT to get Fourier components
 
     s_in: np.2d array of size (Nx,Ny)
     G: shape (nG,2), 2 for Gx,Gy
     s_out: 1/N sum a_m exp(-2pi i mk/n), shape (nGx*nGy)
-    '''
+    """
 
-    sfft = bd.fft2(s_in)*dN
-    return sfft[G[:,0],G[:,1]]
+    sfft = bd.fft2(s_in) * dN
+    return sfft[G[:, 0], G[:, 1]]
 
 
-def get_ifft(Nx,Ny,s_in,G):
-    '''
+def get_ifft(Nx, Ny, s_in, G):
+    """
     Reconstruct real-space fields
-    '''
+    """
     dN = 1.0 / Nx / Ny
+    nG, _ = G.shape
 
-    # Directly assign each Fourier coefficient to its corresponding
-    # location in the frequency domain array.  This is equivalent to
-    # the previous explicit loop but vectorised for efficiency.
     s0 = bd.zeros((Nx, Ny), dtype=complex)
-    s0[G[:, 0], G[:, 1]] = s_in
+    for i in range(nG):
+        x = G[i, 0]
+        y = G[i, 1]
 
-    s_out = bd.ifft2(s0)/dN
+        stmp = bd.zeros((Nx, Ny), dtype=complex)
+        stmp[x, y] = 1.0
+        s0 = s0 + s_in[i] * stmp
+
+    s_out = bd.ifft2(s0) / dN
     return s_out

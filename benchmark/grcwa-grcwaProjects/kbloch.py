@@ -8,7 +8,7 @@ def Lattice_Reciprocate(L1,L2):
     assert type(L1) == list and type(L2) == list, 'Lattice vectors should be in list format.'
     assert len(L1) == 2,'Both x,y components of Lattice vector L1 are required.'
     assert len(L2) == 2,'Both x,y components of Lattice vector L2 are required.'
-    
+
     d = L1[0]*L2[1]-L1[1]*L2[0]
 
     Lk1 = np.array([L2[1]/d, -L2[0]/d])
@@ -16,66 +16,25 @@ def Lattice_Reciprocate(L1,L2):
 
     return Lk1,Lk2
 
-def Lattice_getG(nG,Lk1,Lk2,method=0,dim=2):
+def Lattice_getG(nG,Lk1,Lk2,method=0):
     '''
     The G is defined to produce the following reciprocal vector:
     k = G[:,0] Lk1 + G[:,1] Lk2 (both k and Lk don't include the 2pi factor)
 
-    dim: structural dimensionality of the reciprocal basis
-         0 -> single order (0,0): planar multilayer (reduces to TMM)
-         1 -> line of orders (m,0): 1D grating, nG -> 2M+1
-         2 -> 2D area of orders (default)
-    method: truncation scheme, ONLY used for dim==2
-            0 for circular truncation, 1 for parallelogramic truncation
+    method:0 for circular truncation, 1 for parallelogramic truncation
     '''
-    # allow numpy integer types as well as builtin int
-    if not isinstance(nG, (int, np.integer)):
-        raise TypeError('nG must be an integer')
+    assert type(nG) == int, 'nG must be integar'
 
-    if dim == 0:
-        G,nG = Gsel_0D()
-    elif dim == 1:
-        G,nG = Gsel_1D(nG, Lk1)
-    elif dim == 2:
-        if method == 0:
-            G,nG = Gsel_circular(nG, Lk1, Lk2)
-        elif method == 1:
-            G,nG = Gsel_parallelogramic(nG, Lk1, Lk2)
-        else:
-            raise Exception('Truncation scheme is not included')
+    if method == 0:
+        G,nG = Gsel_circular(nG, Lk1, Lk2)
+    elif method == 1:
+        G,nG = Gsel_parallelogramic(nG, Lk1, Lk2)
+    elif method == 2:
+        G,nG = Gsel_linear(nG, Lk1, Lk2)
     else:
-        raise ValueError('dim must be 0, 1, or 2')
+        raise Exception('Truncation scheme is not included')
 
     return G,nG
-
-
-def Gsel_1D(nG, Lk1):
-    '''1D truncation: keep orders (m,0), m = -M..M, with nG = 2M+1.
-
-    The reciprocal basis is a line along Lk1 (the grating vector); the
-    invariant in-plane direction carries no orders (Gy = 0). The (0,0)
-    order is placed at index 0 so that order=0 is the specular order,
-    consistent with the 2D Gsel functions. Lk1 is accepted only for
-    signature symmetry; the order count is deterministic in nG.
-    '''
-    M = (int(nG) - 1) // 2
-    # order by |m| with (0,0) first: 0, 1, -1, 2, -2, ...
-    ms = [0]
-    for k in range(1, M + 1):
-        ms.append(k)
-        ms.append(-k)
-
-    nG = len(ms)
-    G = np.zeros((nG, 2), dtype=int)
-    G[:, 0] = np.array(ms, dtype=int)
-    return G, nG
-
-
-def Gsel_0D():
-    '''0D truncation: a single order (0,0). RCWA then reduces exactly to the
-    transfer-matrix method for a planar (unstructured) multilayer.'''
-    G = np.zeros((1, 2), dtype=int)
-    return G, 1
 
 def Lattice_SetKs(G, kx0, ky0, Lk1, Lk2):
     '''
@@ -98,7 +57,7 @@ def Gsel_parallelogramic(nG, Lk1, Lk2):
     NGroot = int(np.sqrt(nG))
     if np.mod(NGroot,2) == 0:
         NGroot -= 1
-        
+
     M = NGroot//2
 
     xG = range(-M,NGroot-M)
@@ -113,10 +72,10 @@ def Gsel_parallelogramic(nG, Lk1, Lk2):
     G2 = G2[sort]
 
     # final G
-    nG = NGroot*NGroot    
+    nG = NGroot*NGroot
     G = np.zeros((nG,2),dtype=int)
     G[:,0] = G1[:nG]
-    G[:,1] = G2[:nG]    
+    G[:,1] = G2[:nG]
 
     return G, nG
 
@@ -155,7 +114,7 @@ def Gsel_circular(nG, Lk1, Lk2):
     Gl2 = Gl2[sort]
 
     nGtmp = uext21*vext21
-    
+
     if nG < nGtmp:
         nGtmp = nG
 
@@ -165,10 +124,50 @@ def Gsel_circular(nG, Lk1, Lk2):
         if np.abs(Gl2[i]-Gl2[i-1])>tol:
             break;
     nG = i
-    
+
     # final G
     G = np.zeros((nG,2),dtype=int)
     G[:,0] = G1[:nG]
     G[:,1] = G2[:nG]
 
     return G,nG
+
+
+def Gsel_linear(nG, Lk1, Lk2):
+    '''Generates a set of points along a 1D line in reciprocal space. If the norm of Lk1 is less than Lk2,
+    points are generated along the x-axis. If the norm of Lk2 is less, points are generated along the y-axis.
+    If norms are equal, it falls back to the Gsel_parallelogramic function.'''
+
+    u = np.linalg.norm(Lk1)
+    v = np.linalg.norm(Lk2)
+
+    # Fallback to Gsel_parallelogramic if norms of Lk1 and Lk2 are equal
+    if u == v:
+        return Gsel_parallelogramic(nG, Lk1, Lk2)
+
+    if np.mod(nG, 2) == 0:
+        nG -= 1
+
+    M = nG // 2
+    xG = range(-M, M + 1)
+
+    # Initialize the grid array
+    G1 = np.array(xG)
+
+    if u < v:  # Generate points along the x-axis
+        Gl2 = G1 ** 2 * u ** 2
+        sort = np.argsort(Gl2)
+        G1_sorted = G1[sort]
+
+        G = np.zeros((len(G1_sorted), 2), dtype=int)
+        G[:, 0] = G1_sorted
+
+    elif v < u:  # Generate points along the y-axis
+        Gl2 = G1 ** 2 * v ** 2
+        sort = np.argsort(Gl2)
+        G1_sorted = G1[sort]
+
+        G = np.zeros((len(G1_sorted), 2), dtype=int)
+        G[:, 1] = G1_sorted  # Assign the sorted values to the y-axis
+
+    return G, len(G1_sorted)

@@ -59,6 +59,35 @@ directions, and invariant along the vertical direction.
   directions must be fixed).
 
 
+Dimensionality: 0D / 1D / 2D
+----------------------------
+
+The structural dimensionality is inferred from the lattice vectors passed to
+``grcwa.obj(nG, L1, L2, ...)``:
+
+* ``L1`` and ``L2`` given -> **2D** grating (the general case).
+* ``L1`` given, ``L2 = None`` -> **1D** grating: periodic along ``L1`` and
+  invariant along the second in-plane axis. Only orders ``(m, 0)`` are kept, so
+  ``nG`` becomes exactly ``2M+1``; pass a grid layer as a 1D array of length
+  ``Nx`` (``Ny`` defaults to 1). See `ex_1d_grating.py <./example/ex_1d_grating.py>`_.
+* ``L1 = None`` and ``L2 = None`` -> **0D** planar multilayer; ``nG`` is forced
+  to 1 and RCWA reduces to the transfer-matrix method. Use only uniform layers.
+  See `ex_0d_multilayer.py <./example/ex_0d_multilayer.py>`_.
+
+Dimensionality is independent of the incidence angle (``theta``, ``phi`` only
+set the in-plane wavevector) and of material anisotropy. Conical incidence on a
+1D grating therefore stays a 1D problem (no extra orders); the vectorial solver
+handles the TE/TM coupling automatically.
+
+* **Anisotropic uniform layers**: ``Add_LayerUniform`` accepts either a scalar
+  permittivity (isotropic) or a length-3 list ``[epx, epy, epz]`` for a diagonal
+  tensor (principal axes along x, y, z). Anisotropy does not change the number
+  of Fourier orders. The incident medium must stay isotropic.
+* **Fourier factorization**: Laurent's rule by default;
+  ``grcwa.obj(..., fmm_method='pol')`` selects the Pol method (S4 Eq. 51) for
+  patterned layers.
+
+
 Quick Start
 -----------
 * Installation:
@@ -172,7 +201,11 @@ Quick Start
 * Example 3: topology optimization of reflection of a single patterned layer, `ex3.py <./example/ex3.py>`_
 
 * Example 4: transmission and reflection (sum or by order) of a hexagonal lattice of a hole: `ex4.py <./example/ex4.py>`_
-  
+
+* Example 5: a 1D binary (lamellar) grating, period swept across the wavelength: `ex_1d_grating.py <./example/ex_1d_grating.py>`_
+
+* Example 6: a 0D planar multilayer / anti-reflection coating (reduces to TMM): `ex_0d_multilayer.py <./example/ex_0d_multilayer.py>`_
+
 Note on conventions
 -------------------
 
