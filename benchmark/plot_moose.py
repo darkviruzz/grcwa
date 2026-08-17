@@ -10,6 +10,8 @@ Which conv_results columns are drawn is controlled by WHITELIST below:
   * an entry without "[...]", e.g. "fork", matches ALL variants of that codebase
     (both [Laurent] and [Pol]).
 Set WHITELIST = None to draw every column present. Moose is always overlaid.
+Only cases Moose actually ran are drawn (the group-D factorization cases are not
+among them -- they are referenced against Ikarus instead, in plot_conv.py).
 
 x-axis = total retained orders. Moose 2D keys "(m,m)" are read as m per-axis
 orders -> m*m total (matching the (q,q) convention in structures.py); 1D keys
@@ -68,11 +70,15 @@ for code in _codes:
         _i += 1
 
 
+# solid = the direct (Laurent) rule; every faithful rule gets its own broken style.
+_RULE_STYLE = {"Laurent": ("-", "o"), "Pol": ("--", "s"),
+               "Li": ("-.", "^"), "NV": (":", "D")}
+
+
 def style(col):
-    rule = "Pol" if col.endswith("[Pol]") else "Laurent"
     color = _code_color.get(col.split("[")[0], "#555")
-    ls = "--" if rule == "Pol" else "-"
-    mk = "s" if rule == "Pol" else "o"
+    rule = col.split("[")[-1].rstrip("]") if "[" in col else "Laurent"
+    ls, mk = _RULE_STYLE.get(rule, ("--", "x"))
     return color, ls, mk
 
 
@@ -127,8 +133,13 @@ def has_sweep(case):
     return any(len(conv_points(case, c)) >= 2 for c in COLS)
 
 
+# This figure is *about* the Moose reference, so a case Moose never ran has
+# nothing to be compared against here -- drawing it would silently fall back to
+# a high-order Laurent value as the "reference", which on the group-D
+# factorization cases is not converged and would be actively misleading. Those
+# cases have their own reference in ikarus_reference.json; see plot_conv.py.
 cases = [c for c in conv_cases if conv_cases[c]["info"].get("dim", 2) != 0
-         and has_sweep(c)]
+         and c in moose_cases and has_sweep(c)]
 
 # ---- console table ---------------------------------------------------------
 print("WHITELIST ->", COLS if WHITELIST else "ALL columns")

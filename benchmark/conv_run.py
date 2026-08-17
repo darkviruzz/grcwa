@@ -49,13 +49,17 @@ def discover_variants():
 
 VARIANTS = discover_variants()
 
+# Ikarus factorizations -> column suffixes (see benchmark/ikarus_suite.py).
+IKARUS_MODES = [("laurent", "Laurent"), ("li", "Li"), ("normal", "NV")]
 
-def run_variant(path, modname, fmm):
+
+def run_variant(path, modname, fmm, suite="grcwa"):
     env = os.environ.copy()
     env["PYTHONPATH"] = path
     env["GRCWA_MOD"] = modname
     env["FMM"] = fmm
-    print(f"run process worker: {modname} ({fmm})")
+    env["SUITE"] = suite
+    print(f"run process worker: {modname or suite} ({fmm})")
     p = subprocess.run([sys.executable, WORKER], env=env,
                        capture_output=True, text=True)
     if p.returncode != 0:
@@ -131,6 +135,16 @@ def main():
         if _has_sweep(pol):
             columns.append(f"{label}[Pol]"); data[f"{label}[Pol]"] = pol
 
+    # Ikarus: an independent codebase, so it contributes its own columns.
+    # Optional dependency -- silently absent when it is not installed.
+    for fmm, suffix in IKARUS_MODES:
+        res = run_variant(HERE, "", fmm, suite="ikarus")
+        if _has_sweep(res):
+            columns.append(f"ikarus[{suffix}]"); data[f"ikarus[{suffix}]"] = res
+        elif fmm == IKARUS_MODES[0][0]:
+            print(f"   (no ikarus columns: {res.get('_error', 'unavailable')}"
+                  f"  --  pip install ikarus-rcwa)")
+
     # case order + info from the first good column
     cases, infos = [], {}
     for col in columns:
@@ -155,20 +169,37 @@ def main():
         info = infos.get(case, {})
         ref = analytic_ref(case, info)
 
-        # self-reference for B/C: highest-order Laurent value (correct in the limit)
+        # No closed form -> take the highest-order run of a rule that converges.
+        # Group D (the Ikarus whitepaper's factorization stress tests) prefers
+        # Ikarus's faithful normal-vector column: on those cases Laurent is still
+        # percent-level wrong at every order this sweep reaches, while NV has
+        # settled by q ~ 15, and it is the whitepaper's own published value.
+        # Everything else falls back to Laurent, correct in the limit if slowly.
         if ref is None:
-            best = None
-            for col in laurent_cols:
-                sw = data.get(col, {}).get(case, {}).get("sweep", [])
-                good = [p for p in sw if "R" in p]
-                if good:
-                    cand = max(good, key=lambda p: p["nG"])
-                    if best is None or cand["nG"] > best["nG"]:
-                        best = cand
+            def _best_of(cols):
+                best, src = None, None
+                for col in cols:
+                    good = [p for p in data.get(col, {}).get(case, {})
+                            .get("sweep", []) if "R" in p]
+                    if good:
+                        cand = max(good, key=lambda p: p["nG"])
+                        if best is None or cand["nG"] > best["nG"]:
+                            best, src = cand, col
+                return best, src
+
+            if info.get("group") == "D":
+                best, src = _best_of(["ikarus[NV]"])
+                kind, note = "external_ikarus_NV", ("Ikarus normal-vector "
+                                                   "(faithful) at the highest order run")
+            else:
+                best, src = None, None
+            if best is None:
+                best, src = _best_of(laurent_cols)
+                kind = "self_highnG_Laurent"
+                note = "highest-order Laurent run (replace with external RCWA)"
             if best is not None:
-                ref = {"type": "self_highnG_Laurent", "R": best["R"],
-                       "T": best["T"], "at_nG": best["nG"],
-                       "note": "highest-order Laurent run (replace with external RCWA)"}
+                ref = {"type": kind, "R": best["R"], "T": best["T"],
+                       "at_nG": best["nG"], "from": src, "note": note}
 
         centry = {"info": info, "ref": ref, "columns": {}}
         print(f"\n{case}   [{info.get('desc','')}]")

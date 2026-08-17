@@ -1,8 +1,14 @@
-"""Convergence-study worker (order sweep on ONE grcwa install + ONE factorization).
+"""Convergence-study worker (order sweep on ONE install + ONE factorization).
 
-For the grcwa selected by GRCWA_MOD/PYTHONPATH and FMM (none|pol), sweep the
-per-axis order count q over the shared battery (benchmark/structures.py) and emit
-R(q) as JSON. Driven by conv_run.py once per (variant, mode), in a subprocess.
+Sweeps the per-axis order count q over the shared battery
+(benchmark/structures.py) and emits R(q) as JSON. Driven by conv_run.py once per
+(variant, mode), in a subprocess.
+
+Which solver is selected by SUITE:
+  * ``grcwa`` (default) -- the install named by GRCWA_MOD/PYTHONPATH, with
+    FMM = none|pol choosing Laurent or the Pol rule;
+  * ``ikarus``          -- the independent Ikarus code via benchmark/ikarus_suite.py,
+    with FMM = laurent|li|normal choosing its factorization.
 
 Order convention (see structures.py): 1D uses nG=q AND nG=q**2 (per-axis and
 total points); 2D uses a (q,q) square block (nG=q**2). The plot x-axis is the
@@ -17,23 +23,38 @@ import sys
 import json
 import time
 
-_MOD = os.environ.get("GRCWA_MOD", "grcwa")
-grcwa = __import__(_MOD)
 import numpy as np
 import structures as ST
 
+_SUITE = os.environ.get("SUITE", "grcwa")
 _FMM = os.environ.get("FMM", "none")
 FMM = None if _FMM == "none" else _FMM
 REPEAT = int(os.environ.get("REPEAT", "2"))
 QLIST = [int(x) for x in os.environ.get("GRCWA_QLIST", "1,3,5,7,9,13,17,21,25").split(",")]
 MAX2D = int(os.environ.get("GRCWA_MAX2D", "700"))
 
-NATIVE = ST.supports_native_dim(grcwa)
+if _SUITE == "ikarus":
+    import ikarus_suite as IK
+
+    if not IK.available():
+        # Optional cross-check dependency: report it once, cleanly, instead of
+        # letting every sweep point fail with its own ImportError.
+        print(json.dumps({"_error": "ikarus not installed"}))
+        raise SystemExit(0)
+
+    def solve(s, q):
+        return IK.solve(s, q, FMM)
+else:
+    grcwa = __import__(os.environ.get("GRCWA_MOD", "grcwa"))
+    NATIVE = ST.supports_native_dim(grcwa)
+
+    def solve(s, q):
+        return ST.solve(grcwa, s, q, FMM, NATIVE)
 
 
 def _timed(s, q, label):
     try:
-        out = ST.solve(grcwa, s, q, FMM, NATIVE)
+        out = solve(s, q)
     except Exception as e:
         return {"q": q, "label": label, "error": repr(e)}
     R, T, nG, mode = out
@@ -43,7 +64,7 @@ def _timed(s, q, label):
     for _ in range(REPEAT):
         t0 = time.perf_counter()
         try:
-            ST.solve(grcwa, s, q, FMM, NATIVE)
+            solve(s, q)
         except Exception:
             break
         best = min(best, time.perf_counter() - t0)
@@ -74,9 +95,11 @@ def run_structure(s):
     info = {k: s[k] for k in ("group", "dim", "pol", "desc")}
     info["nk"] = {k: list(s[k]) for k in
                   ("hi", "lo", "film", "sub", "pillar", "bg") if k in s}
-    for k in ("period", "ff", "d", "ax", "ay"):
+    for k in ("period", "ff", "d", "ax", "ay", "radius"):
         if k in s:
             info[k] = s[k]
+    if "shape" in s:
+        info["shape"] = s["shape"]
     return {"info": info, "sweep": [p for p in sweep if "R" in p or "skipped" in p or "error" in p]}
 
 

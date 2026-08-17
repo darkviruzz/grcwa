@@ -46,19 +46,35 @@ for code in _codes:
         _code_color[code] = _palette[_i % len(_palette)]
         _i += 1
 
+# linestyle/marker encode the factorization rule: the direct (Laurent) rule is
+# solid, every faithful rule is broken -- Pol (grcwa), Li's inverse rule and the
+# normal-vector method (both Ikarus).
+_RULE_STYLE = {"Laurent": ("-", "o"), "Pol": ("--", "s"),
+               "Li": ("-.", "^"), "NV": (":", "D")}
+
+
+def rule_of(col):
+    return col.split("[")[-1].rstrip("]") if "[" in col else "Laurent"
+
+
 def style(col):
-    rule = "Pol" if col.endswith("[Pol]") else "Laurent"
     code = col.split("[")[0]
     color = _code_color.get(code, "#555")
-    ls = "--" if rule == "Pol" else "-"
-    mk = "o" if rule == "Laurent" else "s"
+    ls, mk = _RULE_STYLE.get(rule_of(col), ("--", "x"))
     return color, ls, mk
 
 def ref_R(case):
-    """Exact analytic if available, else fork[Laurent] highest-order value."""
+    """Exact analytic if available, else an external converged reference, else
+    the fork[Laurent] highest-order value.
+
+    The external branch matters for the group-D factorization stress tests: there
+    Laurent is still percent-level wrong at every order in the sweep, so its
+    high-order value is not a usable reference (see conv_run.py)."""
     ref = cases[case].get("ref")
     if ref and ref.get("type") == "analytic_exact":
         return ref["R"], "analytic"
+    if ref and str(ref.get("type", "")).startswith("external"):
+        return ref["R"], ref.get("from") or ref["type"]
     sw = [p for p in cases[case]["columns"].get("fork[Laurent]", []) if "R" in p]
     if sw:
         return max(sw, key=lambda p: p["nG"])["R"], "self(fork Laurent, high order)"
