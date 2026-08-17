@@ -155,17 +155,25 @@ def Gsel_circular(nG, Lk1, Lk2):
     Gl2 = Gl2[sort]
 
     nGtmp = uext21*vext21
-    
+
     if nG < nGtmp:
         nGtmp = nG
 
-    # removing the part outside the cycle
+    # Removing the part outside the cycle. Points with equal |G|^2 form a
+    # degenerate "shell" (e.g. the +-k pair of a 1D lattice); such a shell
+    # must not be split. Only trim if the requested cutoff nGtmp actually
+    # falls in the middle of a shell, i.e. the last included point and the
+    # first excluded point are degenerate. Otherwise nGtmp already lands on
+    # a clean shell boundary and no trimming is needed.
     tol = 1e-10*max(u**2,v**2)
-    for i in range(nGtmp-1,-1,-1):
-        if np.abs(Gl2[i]-Gl2[i-1])>tol:
-            break;
-    nG = i
-    
+    if nGtmp < len(Gl2) and np.abs(Gl2[nGtmp-1]-Gl2[nGtmp]) <= tol:
+        i = nGtmp-1
+        while i>0 and np.abs(Gl2[i]-Gl2[i-1])<=tol:
+            i -= 1
+        nG = i
+    else:
+        nG = nGtmp
+
     # final G
     G = np.zeros((nG,2),dtype=int)
     G[:,0] = G1[:nG]
