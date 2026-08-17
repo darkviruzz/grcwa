@@ -32,7 +32,7 @@
     "case": "D1_ikarus_hcg_TM",
     "caption": "The same high-contrast TM grating, at a practical order count.",
     "practical_order_count_inferred": 25,
-    "_note": "The paper does not state Table 1's truncation. 25 retained x-orders (its M=12) reproduces both quoted direct-rule values to 1e-4, so that is the count recorded here.",
+    "_note": "The paper does not state Table 1's truncation. 25 retained x-orders (its M=12) reproduces the quoted Ikarus-laurent value to 1e-4, so that is the count recorded here; torcwa is quoted at the same 16.3% and the paper's own test asserts it matches Ikarus laurent at matched M, but it was not re-run here.",
     "rows": {
       "FMMax (NORMAL)": {"factorization": "faithful", "R_published": 0.100, "R_measured": null,
                          "_note": "not re-run here; FMMax is not a dependency of this benchmark"},
@@ -80,9 +80,9 @@
       "paper_harness_x_orders_at_Gy0": 23,
       "paper_harness_R": 0.1747,
       "fork_native_1D_at_q23_R": 0.1752,
-      "fork_native_1D_at_q385_R": 0.1035
+      "fork_native_1D_at_q385_R": 0.103686
     },
-    "conclusion": "The physics claim stands -- Laurent really is O(1/M) and really is ~75% high at that truncation. Only the framing overstates it: 'still badly off even at 400 orders' is off at 23 effective orders. Given a native 1D truncation of 385 orders the same code gives 0.1035."
+    "conclusion": "The physics claim stands -- Laurent really is O(1/M) and really is ~75% high at that truncation. Only the framing overstates it: 'still badly off even at 400 orders' is off at 23 effective orders. Given a native 1D truncation of 385 orders the same code gives 0.1037."
   },
   "performance": {
     "note": "min-of-3 wall time per solve at nG = 121, from benchmark/results.csv on one machine -- indicative only, not a controlled comparison.",

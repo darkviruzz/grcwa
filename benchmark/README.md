@@ -152,7 +152,7 @@ Run `python benchmark/ikarus_whitepaper_check.py` for the live version of this.
    through a *square 2D lattice*, so of a nominal `nG = 400` only 23 orders lie
    on `Gy = 0` and do any work; "still badly off even at 400 orders" is measured
    at 23 effective orders (the fork's native 1D path gives 0.1752 at `q = 23`,
-   matching, and 0.1035 at `q = 385`). The conclusion survives — Laurent *is*
+   matching, and 0.1037 at `q = 385`). The conclusion survives — Laurent *is*
    O(1/M) and *is* ~75% high there — but the order count in that sentence is not
    the one the physics saw.
 
