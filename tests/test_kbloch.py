@@ -113,6 +113,37 @@ if AG_AVAILABLE:
         grcwa.set_backend('autograd')
         assert np.allclose(ref, new)
 
+    def test_ifft_grad():
+        # get_ifft must stay differentiable: it is reachable from an
+        # objective via Solve_FieldOnGrid and Return_eps.  The value-only
+        # check above runs on the numpy backend and so cannot catch a
+        # break in the autograd path.
+        def fun(s):
+            return npa.real(npa.sum(npa.abs(grcwa.get_ifft(Nx, Ny, s, G))**2))
+
+        grad_fun = grad(fun)
+
+        x = 10.0 * np.random.random(nGout)
+        dx = 1e-4
+        ind = np.random.randint(nGout, size=1)[0]
+        FD, AD = t_grad(fun, grad_fun, x, dx, ind)
+        assert abs(FD-AD) < abs(FD)*tol, 'wrong ifft gradient'
+
+    def test_ifft_aliasing_guard():
+        # A grid too coarse for the requested orders aliases distinct G
+        # vectors onto one grid point; that must be reported, not
+        # silently returned as a wrong field.
+        Gbad = np.array([[0, 0], [4, 0], [1, 1], [-3, 1]], dtype=int)
+        grcwa.set_backend('numpy')
+        try:
+            grcwa.get_ifft(4, 4, np.ones(len(Gbad)), Gbad)
+            raised = False
+        except ValueError:
+            raised = True
+        finally:
+            grcwa.set_backend('autograd')
+        assert raised, 'aliasing on a coarse grid was not caught'
+
     def test_get_conv():
         # Ensure broadcasting version of get_conv matches the previous
         # meshgrid implementation on random grids.
