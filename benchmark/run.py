@@ -9,7 +9,9 @@ and exports everything to benchmark/results.{json,csv}.
 
 Variants are auto-discovered: every `benchmark/grcwa*` directory that is an
 importable package becomes a suite, plus the current branch (`fork`) at the repo
-root. Each variant is run with Laurent's rule, and additionally with the Pol
+root. Set ``GRCWA_VARIANTS`` to a comma-separated list of labels (for example,
+``fork,weiliang-013``) to run only those variants. Each variant is run with
+Laurent's rule, and additionally with the Pol
 method (`fmm_method='pol'`) if its `obj` supports it -- so Pol columns appear
 only for the versions that actually implement it (no hand-maintained list).
 
@@ -53,7 +55,22 @@ def discover_variants():
     return variants
 
 
-VARIANTS = discover_variants()
+def select_variants(variants):
+    """Apply the optional comma-separated ``GRCWA_VARIANTS`` label filter."""
+    value = os.environ.get("GRCWA_VARIANTS")
+    if not value:
+        return variants
+    wanted = {label.strip() for label in value.split(",") if label.strip()}
+    selected = [variant for variant in variants if variant[0] in wanted]
+    missing = wanted.difference(label for label, _, _ in selected)
+    if missing:
+        available = ", ".join(label for label, _, _ in variants)
+        raise SystemExit("Unknown GRCWA_VARIANTS label(s): "
+                         f"{', '.join(sorted(missing))}. Available: {available}")
+    return selected
+
+
+VARIANTS = select_variants(discover_variants())
 
 # Ikarus factorization -> column suffix. Laurent is the direct rule (the one
 # grcwa's default implements), Li the classic inverse rule, NV the normal-vector

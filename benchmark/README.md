@@ -17,6 +17,12 @@ root. Each suite is run with Laurent's rule and, if its `obj` implements
 versions that actually support it. The column label is the directory name with
 the leading `grcwa` stripped (`grcwa-weiliang-013` → `weiliang-013`).
 
+Set `GRCWA_VARIANTS` to a comma-separated list of those labels to restrict the
+grcwa variants without moving or deleting package directories. For example,
+`GRCWA_VARIANTS=fork` runs only `fork[Laurent]` and, when supported,
+`fork[Pol]`. Ikarus remains an independent suite and still runs all three of its
+factorization modes.
+
 On top of that family, **Ikarus** — a separate code with a separate API — adds
 `ikarus[Laurent]`, `ikarus[Li]` and `ikarus[NV]` when it is installed
 (`pip install ikarus-rcwa`); see [Ikarus, the independent
@@ -204,25 +210,52 @@ in every installed codebase. It writes `conv_results.{json,csv}`.
 python benchmark/conv_run.py
 ```
 
+The convergence worker accepts separate order grids for the two patterned
+dimensionalities:
+
+```bash
+set GRCWA_NG1D_FROM_Q2D=1
+set GRCWA_Q2D=1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,51,53,55,57,59,61
+set GRCWA_MAX2D=3721
+```
+
+`GRCWA_NG1D` normally contains exact total 1D order counts. The night job instead
+sets `GRCWA_NG1D_FROM_Q2D=1`, which gives 1D the sorted union of every requested
+`q` and `q²`; this keeps dense low-order samples while reaching the same total
+order ceiling as 2D. `GRCWA_Q2D` contains per-axis counts, so its final `61`
+point retains `61² = 3721` total orders. All counts must be positive and odd so
+the same points are representable in Ikarus.
+
+Every result-producing solve is timed. If its first measurement is faster than
+`GRCWA_FAST_THRESHOLD_MS` (1000 ms in the night job), it receives
+`GRCWA_FAST_REPEAT=3` total measurements and keeps the minimum; slower solves
+run exactly once. The raw timing is retained, while a monotonic timing curve is
+formed separately for each suite, factorization and dimensionality.
+
+Set `GRCWA_CACHE=1` to checkpoint every successful point under
+`GRCWA_CACHE_DIR`. Numerical results and machine-specific timing samples are
+stored separately, allowing interrupted sweeps and extended order lists to
+resume without recalculating existing points. `GRCWA_REFRESH_TIMING=1` refreshes
+timings while retaining cached numerical results. Errors are never cached. The
+runner prints each structure and order before solving it, so a long high-order
+solve is visible in the live console and log.
+
+The convergence report uses `GRCWA_CONV_TOL` (default `1e-4`) and requires at
+least two consecutive measured points within tolerance. A lone crossing is
+reported as provisional.
+
 Reference per case:
 
-* **groups A/A2** — the exact Airy result, and the asymptotic effective-medium
-  film.
-* **group D** — Ikarus's faithful normal-vector column at the highest order run.
-  Laurent is still percent-level wrong at *every* order this sweep reaches on
-  these cases, so its high-order value would be a useless reference; the
-  normal-vector one has settled by `q ≈ 15` and is the whitepaper's own published
-  number, which keeps the comparison falsifiable.
-* **groups B/C** — the highest-`nG` Laurent result (the rule that provably
-  converges in the limit, if slowly). To use your own external RCWA instead, edit
-  the `ref` field of a case in `conv_results.json` before plotting; the two
-  external references already committed here are `moose_reference.json` and
-  `ikarus_reference.json`.
+* **exact 0D anchors** — the Airy result.
+* **patterned cases covered by Moose** — the external Moose reference, retaining
+  its provisional marker for 2D cases that have not fully settled.
+* **remaining cases** — Ikarus's normal-vector value at the highest order run.
+  Highest-order Laurent is used only as a fallback when Ikarus is unavailable.
 
 ## Plotting
 
-After a run, the two plotters read the exported files and write PNGs next to
-themselves (both are git-ignored):
+After a run, the plotters read the exported files and write PNGs next to
+themselves (all are git-ignored):
 
 ```bash
 python benchmark/plot_benchmark.py   # reads results.csv      -> bench_*.png
@@ -232,9 +265,40 @@ python benchmark/plot_moose.py       # reads conv_results.json + moose_reference
 
 `plot_benchmark.py` shows R/T/A per suite, timing, the Pol-port-faithfulness and
 Laurent-agreement cross-checks, and direct-vs-faithful reflectance. `plot_conv.py`
-shows the error-decay (log-log), the raw `R(nG)` settling, accuracy-vs-walltime
-for the hardest cases, and the 0D analytic anchors.
+shows the error-decay (log-log), the raw `R(nG)` settling, raw R-vs-walltime for
+every case, the raw measurements plus grouped timing model, accuracy-vs-walltime
+for the hardest cases, and the 0D analytic anchors. The raw-R convergence and
+Moose figures also have a `_tight.png` copy whose per-case vertical range is
+`R_ref +/- 0.01`; error/log figures do not. `conv_run.py` additionally writes
+`conv_convergence.csv` with the first sustained `1e-4` convergence point and its
+raw and estimated solve time.
 
 In both, colour is the **codebase** and linestyle the **factorization rule**:
 solid for the direct (Laurent) rule, and a distinct broken style for each
 faithful one — `--` Pol (grcwa), `-.` Li and `:` NV (Ikarus).
+
+## Night job
+
+`run_overnight.bat` is the convergence-first job. It runs only fork Laurent/Pol
+and Ikarus Laurent/Li/NV and skips the redundant single-order benchmark. The
+first snapshot contains every odd `q` through 15 (225 total 2D orders). Each
+following snapshot appends one odd order, through `q = 61` (3721 total 2D
+orders), reruns only the missing solves through the persistent cache, and then
+overwrites every `conv_*.png` with the enlarged dataset. Moose plots are produced
+once from the final successful snapshot. The derived 1D grid reaches the same
+225- and 3721-order ceilings at those two endpoints.
+
+```bat
+benchmark\run_overnight.bat quick
+benchmark\run_overnight.bat
+benchmark\run_overnight.bat refresh-timing
+```
+
+The quick profile exercises the same growth path with two snapshots (`1,3`, then
+`1,3,5`). The normal night job has 24 snapshots and reuses all compatible cached
+points. `refresh-timing` deliberately uses one full-grid pass so cached timings
+are refreshed once rather than at every snapshot. The job requires all five
+selected columns and every requested order; an error, skipped high-order point,
+or missing timing makes it exit nonzero while retaining successful cache
+checkpoints for the next run. Any other command-line argument is rejected instead
+of accidentally starting the full night profile.

@@ -25,17 +25,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # ---- which conv_results columns to draw ------------------------------------
-WHITELIST = ["grcwaProjects[Laurent]", "weiliang-013[Pol]", "fork"]
+WHITELIST = ["grcwaProjects[Laurent]", "ikarus", "fork"]
 # WHITELIST = None   # <- draw ALL columns present in conv_results
 # WHITELIST = ["orig-0.1.2", "weiliang-013", "grcwaProjects", "codex",
 #              "original-grcwaProjects", "fork"]   # every variant, both rules
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = HERE
+OUT = os.environ.get("GRCWA_PLOT_OUTPUT_DIR", HERE)
+os.makedirs(OUT, exist_ok=True)
 FLOOR = 1e-7
+TIGHT_DELTA_R = 0.01
 
-CONV = json.load(open(os.path.join(HERE, "conv_results.json")))
-MOOSE = json.load(open(os.path.join(HERE, "moose_reference.json")))
+CONV = json.load(open(os.environ.get(
+    "GRCWA_CONV_JSON", os.path.join(HERE, "conv_results.json"))))
+MOOSE = json.load(open(os.environ.get(
+    "GRCWA_MOOSE_JSON", os.path.join(HERE, "moose_reference.json"))))
 conv_cases = CONV["cases"]
 moose_cases = MOOSE["cases"]
 all_cols = CONV["columns"]
@@ -159,7 +163,7 @@ ncol = 3
 nrow = int(np.ceil(len(cases) / ncol))
 
 
-def grid(kind):
+def grid(kind, tight=False):
     fig, axes = plt.subplots(nrow, ncol, figsize=(6.4 * ncol, 4.1 * nrow),
                              squeeze=False)
     for i, case in enumerate(cases):
@@ -191,6 +195,8 @@ def grid(kind):
                             label="Moose", zorder=5)
         if kind != "error" and ref is not None:
             ax.axhline(ref, color="k", ls="--", lw=0.8, alpha=0.6)
+            if tight:
+                ax.set_ylim(ref - TIGHT_DELTA_R, ref + TIGHT_DELTA_R)
         prov = ""
         if case in moose_cases and moose_cases[case].get("ref_provisional"):
             prov = "  (prov. ref)"
@@ -211,11 +217,20 @@ f1.suptitle("conv_results vs Moose: |R(N) - R_ref|   (x = total retained orders)
             fontsize=13, fontweight="bold")
 f1.tight_layout()
 f1.savefig(f"{OUT}/moose_compare_error.png", dpi=150, bbox_inches="tight")
+plt.close(f1)
 
 f2 = grid("raw")
 f2.suptitle("conv_results vs Moose: raw R   (black = Moose; dashed line = reference)",
             fontsize=13, fontweight="bold")
 f2.tight_layout()
 f2.savefig(f"{OUT}/moose_compare_raw.png", dpi=150, bbox_inches="tight")
+plt.close(f2)
+
+f3 = grid("raw", tight=True)
+f3.suptitle("conv_results vs Moose: raw R, tight view (R_ref +/- 0.01)",
+            fontsize=13, fontweight="bold")
+f3.tight_layout()
+f3.savefig(f"{OUT}/moose_compare_raw_tight.png", dpi=150, bbox_inches="tight")
+plt.close(f3)
 
 print("\nfigures written to", OUT)
