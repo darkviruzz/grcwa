@@ -95,6 +95,20 @@ def merge(reference, rows):
     return changes
 
 
+def new_reference():
+    """An empty reference file, ready for :func:`merge` to fill in."""
+    return {
+        "software": "Moose",
+        "note": ("External independent RCWA reference, R as a FRACTION (0..1). "
+                 "Sweep keys are Moose max orders m (2m+1 retained per axis); "
+                 "2D keys are \"(m,m)\". Points are produced by "
+                 "benchmark/moose/moose_convergence_bench.cs and merged with "
+                 "benchmark/moose/moose_csv_to_json.py, which rejects any row "
+                 "whose R+T+A does not come out to 1."),
+        "cases": {},
+    }
+
+
 def total_orders(key):
     """Total retained orders for a sweep key -- the same reading plot_moose.py
     uses: keys are Moose max orders m, so q = 2m+1 per axis."""
@@ -128,6 +142,11 @@ def main(argv=None):
                         help="reference file to merge into (default: %(default)s)")
     parser.add_argument("--dry-run", action="store_true",
                         help="print what would change, write nothing")
+    parser.add_argument("--create", action="store_true",
+                        help="start a fresh reference file instead of merging "
+                             "into an existing one. Required when --json does "
+                             "not exist yet, so that a mistyped path fails "
+                             "loudly rather than quietly creating a file")
     parser.add_argument("--energy-tol", type=float, default=1e-6,
                         help="allowed deviation of R+T+A from 1 (default: %(default)s)")
     parser.add_argument("--skip-case", action="append", default=[],
@@ -152,8 +171,17 @@ def main(argv=None):
         print("no usable rows in %s" % args.csv, file=sys.stderr)
         return 1
 
-    with open(args.json) as handle:
-        reference = json.load(handle)
+    if os.path.exists(args.json) and not args.create:
+        with open(args.json) as handle:
+            reference = json.load(handle)
+    elif args.create:
+        reference = new_reference()
+        if os.path.exists(args.json):
+            print("--create: replacing the existing %s" % args.json)
+    else:
+        print("%s does not exist. Pass --create to start a fresh one."
+              % args.json, file=sys.stderr)
+        return 1
 
     changes = merge(reference, rows)
     print("%d runs read, %d sweep points added or changed"

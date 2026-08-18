@@ -151,7 +151,7 @@
         "(4,4)": 0.4098956358626387,
         "(5,5)": 0.39658260521034855,
         "(7,7)": 0.3985881376977292,
-        "(10,10)": 0.39878384777269654,
+        "(10,10)": 0.39871211525575584,
         "(20,20)": 0.39820947749375957,
         "(15,15)": 0.3984362565314464
       }
@@ -162,13 +162,13 @@
       "ref": 0.155574,
       "ref_provisional": true,
       "sweep": {
-        "(1,1)": 0.111494,
-        "(2,2)": 0.13765,
-        "(3,3)": 0.115623,
-        "(4,4)": 0.157051,
-        "(5,5)": 0.148151,
-        "(7,7)": 0.153782,
-        "(10,10)": 0.158877,
+        "(1,1)": 0.08539591607260213,
+        "(2,2)": 0.13725103084780274,
+        "(3,3)": 0.11888424489576194,
+        "(4,4)": 0.15585167176258258,
+        "(5,5)": 0.1487572602801709,
+        "(7,7)": 0.156354226511783,
+        "(10,10)": 0.15796119731551816,
         "(15,15)": 0.156272,
         "(20,20)": 0.155574
       }
@@ -186,7 +186,7 @@
         "(4,4)": 0.5811232581996212,
         "(5,5)": 0.6715458839641015,
         "(7,7)": 0.6671045675316296,
-        "(10,10)": 0.6720806741499147,
+        "(10,10)": 0.6713616618760316,
         "(15,15)": 0.6566851109996652,
         "(20,20)": 0.6484916679760402,
         "(30,30)": 0.648343
@@ -207,11 +207,28 @@
       },
       "ref": 0.10017435130934725,
       "ref_provisional": true
+    },
+    "D2_ikarus_cylinder_TE": {
+      "dim": 2,
+      "pol": "TE",
+      "sweep": {
+        "(1,1)": 0.9526636561993077,
+        "(2,2)": 0.8032143917311987,
+        "(3,3)": 0.8391245392138882,
+        "(4,4)": 0.8587338810176186,
+        "(5,5)": 0.8718711597752095,
+        "(7,7)": 0.8901532028500283,
+        "(10,10)": 0.9048548492710922
+      },
+      "ref": 0.9048548492710922,
+      "ref_provisional": true
     }
   },
   "_provenance": {
     "script": "benchmark/moose/moose_convergence_bench.cs",
-    "C1b_Si_pillars_diffract": "sweep is the ORIGINAL manual Moose entry. The script's own run of this case lost the cross-polarized half of the propagating off-axis orders (R+T+A came out at 65-94%%) and was rejected; it is the one 2D case in the battery with propagating off-axis orders. Re-run with the fixed script to replace these.",
-    "D2_ikarus_cylinder_TE": "not present: the script's run built a circle of radius 0.60*period (the third Atom argument is a radius, not a diameter), which overfills the cell and gave R=0.027 against grcwa/Ikarus 0.95. Re-run with the fixed script."
+    "note": "Points carry R+T+A = 1 to within 2e-16. Most come from the run made after the percent, circular-atom and cross-polarization fixes; the exceptions are listed under 'older_points'.",
+    "older_points": "1D m=1000 and the 2D points above (10,10) predate the last run, whose per-solve budget cut the sweep short. The 1D ones and C1's (15,15) / (20,20) come from the earlier percent-era run, rescaled -- valid, because those cases were never touched by the circular-atom or cross-polarization bugs. C1b (15,15)/(20,20) and C2 (15,15)/(20,20)/(30,30) are the original manual Moose entries.",
+    "validation": "1D (groups A, B, D1) reproduces the original manual Moose entries to all six recorded digits. 2D lands nearest the well-factorized references of benchmark/night_run_2: C1 0.39871 vs Pol 0.38896 / Li 0.38996 / NV 0.39065; C2 0.67136 vs Li 0.67233; D2 0.90485 vs Li 0.91802. C1b and D2 are still rising at (10,10) (nG=441) and are not converged there.",
+    "manual_baseline_superseded": "C1b_Si_pillars_diffract held the manual entries up to (10,10) while the script's first run was rejected for lost cross-polarized flux. The fixed run agrees with those manual values to under 2% from (4,4) up and replaces them."
   }
 }

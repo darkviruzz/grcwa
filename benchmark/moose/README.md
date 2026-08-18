@@ -78,11 +78,27 @@ visible so the choice stays auditable.
 **Validation.** Every 1D case reproduces the values that were originally entered
 into Moose by hand, to all six digits those were recorded with — `B1_Si_grating_TE`
 at `m = 5/10/20` gives `0.397683 / 0.380807 / 0.379884`, and so on across
-groups A, B and D1. The 2D rectangular cases land within a few tenths of a
-percent of the manual entries (`C1_Si_pillars`: `0.39821` against `0.39748`),
-which is the FFT-refinement difference described below: the manual runs used
-Moose's default refinement, this script holds the absolute unit-cell grid
-constant across the sweep.
+groups A, B and D1.
+
+On 2D the battery is its own hardest test, and Moose lands next to the
+well-factorized codes rather than next to Laurent's rule — which is what a
+mature RCWA implementation should do:
+
+| case | Moose | Pol | Li | NV | Laurent |
+|---|---|---|---|---|---|
+| `C1_Si_pillars` | 0.39871 | 0.38896 | 0.38996 | 0.39065 | 0.45327 |
+| `C2_Au_holes` | 0.67136 | 0.69010 | 0.67233 | 0.67995 | 0.80877 |
+| `D2_ikarus_cylinder_TE` | 0.90485 | 0.94258 | 0.91802 | 0.94214 | 0.95585 |
+
+Do not read those last two rows as converged: `C1b` and `D2` are still rising at
+`(10,10)` (`nG = 441`), the highest order that run reached. Comparing Moose
+against grcwa with Laurent's rule at low order is not a fair yardstick either —
+that column is the slowest to converge on exactly these cases.
+
+The small offsets against the manual entries (`C1_Si_pillars`: `0.39871`
+against `0.39748`) are the FFT-refinement difference described below: the manual
+runs used Moose's default refinement, this script holds the absolute unit-cell
+grid constant across the sweep.
 
 ## Checking a script without Moose
 
@@ -216,3 +232,20 @@ rows are listed with the reason rather than dropped quietly.
 | `--energy-tol` | how far `R + T + A` may sit from `1` (default `1e-6`) |
 | `--skip-case NAME` | drop a case entirely; repeatable. For a run whose *geometry* is known wrong, which no energy check can catch |
 | `--legacy-percent` | read a CSV from before the percent fix: divide by 100 and check the balance against 100 |
+| `--create` | start a fresh reference file instead of merging into an existing one |
+
+**Starting over from nothing.** If `moose_reference.json` does not exist — a
+clean checkout, or you simply want to recompute everything — pass `--create`:
+
+```bash
+python benchmark/moose/moose_csv_to_json.py <output_dir>/moose_conv.csv --create
+```
+
+That writes the whole file, wrapper and all, from the CSV alone. It is required
+rather than automatic so that a mistyped `--json` path fails loudly instead of
+quietly creating a stray file.
+
+The `moose_sweep.json` the Moose script itself writes (and echoes at the end of
+its console output) is the same data and is already filtered by the energy
+check, but it is only the inner `cases` block — no wrapper, no `note`, and no
+timing file. `--create` is the tidier route.
