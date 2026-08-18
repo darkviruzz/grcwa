@@ -62,10 +62,27 @@ the empirical scaling exponent `p` in `t_solve ~ nG^p`.
 `R` and `T` are **summed over all propagating diffraction orders**, because that
 is what grcwa's `RT_Solve` returns. Evanescent orders carry no flux, so the sum
 is restricted to the propagating window `|m| <= n * period / lambda` — much
-cheaper than asking for all 1001 orders. The `energy` column
-(`R + T + GetAbsorption()`, which is `1` exactly iff the sums reproduce Moose's
-own internal totals) is the check that nothing was missed; the console prints it
-as `|1-E|` and it should sit at round-off.
+cheaper than asking for all 1001 orders.
+
+The `energy` column (`R + T + GetAbsorption()`, which is `1` exactly iff the
+sums reproduce Moose's own internal totals) is what polices all of this. The
+console prints it as `|1-E|`; it should sit at round-off, and a row where it
+does not is printed in red, marked `energy` instead of `ok`, and refused by the
+merge script. Both bugs above were caught by this column rather than by reading
+the numbers — treat it as the primary result, not a diagnostic.
+
+The `harvest` column records which polarization reading was kept, and
+`R_te_tm` / `R_both` / `R_in` (with their own energy columns) keep all three
+visible so the choice stays auditable.
+
+**Validation.** Every 1D case reproduces the values that were originally entered
+into Moose by hand, to all six digits those were recorded with — `B1_Si_grating_TE`
+at `m = 5/10/20` gives `0.397683 / 0.380807 / 0.379884`, and so on across
+groups A, B and D1. The 2D rectangular cases land within a few tenths of a
+percent of the manual entries (`C1_Si_pillars`: `0.39821` against `0.39748`),
+which is the FFT-refinement difference described below: the manual runs used
+Moose's default refinement, this script holds the absolute unit-cell grid
+constant across the sweep.
 
 ## Checking a script without Moose
 
@@ -120,18 +137,48 @@ made of the `hi` material. The bar sits at a different position inside the cell
 than in grcwa, which cannot matter at normal incidence: shifting the whole
 grating sideways does not change diffraction efficiencies.
 
-**Circular atom (case `D2`).** The help calls the third argument of
-`Atom(posX, posY, r, material)` a *radius*, but `unit_tests_structures.cs`
+**Circular atom (case `D2`).** The third argument of
+`Atom(posX, posY, r, material)` is the **radius**, relative to the period. The
+help says so; the shipped unit test misleads. `unit_tests_structures.cs`
 (`TestAtom.TestCircular`) asserts for `Atom(0.2, 0.3, 0.2, mat)`:
 
 ```
 GetStartX() == 0.1     GetStopX() == 0.3     GetWidthX() == 0.2
 ```
 
-i.e. `start = pos - arg/2`: the argument is the **diameter**. The shipped unit
-test wins over the help, so `D2`'s radius `0.30` (in units of the period) is
-passed as `0.60`. If your Moose build disagrees, flip `CIRCLE_ARG_IS_RADIUS` —
-the `SHOW_STRUCTURES` dry run makes that a ten-second check.
+i.e. `start = pos - arg/2`, which reads like a diameter — but those getters
+describe a bounding box that does **not** agree with what the solver
+rasterizes. Trusting them cost a run: passing `0.60` for `D2`'s radius `0.30`
+built a circle of radius `0.60 * period`, which overfills the unit cell (95 %
+silicon, only the corners left as air) and collapsed `R` from `0.95` to
+`0.027`. Cross-checked against grcwa, an overfilled `r = 0.60` circle gives
+`R ~ 0.024` converging toward Moose's `0.0267`, while every other reading
+(diameter `0.6`, square, uniform film) is off by orders of magnitude. So the
+radius goes in unscaled. `CIRCLE_ARG_IS_RADIUS = false` restores the old, wrong
+reading.
+
+Note that this is invisible in the `SHOW_STRUCTURES` dry run:
+`ConvertToCaModel` draws a **side view**, and a side view cannot tell a pillar
+of the right diameter from one of the wrong diameter once it spans most of the
+cell. Judge 2D geometry by the numbers, not the picture.
+
+**Efficiencies come back in percent.** `GetEfficiencyForGivenOrder` and
+`GetAbsorption` return percent, not fractions — undocumented, and
+`R + T + A = 100` is how it announces itself. Everything harvested is scaled by
+`SCALE = 0.01`, so the CSV and `moose_reference.json` hold fractions. If a build
+ever returns fractions, the energy balance says so immediately: it lands on `1`
+with the right `SCALE` and on `100` with the wrong one.
+
+**Output polarization.** The default `rOutputPolarization = "in"` returns only
+the **co-polarized** output. On a 2D lattice the off-axis orders (both indices
+non-zero) convert polarization, so their cross-polarized half is silently
+dropped and up to a third of the flux disappears. It cannot be seen on 1D at
+normal incidence, nor on any 2D case where only order `(0,0)` propagates — in
+this battery `C1b_Si_pillars_diffract` is the single case that exposes it. Every
+sum is therefore formed three ways (`"TE"+"TM"`, `"both"`, `"in"`) and the
+reading that conserves energy is kept; all three are written to the CSV, and a
+row where none of them conserves energy gets status `energy` instead of `ok`, so
+it can never be merged as if it were sound.
 
 **FFT refinement.** `Rcwa`'s `rRefinementFactorEpsFT` multiplies the *order
 count*, so the absolute sampling of the unit cell would grow with `m` and the
@@ -155,6 +202,17 @@ python benchmark/moose/moose_csv_to_json.py <output_dir>/moose_conv.csv
 
 merges the runs into `benchmark/moose_reference.json` (existing cases are
 updated point by point, untouched cases are left alone) and writes the timings
-into a sibling `benchmark/moose_timing.json`. `--dry-run` shows the diff without
-writing; `--json <path>` targets a different reference file. After that,
+into a sibling `benchmark/moose_timing.json`. After that,
 `python benchmark/plot_moose.py` picks the new points up.
+
+Every row is checked before it is allowed in — `status` must be `ok`, `R` must
+lie in `[0, 1]`, and `R + T + A` must equal `1` within `--energy-tol`. Rejected
+rows are listed with the reason rather than dropped quietly.
+
+| flag | what it does |
+|---|---|
+| `--dry-run` | show the diff, write nothing |
+| `--json <path>` | target a different reference file |
+| `--energy-tol` | how far `R + T + A` may sit from `1` (default `1e-6`) |
+| `--skip-case NAME` | drop a case entirely; repeatable. For a run whose *geometry* is known wrong, which no energy check can catch |
+| `--legacy-percent` | read a CSV from before the percent fix: divide by 100 and check the balance against 100 |

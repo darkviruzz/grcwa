@@ -13,7 +13,8 @@
 //   * solves each of them at every truncation order of the sweep below,
 //   * sums the efficiencies over all *propagating* diffraction orders to get
 //     the total R and T (that is what grcwa's RT_Solve returns, so the numbers
-//     are directly comparable),
+//     are directly comparable), as fractions and over both output
+//     polarizations -- see the two notes on percent and polarization below,
 //   * times setup / solve / harvest separately and records the process memory,
 //   * appends every finished run to a CSV *immediately* (so an aborted run is
 //     not a lost run), and can resume a previously aborted sweep,
@@ -57,15 +58,36 @@
 //   than in grcwa, which is irrelevant at normal incidence (a lateral shift of
 //   the whole grating cannot change the diffraction efficiencies).
 //
-// CIRCULAR ATOM (case D2).  The help calls the third argument of
-//   Atom(posX, posY, r, material) a "radius", but unit_tests_structures.cs
+// CIRCULAR ATOM (case D2).  The third argument of Atom(posX, posY, r, mat) is
+//   the RADIUS, relative to the period -- the help is right about this and the
+//   shipped unit test is misleading.  unit_tests_structures.cs
 //   (TestAtom.TestCircular) asserts for Atom(0.2, 0.3, 0.2, mat):
 //       GetStartX() == 0.1, GetStopX() == 0.3, GetWidthX() == 0.2
-//   i.e. start = pos - arg/2:  the argument is the *diameter*, not the radius.
-//   The shipped unit test wins over the help, so D2's radius 0.30 (in units of
-//   the period) is passed as 0.60.  Flip CIRCLE_ARG_IS_RADIUS below if your
-//   Moose build disagrees -- ConvertToCaModel + SHOW_STRUCTURES makes that a
-//   ten second check.
+//   i.e. start = pos - arg/2, which reads like a diameter -- but those getters
+//   describe a bounding box that does NOT agree with what the solver
+//   rasterizes.  Passing 0.60 for D2's radius 0.30 produced a circle of radius
+//   0.60*period, which overfills the unit cell (95% Si, only the corners left
+//   as air) and collapsed R from 0.95 to 0.027.  Cross-checked against grcwa:
+//   an overfilled r=0.60 circle gives R ~ 0.024 and converges toward Moose's
+//   0.0267, while every other reading (diameter 0.6, square, uniform film) is
+//   off by orders of magnitude.  So the radius goes in unscaled.
+//   CIRCLE_ARG_IS_RADIUS = false restores the old, wrong reading.
+//
+// EFFICIENCIES ARE IN PERCENT.  GetEfficiencyForGivenOrder and GetAbsorption
+//   return percent, not fractions -- undocumented, and R + T + A = 100 is how
+//   it shows up.  Everything harvested is scaled by SCALE = 0.01 so the CSV
+//   holds fractions like the rest of the benchmark.
+//
+// OUTPUT POLARIZATION.  The default rOutputPolarization = "in" returns only
+//   the co-polarized output.  On a 2D lattice the off-axis orders (both
+//   indices non-zero) convert polarization, so their cross-polarized half is
+//   silently dropped and up to a third of the flux goes missing.  It is
+//   invisible on 1D at normal incidence and on any 2D case where only order
+//   (0,0) propagates -- in this battery C1b_Si_pillars_diffract is the single
+//   case that exposes it.  Every sum is therefore formed three ways ("TE"+"TM",
+//   "both", "in") and the one that conserves energy is kept; all three land in
+//   the CSV, and a row where none of them conserves energy is marked "energy"
+//   rather than "ok" so it cannot be merged as if it were sound.
 //
 // FFT REFINEMENT.  Rcwa's rRefinementFactorEpsFT multiplies the *order count*,
 //   so the absolute sampling of the unit cell would grow with m and the
@@ -129,6 +151,11 @@ public class BenchResult
     public int    Q;            // retained orders per axis = 2m+1
     public double NG;           // total retained orders (q or q*q)
     public double R, T, A, R0, T0, Energy;
+    // the three polarization readings of the order sums, see SumEfficiency
+    public double RTeTm, TTeTm, ETeTm;
+    public double RBoth, TBoth, EBoth;
+    public double RIn,   TIn,   EIn;
+    public string Harvest = "";
     public double TSetup, TSolve, TReap, TTotal;
     public double MemBefore, MemAfter, MemPeak;
     public int    FftRefinement;
@@ -174,8 +201,11 @@ public class MooseScript
     const  int    FFT_REFINEMENT_MIN  = 2;
     const  int    FFT_REFINEMENT_MAX  = 200;
 
-    // See the header note on the circular atom constructor.
-    static bool   CIRCLE_ARG_IS_RADIUS = false;
+    // See the header note on the circular atom constructor: Moose's solver
+    // reads the third argument of Atom(x, y, r, mat) as a RADIUS relative to
+    // the period.  Set false only to reproduce the old (wrong) diameter
+    // reading.
+    static bool   CIRCLE_ARG_IS_RADIUS = true;
 
     // Show a side view of every structure before solving (visual check that
     // the geometry really is what you meant).  Costs a few clicks, saves hours.
@@ -194,6 +224,18 @@ public class MooseScript
 
     // Cache handed to Rcwa (bytes).  0 is fine, the geometry changes every run.
     const  long   RCWA_CACHE   = 0;
+
+    // Moose reports efficiencies and GetAbsorption() in PERCENT.  The rest of
+    // the benchmark (and benchmark/moose_reference.json) works in fractions,
+    // so everything harvested is multiplied by this.  Set it to 1.0 if a build
+    // ever returns fractions -- the energy balance says which one you have:
+    // it lands on 1 with the right SCALE and on 100 with the wrong one.
+    const  double SCALE = 0.01;
+
+    // How far R + T + A may sit from 1 before a row is rejected.  Round-off on
+    // these sums is ~1e-9; anything above 1e-6 means orders or a polarization
+    // component went missing, which is a broken row, not a noisy one.
+    const  double ENERGY_TOL = 1.0e-6;
 
     static readonly CultureInfo INV = CultureInfo.InvariantCulture;
 
@@ -351,7 +393,8 @@ public class MooseScript
             Atom[] atoms = new Atom[1];
             if (c.Shape == "circle")
             {
-                // see header: the third argument is the full width, not r
+                // see header: the third argument is the radius, relative to
+                // the period, exactly as structures.py defines it
                 double arg = CIRCLE_ARG_IS_RADIUS ? c.Radius : 2.0 * c.Radius;
                 atoms[0] = new Atom(0.5, 0.5, arg, c.Hi());
             }
@@ -383,29 +426,46 @@ public class MooseScript
         return m;
     }
 
+    // One order's efficiency, in the requested output polarization.  Returns 0
+    // for anything Moose does not know about, so an unsupported order or an
+    // unsupported polarization string can never abort a run -- the energy
+    // balance below is what notices that something went missing.
+    static double Eff(Rcwa solver, char tr, int ox, int oy, string pol)
+    {
+        try { return solver.GetEfficiencyForGivenOrder(tr, ox, oy, pol); }
+        catch (Exception) { return 0.0; }
+    }
+
     // Total efficiency of a half space: sum over every propagating order.
     // Evanescent orders carry no flux, so restricting the sum to the
     // propagating window is exact -- and much cheaper than asking Moose for
-    // all 2m+1 orders when m is 500.  The energy balance R+T+A printed for
-    // every run is the check that nothing was missed.
-    static double SumEfficiency(Rcwa solver, char tr, int mx, int my)
+    // all 2m+1 orders when m is 500.
+    //
+    // The polarization argument is the trap here.  Moose's default is
+    // rOutputPolarization = "in", and that returns only the co-polarized
+    // output: on a 2D lattice the off-axis orders (both indices non-zero)
+    // convert polarization, so their cross-polarized half is silently dropped
+    // and the energy balance comes out short.  It only shows up on a 2D case
+    // that actually has propagating off-axis orders -- in this battery that is
+    // C1b_Si_pillars_diffract alone, which is why it went unnoticed at first.
+    //
+    // So every sum is formed three ways -- explicit "TE"+"TM", the "anything
+    // else sums both outputs" reading of the help, and the plain default --
+    // and RunOne keeps whichever one conserves energy.  HARVEST_TE_TM etc.
+    // name the three in the CSV.
+    static void SumEfficiency(Rcwa solver, char tr, int mx, int my,
+                              out double te_tm, out double both, out double def)
     {
-        double sum = 0.0;
+        te_tm = 0.0; both = 0.0; def = 0.0;
         for (int ox = -mx; ox <= mx; ox++)
         {
             for (int oy = -my; oy <= my; oy++)
             {
-                try
-                {
-                    sum += solver.GetEfficiencyForGivenOrder(tr, ox, oy);
-                }
-                catch (Exception)
-                {
-                    // an order Moose does not know about contributes nothing
-                }
+                te_tm += Eff(solver, tr, ox, oy, "TE") + Eff(solver, tr, ox, oy, "TM");
+                both  += Eff(solver, tr, ox, oy, "both");
+                def   += Eff(solver, tr, ox, oy, "in");
             }
         }
-        return sum;
     }
 
     static int RefinementFor(BenchCase c, int m)
@@ -419,6 +479,11 @@ public class MooseScript
         return refinement;
     }
 
+    // Process.WorkingSet64 comes back as 0 on some Mono builds (it did on the
+    // Windows host this was first run on), so fall back down a chain until
+    // something reports a real number.  GC.GetTotalMemory is the last resort
+    // and only sees managed memory -- Moose's matrices are unmanaged C++, so
+    // that number is a floor, not the truth.
     static double MemoryMb()
     {
         try
@@ -426,8 +491,19 @@ public class MooseScript
             System.Diagnostics.Process p =
                 System.Diagnostics.Process.GetCurrentProcess();
             p.Refresh();
-            return (double)p.WorkingSet64 / (1024.0 * 1024.0);
+            double ws = (double)p.WorkingSet64 / (1024.0 * 1024.0);
+            if (ws > 0.0) return ws;
+            double pm = (double)p.PrivateMemorySize64 / (1024.0 * 1024.0);
+            if (pm > 0.0) return pm;
         }
+        catch (Exception) { }
+        try
+        {
+            double ews = (double)Environment.WorkingSet / (1024.0 * 1024.0);
+            if (ews > 0.0) return ews;
+        }
+        catch (Exception) { }
+        try { return (double)GC.GetTotalMemory(false) / (1024.0 * 1024.0); }
         catch (Exception) { return -1.0; }
     }
 
@@ -438,9 +514,11 @@ public class MooseScript
             System.Diagnostics.Process p =
                 System.Diagnostics.Process.GetCurrentProcess();
             p.Refresh();
-            return (double)p.PeakWorkingSet64 / (1024.0 * 1024.0);
+            double pk = (double)p.PeakWorkingSet64 / (1024.0 * 1024.0);
+            if (pk > 0.0) return pk;
         }
-        catch (Exception) { return -1.0; }
+        catch (Exception) { }
+        return MemoryMb();
     }
 
 
@@ -487,17 +565,42 @@ public class MooseScript
             int my_t = Math.Min(my, (c.Dim == 2)
                                     ? PropagatingOrders(c.SubN, c.Period) : 0);
 
-            r.R  = SumEfficiency(solver, 'r', mx_r, my_r);
-            r.T  = SumEfficiency(solver, 't', mx_t, my_t);
-            r.R0 = solver.GetEfficiencyForGivenOrder('r', 0, 0);
-            r.T0 = solver.GetEfficiencyForGivenOrder('t', 0, 0);
-            r.A  = solver.GetAbsorption();
+            double r_te, r_both, r_def, t_te, t_both, t_def;
+            SumEfficiency(solver, 'r', mx_r, my_r, out r_te, out r_both, out r_def);
+            SumEfficiency(solver, 't', mx_t, my_t, out t_te, out t_both, out t_def);
+            r.A  = solver.GetAbsorption() * SCALE;
+            r.R0 = Eff(solver, 'r', 0, 0, "TE") + Eff(solver, 'r', 0, 0, "TM");
+            r.T0 = Eff(solver, 't', 0, 0, "TE") + Eff(solver, 't', 0, 0, "TM");
+            r.R0 *= SCALE; r.T0 *= SCALE;
+
+            // GetAbsorption() is 1 - R_moose - T_moose, so R + T + A is 1
+            // exactly iff our order sums reproduce Moose's internal totals.
+            // Keep the polarization convention that actually conserves energy;
+            // all three are written to the CSV so the choice stays auditable.
+            r.RTeTm = r_te * SCALE;   r.TTeTm = t_te * SCALE;
+            r.RBoth = r_both * SCALE; r.TBoth = t_both * SCALE;
+            r.RIn   = r_def * SCALE;  r.TIn   = t_def * SCALE;
+            r.ETeTm = r.RTeTm + r.TTeTm + r.A;
+            r.EBoth = r.RBoth + r.TBoth + r.A;
+            r.EIn   = r.RIn   + r.TIn   + r.A;
+
+            if (Math.Abs(1.0 - r.ETeTm) <= ENERGY_TOL)
+            { r.R = r.RTeTm; r.T = r.TTeTm; r.Energy = r.ETeTm; r.Harvest = "TE+TM"; }
+            else if (Math.Abs(1.0 - r.EBoth) <= ENERGY_TOL)
+            { r.R = r.RBoth; r.T = r.TBoth; r.Energy = r.EBoth; r.Harvest = "both"; }
+            else if (Math.Abs(1.0 - r.EIn) <= ENERGY_TOL)
+            { r.R = r.RIn; r.T = r.TIn; r.Energy = r.EIn; r.Harvest = "in"; }
+            else
+            {
+                // Nothing conserves energy -- report the best candidate but
+                // mark the row, so it can never be merged as if it were sound.
+                r.R = r.RTeTm; r.T = r.TTeTm; r.Energy = r.ETeTm;
+                r.Harvest = "none";
+                r.Status  = "energy";
+                r.Note    = "no polarization convention conserved energy";
+            }
             sw.Stop();
             r.TReap = sw.Elapsed.TotalSeconds;
-
-            // GetAbsorption() is 1 - R_moose - T_moose, so this is 1 exactly
-            // iff our order sums reproduce Moose's internal totals.
-            r.Energy = r.R + r.T + r.A;
         }
         catch (Exception e)
         {
@@ -552,9 +655,12 @@ public class MooseScript
         return dir;
     }
 
+    // R/T/A are FRACTIONS (0..1), not percent -- see SCALE.
     const string CSV_HEADER =
         "case,group,dim,pol,column,m_moose,q,nG,fft_refinement,"
-        + "R,T,A,R0,T0,energy,"
+        + "R,T,A,R0,T0,energy,harvest,"
+        + "R_te_tm,T_te_tm,energy_te_tm,R_both,T_both,energy_both,"
+        + "R_in,T_in,energy_in,"
         + "t_setup_s,t_solve_s,t_harvest_s,t_total_s,"
         + "mem_before_mb,mem_after_mb,mem_peak_mb,status,note";
 
@@ -567,6 +673,10 @@ public class MooseScript
             + r.FftRefinement.ToString(INV) + ","
             + G(r.R) + "," + G(r.T) + "," + G(r.A) + ","
             + G(r.R0) + "," + G(r.T0) + "," + G(r.Energy) + ","
+            + r.Harvest + ","
+            + G(r.RTeTm) + "," + G(r.TTeTm) + "," + G(r.ETeTm) + ","
+            + G(r.RBoth) + "," + G(r.TBoth) + "," + G(r.EBoth) + ","
+            + G(r.RIn) + "," + G(r.TIn) + "," + G(r.EIn) + ","
             + F(r.TSetup, 6) + "," + F(r.TSolve, 6) + ","
             + F(r.TReap, 6) + "," + F(r.TTotal, 6) + ","
             + F(r.MemBefore, 1) + "," + F(r.MemAfter, 1) + ","
@@ -609,8 +719,8 @@ public class MooseScript
             while ((line = sr.ReadLine()) != null)
             {
                 string[] f = line.Split(',');
-                if (f.Length < 23) continue;
-                if (f[22] != "ok") continue;            // retry anything failed
+                if (f.Length < 33) continue;
+                if (f[32] != "ok") continue;            // retry anything failed
                 BenchResult r = new BenchResult();
                 r.Name   = f[0];
                 r.M      = (int)ParseD(f[5]);
@@ -623,13 +733,17 @@ public class MooseScript
                 r.R0     = ParseD(f[12]);
                 r.T0     = ParseD(f[13]);
                 r.Energy = ParseD(f[14]);
-                r.TSetup = ParseD(f[15]);
-                r.TSolve = ParseD(f[16]);
-                r.TReap  = ParseD(f[17]);
-                r.TTotal = ParseD(f[18]);
-                r.MemBefore = ParseD(f[19]);
-                r.MemAfter  = ParseD(f[20]);
-                r.MemPeak   = ParseD(f[21]);
+                r.Harvest = f[15];
+                r.RTeTm  = ParseD(f[16]); r.TTeTm = ParseD(f[17]); r.ETeTm = ParseD(f[18]);
+                r.RBoth  = ParseD(f[19]); r.TBoth = ParseD(f[20]); r.EBoth = ParseD(f[21]);
+                r.RIn    = ParseD(f[22]); r.TIn   = ParseD(f[23]); r.EIn   = ParseD(f[24]);
+                r.TSetup = ParseD(f[25]);
+                r.TSolve = ParseD(f[26]);
+                r.TReap  = ParseD(f[27]);
+                r.TTotal = ParseD(f[28]);
+                r.MemBefore = ParseD(f[29]);
+                r.MemAfter  = ParseD(f[30]);
+                r.MemPeak   = ParseD(f[31]);
                 r.Status = "ok";
                 r.Note   = "from csv";
                 done[r.Name + "@" + r.M.ToString(INV)] = r;
@@ -830,7 +944,13 @@ public class MooseScript
                 per_case[c.Name].Add(r);
 
                 string line;
-                if (r.Status == "ok")
+                if (r.Status == "failed")
+                {
+                    line = "  " + Pad(c.Name, 26) + " m=" + Pad(m.ToString(INV), 4)
+                        + " FAILED: " + r.Note;
+                    Io.error(line);
+                }
+                else
                 {
                     line = "  " + Pad(c.Name, 26)
                         + " m=" + Pad(m.ToString(INV), 4)
@@ -839,15 +959,14 @@ public class MooseScript
                         + " T=" + Pad(F(r.T, 6), 10)
                         + " A=" + Pad(F(r.A, 6), 10)
                         + " |1-E|=" + Pad(E(Math.Abs(1.0 - r.Energy)), 10)
+                        + " " + Pad(r.Harvest, 6)
                         + " solve=" + Pad(F(r.TSolve, 3) + "s", 10)
                         + " mem=" + F(r.MemAfter, 0) + "MB";
-                    Io.output(line);
-                }
-                else
-                {
-                    line = "  " + Pad(c.Name, 26) + " m=" + Pad(m.ToString(INV), 4)
-                        + " FAILED: " + r.Note;
-                    Io.error(line);
+                    // A row whose energy balance is broken is still printed
+                    // with its numbers -- they are the evidence -- but in red
+                    // and with status "energy", so it is never merged as sound.
+                    if (r.Status == "ok") Io.output(line);
+                    else Io.error(line + "   <-- ENERGY CHECK FAILED");
                 }
 
                 if (csv != null)
