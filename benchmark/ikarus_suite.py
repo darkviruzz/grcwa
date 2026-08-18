@@ -102,8 +102,9 @@ def solve(s, q, fmm, native=True):
         mask, nk_pair = ST.layer_mask(s)
         # Pin the layer's own resolution to the shared mask so Ikarus uses those
         # exact pixels instead of resampling to its 4M+1 anti-aliasing grid --
-        # identical geometry in both codes is the point. Safe here because every
-        # mask (2048 in 1D, 256 in 2D) already exceeds 4M+1 at the orders run.
+        # identical geometry in both codes is the point. conv_run/conv_worker
+        # validate that the shared mask resolves every requested difference
+        # order before any solve starts.
         rc.add_layer(s["d"] * UNIT, mask, [_index(nk) for nk in nk_pair],
                      resolution=mask.shape)
     rc.add_uniform_layer(np.inf, _index(s["sub"]))             # substrate

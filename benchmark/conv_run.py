@@ -31,7 +31,8 @@ import subprocess
 import tempfile
 
 import structures as ST
-from conv_worker import order_lists, planned_points
+from conv_worker import (order_lists, planned_points,
+                         validate_cell_resolution)
 from timing_model import (annotate_estimates, build_timing_models,
                           convergence_report)
 
@@ -264,6 +265,12 @@ def validate_worker_results(attempts, included_columns, structures, ng1d, q2d,
 
 def main():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
+    ng1d, q2d, max2d = order_lists()
+    try:
+        validate_cell_resolution(ST.STRUCTURES, ng1d, q2d, max2d)
+    except ValueError as exc:
+        raise SystemExit("Invalid convergence configuration: %s" % exc)
+
     # column label -> worker output {case: {info, sweep}}
     columns, data, attempts = [], {}, {}
     mandatory_columns = set()
@@ -293,7 +300,6 @@ def main():
             print(f"   (no ikarus columns: {res.get('_error', 'unavailable')}"
                   f"  --  pip install ikarus-rcwa)")
 
-    ng1d, q2d, max2d = order_lists()
     explicitly_required = _requested_columns(
         os.environ.get("GRCWA_REQUIRED_COLUMNS"))
     required_columns = mandatory_columns | explicitly_required

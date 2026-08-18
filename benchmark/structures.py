@@ -29,7 +29,11 @@ import numpy as np
 FREQ = 1.0                       # lambda = 1 micron
 QABS = 1e7                       # tiny loss regularizes Rayleigh anomalies
 FREQC = FREQ * (1 + 1j / 2 / QABS)
-NX_1D = 2048
+# The overnight sweep derives 1D total orders from the 2D q values and reaches
+# q = 61**2 = 3721.  Convolution matrices need every difference order, so the
+# real-space grid must contain at least 2*q-1 = 7441 samples.  Use the next
+# power of two for efficient FFTs.
+NX_1D = 8192
 NX_2D = 256
 
 # materials at lambda = 1 um  (n, k)

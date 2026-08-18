@@ -224,7 +224,11 @@ sets `GRCWA_NG1D_FROM_Q2D=1`, which gives 1D the sorted union of every requested
 `q` and `q²`; this keeps dense low-order samples while reaching the same total
 order ceiling as 2D. `GRCWA_Q2D` contains per-axis counts, so its final `61`
 point retains `61² = 3721` total orders. All counts must be positive and odd so
-the same points are representable in Ikarus.
+the same points are representable in Ikarus. Before starting any worker, the
+runner also verifies that each real-space cell grid has at least `2q-1` samples
+per active axis, which is required to represent every Fourier difference order
+without aliasing. The final 1D point needs 7441 samples and uses the shared
+8192-sample grid.
 
 Every result-producing solve is timed. If its first measurement is faster than
 `GRCWA_FAST_THRESHOLD_MS` (1000 ms in the night job), it receives

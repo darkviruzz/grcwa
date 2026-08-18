@@ -12,7 +12,7 @@ if BENCHMARK not in sys.path:
 
 from conv_cache import PointCache  # noqa: E402
 from conv_worker import (cached_timed_solve, order_lists, planned_points,
-                         timed_solve)  # noqa: E402
+                         timed_solve, validate_cell_resolution)  # noqa: E402
 from conv_run import validate_worker_results  # noqa: E402
 from timing_model import (build_timing_models, convergence_report,
                           estimate_ms)  # noqa: E402
@@ -85,6 +85,32 @@ class BenchmarkPipelineTests(unittest.TestCase):
         self.assertEqual(calls, [5, 5, 5])
         self.assertEqual(subsecond["timing_runs"], 3)
         self.assertAlmostEqual(subsecond["time_ms"], 600.0)
+
+    def test_cell_resolution_preflight_checks_difference_orders(self):
+        structures = [{"dim": 1}, {"dim": 2}]
+        # The repository defaults must cover the complete overnight schedule.
+        validate_cell_resolution(
+            structures, [1, 1089, 3721], [1, 33, 61], 3721)
+        validate_cell_resolution(
+            structures, [1, 1089, 3721], [1, 33, 61], 3721,
+            nx_1d=8192, nx_2d=256)
+
+        with self.assertRaisesRegex(ValueError,
+                                    "need.*7441.*NX_1D=2048"):
+            validate_cell_resolution(
+                structures, [1, 1089, 3721], [1, 33, 61], 3721,
+                nx_1d=2048, nx_2d=256)
+
+        with self.assertRaisesRegex(ValueError,
+                                    "need.*121x121.*NX_2D=120"):
+            validate_cell_resolution(
+                structures, [1], [1, 33, 61], 3721,
+                nx_1d=8192, nx_2d=120)
+
+        # A cap below q=61 excludes that 2D point from the required grid.
+        validate_cell_resolution(
+            [{"dim": 2}], [1], [1, 33, 61], 1089,
+            nx_1d=1, nx_2d=65)
 
     def test_cache_reuses_physics_timing_and_extends_orders(self):
         with tempfile.TemporaryDirectory() as directory:

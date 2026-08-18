@@ -101,6 +101,43 @@ def planned_points(structure, ng1d, q2d, max2d=0):
             if not max2d or q * q <= max2d]
 
 
+def validate_cell_resolution(structures, ng1d, q2d, max2d=0,
+                             nx_1d=None, nx_2d=None):
+    """Reject order grids whose Fourier differences would alias.
+
+    A symmetric retained block with ``q`` harmonics spans difference orders
+    ``-(q-1)..(q-1)`` and therefore needs at least ``2*q-1`` real-space
+    samples along that axis.  Check the resolved plans rather than only the
+    environment strings so the 2D safety cap is respected.
+    """
+    nx_1d = ST.NX_1D if nx_1d is None else int(nx_1d)
+    nx_2d = ST.NX_2D if nx_2d is None else int(nx_2d)
+    dimensions = {structure["dim"] for structure in structures}
+    issues = []
+
+    if 1 in dimensions:
+        q_1d = max(ng1d)
+        required_1d = 2 * q_1d - 1
+        if nx_1d < required_1d:
+            issues.append(
+                "1D needs at least %d samples for q=%d, got NX_1D=%d"
+                % (required_1d, q_1d, nx_1d))
+
+    planned_2d = [q for q in q2d if not max2d or q * q <= max2d]
+    if 2 in dimensions and planned_2d:
+        q_2d = max(planned_2d)
+        required_2d = 2 * q_2d - 1
+        if nx_2d < required_2d:
+            issues.append(
+                "2D needs at least %dx%d samples for q=(%d,%d), got "
+                "NX_2D=%d" % (required_2d, required_2d, q_2d, q_2d,
+                               nx_2d))
+
+    if issues:
+        raise ValueError("Cell resolution too coarse for convergence sweep: "
+                         + "; ".join(issues))
+
+
 def timed_solve(structure, q, label, solve, fast_repeat=3,
                 fast_threshold_ms=1000.0, clock=time.perf_counter):
     """Solve once for physics and timing, repeating only a fast first solve."""
@@ -351,6 +388,7 @@ def main():
         0.0, float(os.environ.get("GRCWA_FAST_THRESHOLD_MS", "1000")))
     refresh = env_flag("GRCWA_REFRESH_TIMING", False)
     ng1d, q2d, max2d = order_lists()
+    validate_cell_resolution(ST.STRUCTURES, ng1d, q2d, max2d)
 
     solve, source_paths, versions = configure_solver(suite, module_name, fmm)
     if solve is None:
