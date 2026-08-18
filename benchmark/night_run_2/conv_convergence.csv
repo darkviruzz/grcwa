@@ -15,7 +15,7 @@ B1_Si_grating_TE,ikarus[Laurent],external_moose,False,0.0001,converged,49,81,49,
 B1_Si_grating_TE,ikarus[Li],external_moose,False,0.0001,converged,49,81,49,49,0.3798333203914547,6.832039145465707e-05,23.663099855184555,23.672900162637234
 B1_Si_grating_TE,ikarus[NV],external_moose,False,0.0001,converged,49,81,49,49,0.3798333203914542,6.832039145415747e-05,76.59919932484627,76.63599960505965
 B1_Si_grating_TM,fork[Laurent],external_moose,False,0.0001,not_reached,,,,,,,,
-B1_Si_grating_TM,fork[Pol],external_moose,False,0.0001,provisional_crossing,49,,49,49,0.21373836569117122,2.736569117120502e-05,56.41059949994087,53.86540014296771
+B1_Si_grating_TM,fork[Pol],external_moose,False,0.0001,converged,1089,1225,1089,1089,0.21378789139530843,7.689139530842048e-05,16154.73959967494,15818.673199974008
 B1_Si_grating_TM,ikarus[Laurent],external_moose,False,0.0001,not_reached,,,,,,,,
 B1_Si_grating_TM,ikarus[Li],external_moose,False,0.0001,converged,289,361,289,289,0.21378718155637025,7.618155637023616e-05,855.0864001736045,914.480400271714
 B1_Si_grating_TM,ikarus[NV],external_moose,False,0.0001,converged,289,361,289,289,0.2137871815594667,7.618155946667593e-05,1031.280000694096,1007.4522998183976
@@ -45,12 +45,12 @@ C2_Au_holes,ikarus[Laurent],external_moose,True,0.0001,not_reached,,,,,,,,
 C2_Au_holes,ikarus[Li],external_moose,True,0.0001,not_reached,,,,,,,,
 C2_Au_holes,ikarus[NV],external_moose,True,0.0001,not_reached,,,,,,,,
 D1_ikarus_hcg_TM,fork[Laurent],external_ikarus_NV,True,0.0001,not_reached,,,,,,,,
-D1_ikarus_hcg_TM,fork[Pol],external_ikarus_NV,True,0.0001,converged,841,961,841,841,0.10009614117729228,7.834709613711854e-05,9299.043499864638,13566.083239533378
+D1_ikarus_hcg_TM,fork[Pol],external_ikarus_NV,True,0.0001,converged,841,961,841,841,0.10009614117729228,7.730038953882024e-05,9299.043499864638,13566.083239533378
 D1_ikarus_hcg_TM,ikarus[Laurent],external_ikarus_NV,True,0.0001,not_reached,,,,,,,,
-D1_ikarus_hcg_TM,ikarus[Li],external_ikarus_NV,True,0.0001,converged,49,81,49,49,0.10026729685322153,9.280857979213075e-05,23.672900162637234,23.672900162637234
-D1_ikarus_hcg_TM,ikarus[NV],external_ikarus_NV,True,0.0001,converged,49,81,49,49,0.10026729685336061,9.280857993121394e-05,76.553700491786,76.63599960505965
+D1_ikarus_hcg_TM,ikarus[Li],external_ikarus_NV,True,0.0001,converged,37,49,37,37,0.1002554807711421,8.203920431100464e-05,18.82540062069893,19.171800464391705
+D1_ikarus_hcg_TM,ikarus[NV],external_ikarus_NV,True,0.0001,converged,37,49,37,37,0.10025548077121758,8.203920438648593e-05,68.04930046200752,68.87759920209648
 D2_ikarus_cylinder_TE,fork[Laurent],external_ikarus_NV,True,0.0001,not_reached,,,,,,,,
-D2_ikarus_cylinder_TE,fork[Pol],external_ikarus_NV,True,0.0001,provisional_crossing,729,,27,"(27,27)",0.9421507908263644,8.495948174980228e-06,7710.090500302613,7888.235212042393
+D2_ikarus_cylinder_TE,fork[Pol],external_ikarus_NV,True,0.0001,not_reached,,,,,,,,
 D2_ikarus_cylinder_TE,ikarus[Laurent],external_ikarus_NV,True,0.0001,not_reached,,,,,,,,
 D2_ikarus_cylinder_TE,ikarus[Li],external_ikarus_NV,True,0.0001,not_reached,,,,,,,,
-D2_ikarus_cylinder_TE,ikarus[NV],external_ikarus_NV,True,0.0001,provisional_crossing,961,,31,"(31,31)",0.9421422948781895,0.0,12299.107699654996,12211.378432493082
+D2_ikarus_cylinder_TE,ikarus[NV],external_ikarus_NV,True,0.0001,provisional_crossing,1369,,37,"(37,37)",0.9427652864799093,0.0,29058.939900249243,28739.329224730416
