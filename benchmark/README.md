@@ -134,13 +134,18 @@ disagreement with Moose. On `C1b`, at matched order, feeding the nominal
 rectangle instead of the mask closes 82 % of that gap (0.0090 → 0.0016).
 
 **That is what the 2D Moose disagreement is**, and it is not a factorization
-difference. Laurent, Pol, Li and the normal-vector method cannot converge to
-different limits on one structure, and on `C1`/`C1b` they do not: they agree to
-≤0.001 with each other and miss Moose by 0.008–0.010, because all four are
-solving the *mask* while Moose solves the nominal pillar. The 1D column is the
-control — identical conventions, exact masks, agreement with Moose to five or
-six digits (`B1_Si_grating_TM` 0.213710, `B2_HCG_TM` 0.873329,
-`D1_ikarus_hcg_TM` 0.100173, all matching).
+difference. Different rules cannot converge to different limits on one
+structure, and at `nG = 2601` they do not: on `C1b` all four columns land within
+0.0008 of each other (0.14535 / 0.14544 / 0.14539, with even Laurent at
+0.14606), on `C1` the three faithful rules do (0.38979 / 0.39016 / 0.38974;
+Laurent is still crawling in from above at 0.42744, as it does on every
+high-contrast case). They miss Moose by 0.008–0.010 *together*, because they are
+all solving the mask while Moose solves the nominal pillar.
+
+The 1D cases are the control: same conventions, same rules, exact masks — and
+there the faithful columns match Moose to five or six digits
+(`B1_Si_grating_TM` 0.213710, `B2_HCG_TM` 0.873329, `D1_ikarus_hcg_TM`
+0.100173, `B3_Au_slits_TM` 0.79330 vs 0.79326).
 
 `D2_ikarus_cylinder_TE` is the one 2D case where the mask is *not* the problem.
 There Moose is simply not converged: its points follow `R(m) = R∞ − c/m` with an

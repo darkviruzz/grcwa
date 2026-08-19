@@ -16,6 +16,14 @@ among them -- they are referenced against Ikarus instead, in plot_conv.py).
 x-axis = total retained orders. Moose 2D keys "(m,m)" are read as m per-axis
 orders -> m*m total (matching the (q,q) convention in structures.py); 1D keys
 "N" -> N. If Moose actually means max-order m (2m+1 per axis), change parse_key.
+
+CAVEAT on the 2D panels. `ref_of` uses the Moose value as the reference, so the
+error curves show |R(N) - R_moose|. On the 1D cases that is a convergence error.
+On C1/C1b/C2 it is not: those masks misrepresent their own nominal pillars by
+0.4-0.8 % in width (benchmark/geometry_fidelity.py), which is worth about 0.01
+in R -- more than the gap being plotted. The 2D error curves therefore flatten
+out on a geometry mismatch, not on a convergence floor. See "The mask is not the
+structure" in benchmark/README.md before reading anything into them.
 """
 import os
 import json

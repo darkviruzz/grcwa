@@ -7,7 +7,17 @@ The geometry of every patterned layer is rasterized once by :func:`layer_mask`
 and consumed by *both* backends -- grcwa (a flattened eps vector, this module's
 :func:`solve`) and Ikarus (an integer topology + material list, see
 benchmark/ikarus_suite.py). Neither backend rasterizes on its own, so a
-cross-code disagreement can never be a pixel-grid artifact.
+disagreement *between those two* can never be a pixel-grid artifact.
+
+It can be one against any third code, though, and on the 2D cases it is: at
+NX_2D = 256 the rect branch renders the pillars 0.4-0.8 % off their nominal
+width (0.6*256 = 153.6 is not an integer, and see the sampling note in
+:func:`layer_mask`), which moves R by about 0.01 -- an order of magnitude more
+than the truncation error at the top of the sweep, and the whole of the 2D
+disagreement with the external Moose reference. benchmark/geometry_fidelity.py
+measures it; "The mask is not the structure" in benchmark/README.md is the
+write-up. Fixing it invalidates every recorded 2D value, so the mask is left as
+it is until that re-run is wanted.
 
 Order-counting convention
 -------------------------
@@ -139,6 +149,14 @@ def layer_mask(s):
         X, Y = np.meshgrid(c, c, indexing="ij")
         inside = (X - 0.5) ** 2 + (Y - 0.5) ** 2 <= s["radius"] ** 2
     else:
+        # Left-edge sampling with a strict "<", kept so the published rect
+        # values stay bit-comparable.  It is NOT faithful: 0.6*256 = 153.6 and
+        # 0.4*256 = 102.4 are not integers, so C1 comes out 153/256 (-0.39 %)
+        # and C1b 103/256 (+0.59 %); on C2 the edge lands exactly on a sample
+        # and the strict "<" drops a pixel on each side (127 instead of 128,
+        # -0.78 %).  Cell centres with "<=" and an NX_2D divisible by 5 (260
+        # works for all three) would render every rectangle exactly -- at the
+        # price of recomputing every 2D number on record.
         x = np.linspace(0, 1, NX_2D, endpoint=False)
         X, Y = np.meshgrid(x, x, indexing="ij")
         inside = (np.abs(X - 0.5) < s["ax"] / (2 * Lam)) & \
