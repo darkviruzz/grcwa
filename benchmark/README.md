@@ -152,6 +152,19 @@ There Moose is simply not converged: its points follow `R(m) = R∞ − c/m` wit
 rms residual of 1.8e-4 and `R∞ = 0.9401`, against the python normal-vector value
 0.9428.
 
+Everything else that could differ between the three constructs was checked and
+does not: the refractive indices, the wavelength (`FREQC` detunes grcwa by 5e-8
+and nothing else), the periods, depths and substrates, the polarization (all four
+2D cases are C4v-symmetric, so TE = TM at normal incidence anyway), the retained
+order *set* (grcwa's parallelogramic truncation returns exactly the symmetric
+−M…M block that Ikarus's `(M, M)` and Moose's `(m, m)` retain), the percent
+scaling and order summation on the Moose side (its energy balance closes to
+2e-16), and the finite-thickness end layers, which enter grcwa's S-matrix as a
+phase only. Two battery-wide controls back that up: `A1b_slab_glass` fixes the
+substrate and the illumination side to seven digits — every 1D case is
+free-standing, so the 0D one is what tests that — and `B3_Au_slits_TM` fixes the
+absorption sign convention on gold to 6e-5.
+
 Fixing the mask is one change in `structures.layer_mask` — sample cell centres,
 as the circle branch already does, and pick `NX_2D` so that `ax/Λ · NX_2D` is an
 integer (`260` suffices for all three rect cases; an axis-aligned rectangle whose
