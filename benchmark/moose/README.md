@@ -278,12 +278,30 @@ row where none of them conserves energy gets status `energy` instead of `ok`, so
 it can never be merged as if it were sound.
 
 **FFT refinement.** `Rcwa`'s `rRefinementFactorEpsFT` multiplies the *order
-count*, so the absolute sampling of the unit cell would grow with `m` and the
-permittivity would be resolved differently at every point of a convergence
-sweep. grcwa rasterizes on a fixed `256 x 256` grid instead. `FFT_MODE = 1`
-reproduces that by choosing the refinement per run so the absolute grid stays
-near `FFT_TARGET_SAMPLES`; the effective value is recorded per row in the
-`fft_refinement` column.
+count*, so the absolute sampling of the unit cell grows with `m` and the
+permittivity is resolved differently at every point of a convergence sweep.
+grcwa rasterizes on a fixed `256 x 256` grid instead, and `FFT_MODE = 1` was
+written to reproduce that by choosing the refinement per run.
+
+**It does not work, and the sweep on record never did what that says.** Moose
+clamps the refinement to **[30, 100]**: the RCWA dialog refuses anything outside
+that range, and the API substitutes silently — passing `13` returns a result
+bit-identical to passing `30`, while `50` and `100` return different numbers, so
+the value does matter and the `13` was raised. `ceil(256/q)` is 13 at `q = 21`
+and 5 at `q = 61`, both under the floor, so **every 2D point ran at refinement
+30** and the absolute grid grew with the order after all (630 samples at
+`q = 21`, 1830 at `q = 61`). `FFT_MODE = 1` and `FFT_MODE = 0` with
+`FFT_REFINEMENT = 30` are the same run on this build. The constants now carry
+Moose's real range so the `fft_refinement` column records what was used rather
+than what was requested.
+
+That costs accuracy, though not geometry — `0.6 * 30 * q` is an integer for
+every `q`, so the pillar is rendered exactly. On `C1` at `m = 10` with the
+nominal geometry, refinement `30 → 0.398784`, `50 → 0.397764`, `100 → 0.397322`,
+extrapolating as `1/refinement` to `0.39688` against grcwa's and Ikarus's
+`0.396804` / `0.396956` on the same rectangle. Refinement 30 is worth ~0.0018 on
+that case by itself, and it is what is left of the Moose-to-python difference
+once the geometry is matched.
 
 **Group A 0D cases.** `A1_slab_air` / `A1b_slab_glass` are plain film stacks
 with no lateral structure. They still need *a* period, which is set to `0.5 µm`:
@@ -353,11 +371,11 @@ not the structure" section of [`benchmark/README.md`](../README.md).
 This script asks the same question from Moose's side. Three probes, all
 configurable at the top of the file:
 
-| probe | what it does |
-|---|---|
-| **A — geometry dump** | renders each patterned layer with `GetEpsilonDistributionsAsCaModel` at 64/100/256/300/512 and reports fill fraction, pillar width in pixels and the number of distinct permittivity values. Binary rasterization shows up as `levels = 2`; anything more means Moose area-weights its boundary pixels, which is what would let it hit the nominal geometry on a coarse grid. Seconds, no solving. |
-| **B — width sweep** | solves each 2D case with the atom set to the nominal size, to **the size the python mask actually rasterizes**, and to ±1 %/±2 %. If Moose at the python width reproduces the python numbers (printed in the console header for comparison), the 2D disagreement is the rasterization and nothing else. |
-| **C — refinement sweep** | `rRefinementFactorEpsFT` = 2…40 at fixed geometry, i.e. how much of Moose's own value depends on its eps sampling — and therefore whether the ±0.001 wobble along the 2D sweep comes from `FFT_MODE = 1` picking a different refinement at every order. |
+| probe | what it does | what it found |
+|---|---|---|
+| **A — geometry dump** | renders each patterned layer with `GetEpsilonDistributionsAsCaModel` at 64/100/256/300/512 and reports fill fraction, pillar width in pixels and the number of distinct permittivity values. Seconds, no solving. | **binary** (`levels = 2` everywhere) and rounding **outward**: `C1` at 256 is 155 px where `structures.py` takes 153 and 153.6 is exact. Both codes rasterize; they err in opposite directions. |
+| **B — width sweep** | solves each 2D case with the atom set to the nominal size, to **the size the python mask actually rasterizes**, and to ±1 %/±2 %. The python numbers are printed in the console header for comparison. | same sensitivity as python: on `C1b` at m = 10, nominal → mask width moves Moose by 0.010060 and Ikarus-Li by 0.010187. |
+| **C — refinement sweep** | `rRefinementFactorEpsFT` across Moose's whole accepted range, 30…100, at fixed geometry. | the value matters (`C1`, m = 10: 30 → 0.398784, 50 → 0.397764, 100 → 0.397322) and extrapolates onto the python value; see the FFT-refinement note below. |
 
 Probe B uses the same refinement rule as the main sweep (`ceil(256/q)`), so its
 `nominal` row is directly comparable to `moose_reference.json`.
@@ -369,6 +387,10 @@ fill fraction. **The `(0,0)` points currently in `moose_reference.json` fail tha
 test**: `C1_Si_pillars` reports 0.363252, which is R of a *solid silicon film* to
 seven digits, where the averaged medium gives 0.151138 (grcwa at `nG = 1`
 reproduces that exactly); `C2_Au_holes` reports 0.040000, R of a *bare air/glass
-interface*, where a gold-dominated average gives 0.973. Until the probe explains
-what Moose does with zero orders, those two points should not be plotted or
-merged.
+interface*, where a gold-dominated average gives 0.973.
+
+The width sweep settles what those points are: at `m = 0` the result **does not
+depend on the atom size at all** — `C1` returns 0.363252 for every width from
+−2 % to +2 %, `C1b` 0.039244, `D2` 0.021876. Moose ignores the geometry
+completely with zero orders. Those points are not low-order data, they are not
+data; drop them rather than plotting them.

@@ -63,9 +63,13 @@
 //    the fill fraction, the pillar width along the centre row, and whether any
 //    intermediate permittivity appears.  That answers directly whether Moose
 //    rasterizes binary (like the python battery) or area-weighted/analytic, and
-//    how big its atoms really are.  If the fill fraction comes out at the
-//    nominal 0.36 / 0.16 / 0.25 / 0.2827 independently of the resolution, Moose
-//    is solving the nominal structure and the python side is not.
+//    how big its atoms really are.
+//
+//    ANSWER, from the first run: binary -- levels = 2 at every resolution -- and
+//    it rounds OUTWARD.  C1 at 256 comes out 155 px wide where structures.py
+//    takes 153 and the exact value is 153.6; at 512 it is 309 where 307.2 would
+//    be exact.  So both codes rasterize, both are wrong, and they are wrong in
+//    opposite directions -- which is the whole 2D disagreement.
 //
 // B  WIDTH SWEEP (the decisive one).  Solves each 2D case at a fixed order with
 //    the atom width set to
@@ -79,11 +83,16 @@
 //        own eps sampling cannot resolve them, which is worth knowing too.
 //
 // C  REFINEMENT SWEEP.  Same case and order, nominal width, rRefinementFactorEpsFT
-//    = 2, 3, 5, 10, 20, 40.  Shows how much of Moose's own 2D value depends on
-//    its eps sampling -- i.e. whether the +-0.001 wobble along the Moose 2D
-//    sweep in moose_reference.json is the refinement changing with the order
-//    (FFT_MODE = 1 in moose_convergence_bench.cs picks refinement =
-//    ceil(256 / q), so the absolute grid jumps around between ~256 and ~305).
+//    over Moose's whole accepted range, 30 ... 100.  Shows how much of Moose's
+//    own 2D value depends on its eps sampling.
+//
+//    Three points of this are already in from the RCWA dialog (C1, m = 10,
+//    nominal geometry): 30 -> 0.398784, 50 -> 0.397764, 100 -> 0.397322, which
+//    extrapolates as ~1/refinement to 0.39688 -- against 0.396804 (q = 31) and
+//    0.396956 (q = 41) from grcwa and Ikarus on the same nominal rectangle.  So
+//    a converged Moose and a converged python agree to ~1e-4, and refinement 30
+//    (which is what the whole 2D sweep ran at, see FFT_REFINEMENT_MIN) accounts
+//    for ~0.0018 of the difference on C1 all by itself.
 //
 // ---------------------------------------------------------------------------
 // CONVENTIONS
@@ -175,21 +184,28 @@ public class MooseScript
     static readonly int[] ORDERS = { 0, 10, 15 };
 
     // Refinement factors for probe C.
-    static readonly int[] REFINEMENTS = { 2, 3, 5, 10, 20, 40 };
+    // Refinement factors for probe C.  Moose accepts only [30, 100] -- the RCWA
+    // dialog refuses anything outside it and the API substitutes silently, which
+    // is why the first version of this list (2, 3, 5, 10, 20, 40) would have
+    // measured 30, 30, 30, 30, 30, 40.
+    static readonly int[] REFINEMENTS = { 30, 40, 50, 65, 80, 100 };
 
     // Resolutions at which probe A renders the permittivity distribution.
     static readonly int[] DUMP_RES = { 64, 100, 256, 300, 512 };
 
     // Refinement used by probes A and B.  0 = use exactly the rule
     // moose_convergence_bench.cs uses with FFT_MODE = 1, i.e.
-    // ceil(FFT_TARGET_SAMPLES / q) clamped to [2, 200], so probe B's "nominal"
-    // row is directly comparable to the numbers already in
-    // benchmark/moose_reference.json.  A positive value pins the refinement
-    // instead (5 is Moose's own default).
+    // ceil(FFT_TARGET_SAMPLES / q) clamped to Moose's own [30, 100], so probe
+    // B's "nominal" row is directly comparable to the numbers already in
+    // benchmark/moose_reference.json.  A positive value pins the refinement.
+    //
+    // Note what that clamp does to the rule: ceil(256/q) is 13 at q = 21 and 5
+    // at q = 61, both below the floor, so the sweep runs every 2D point at 30
+    // and the "constant absolute grid" the mode was written for never happens.
     static int FIXED_REFINEMENT = 0;
     const int FFT_TARGET_SAMPLES = 256;
-    const int FFT_REFINEMENT_MIN = 2;
-    const int FFT_REFINEMENT_MAX = 200;
+    const int FFT_REFINEMENT_MIN = 30;
+    const int FFT_REFINEMENT_MAX = 100;
 
     static int RefinementFor(int m)
     {

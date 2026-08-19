@@ -148,6 +148,43 @@ normal-vector rule is the exception, 0.397477 vs 0.399886, because it builds its
 tangent field *from* the rendered grid — one more reason not to compare rules
 across rasterizations.)
 
+### Closing it from the Moose side
+
+`benchmark/moose/moose_geometry_probe.cs` asked Moose the same questions, and
+the answers close the chain:
+
+1. **Moose rasterizes too, and binary** — `levels = 2` at every resolution the
+   probe renders. But it rounds *outward*: `C1` at 256 comes out **155** px wide
+   where `structures.py` takes **153** and 153.6 would be exact. Both codes
+   rasterize, both are wrong, and they are wrong in opposite directions.
+2. **Moose has the same width sensitivity.** At m = 10 on `C1b`, moving the atom
+   from the nominal 0.400000 to the mask's 0.402344 moves Moose's R by
+   **0.010060** (0.157900 → 0.147840). The same step moves Ikarus-Li by
+   **0.010187**. Same structure, same physics, same response.
+3. **`FFT_MODE = 1` never worked on this build.** Moose clamps
+   `rRefinementFactorEpsFT` to **[30, 100]** — the RCWA dialog refuses anything
+   outside it, and the API substitutes silently: passing 13 gives a result
+   bit-identical to passing 30. Since `ceil(256/q)` is 13 at q = 21 and 5 at
+   q = 61, *every* 2D point of the recorded sweep ran at refinement 30, and the
+   absolute grid grew with the order (630 samples at q = 21, 1830 at q = 61) —
+   exactly what the mode was written to prevent. The constants now say [30, 100]
+   so the CSV records the refinement Moose actually used.
+4. **And that residual is the last of the difference.** From the RCWA dialog on
+   `C1` at m = 10 with the nominal geometry: refinement 30 → 0.398784, 50 →
+   0.397764, 100 → 0.397322. Extrapolated as `1/refinement` that is **0.39688**,
+   against **0.396804** (q = 31) and **0.396956** (q = 41) from grcwa and Ikarus
+   on the same nominal rectangle — agreement to ~1e-4. The 0.0012–0.0016 left
+   over after the geometry correction is Moose's own eps sampling, not physics.
+5. **The `(0,0)` points are confirmed broken.** In the width sweep at m = 0 the
+   result does not depend on the atom size at all — `C1` returns 0.363252 for
+   every width, `C1b` 0.039244, `D2` 0.021876 — so Moose ignores the geometry
+   entirely at zero orders. Those points must not be plotted or merged.
+
+The UI and the script agree exactly, incidentally: entering `C1` by hand at
+10/10 orders and fft-fac 30 gives 39.8784 %, bit for bit what the script
+reports. Whatever else differs between the two codes, the Moose side is one
+consistent solver.
+
 **That is what the 2D Moose disagreement is**, and it is not a factorization
 difference. Different rules cannot converge to different limits on one
 structure, and at `nG = 2601` they do not: on `C1b` all four columns land within

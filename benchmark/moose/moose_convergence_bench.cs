@@ -90,11 +90,29 @@
 //   rather than "ok" so it cannot be merged as if it were sound.
 //
 // FFT REFINEMENT.  Rcwa's rRefinementFactorEpsFT multiplies the *order count*,
-//   so the absolute sampling of the unit cell would grow with m and the
-//   permittivity would be resolved differently at every point of a convergence
-//   sweep.  grcwa rasterizes on a fixed 256x256 grid instead.  FFT_MODE = 1
-//   reproduces that: the refinement is chosen per run so the absolute grid
-//   stays ~FFT_TARGET_SAMPLES.  FFT_MODE = 0 uses a fixed refinement factor.
+//   so the absolute sampling of the unit cell grows with m and the permittivity
+//   is resolved differently at every point of a convergence sweep.  grcwa
+//   rasterizes on a fixed 256x256 grid instead, and FFT_MODE = 1 was written to
+//   reproduce that by choosing the refinement per run.
+//
+//   THAT DOES NOT WORK, and the numbers below say so.  Moose clamps the
+//   refinement to [30, 100]: the RCWA dialog refuses anything outside that, and
+//   passing 13 from this script gives a result bit-identical to passing 30
+//   (C1_Si_pillars at m = 10, nominal geometry: 0.398784 either way, while 50
+//   gives 0.397764 and 100 gives 0.397322 -- so the value does matter and 13
+//   was silently raised).  Since ceil(256/q) is 13 at q = 21 and 5 at q = 61,
+//   EVERY 2D point of a sweep runs at refinement 30, and the absolute grid grows
+//   with the order after all: 30*21 = 630 samples at q = 21, 30*61 = 1830 at
+//   q = 61.  FFT_MODE = 1 and FFT_MODE = 0 with FFT_REFINEMENT = 30 are the same
+//   run on this build.
+//
+//   It is not a geometry error -- 0.6 * 30 * q is an integer for every q, so the
+//   pillar is rendered exactly -- but it does leave a residual that shrinks like
+//   1/refinement.  Extrapolating the three points above gives R -> ~0.39688,
+//   against 0.396804 (q = 31) and 0.396956 (q = 41) from grcwa and Ikarus on the
+//   same nominal geometry.  So refinement 30 costs ~0.0018 on C1, and the
+//   remaining Moose-to-python difference after the geometry is fixed is this,
+//   not physics.
 // ---------------------------------------------------------------------------
 
 using System;
@@ -216,15 +234,23 @@ public class MooseScript
     // ~7400 x 7400 eigenproblem -- that one is hours, not minutes.
     static double MAX_SECONDS_PER_SOLVE = 600.0;
 
-    // FFT sampling of the unit cell (2D only, see header).
+    // FFT sampling of the unit cell (2D only, see the header note, which now
+    // carries the measurement).
     //   0 = fixed refinement factor FFT_REFINEMENT
     //   1 = pick the refinement per run so the absolute grid stays about
-    //       FFT_TARGET_SAMPLES (this is what grcwa does with NX_2D = 256)
+    //       FFT_TARGET_SAMPLES -- the intent was to match grcwa's fixed
+    //       NX_2D = 256, but Moose's own clamp defeats it: ceil(256/q) is
+    //       always below the floor of 30, so every 2D point lands on 30 and
+    //       mode 1 is identical to mode 0 with FFT_REFINEMENT = 30.
     static int    FFT_MODE            = 1;
     const  int    FFT_REFINEMENT      = 5;
     const  int    FFT_TARGET_SAMPLES  = 256;
-    const  int    FFT_REFINEMENT_MIN  = 2;
-    const  int    FFT_REFINEMENT_MAX  = 200;
+    // Moose's real range, measured in the RCWA dialog: it accepts nothing below
+    // 30 or above 100.  These used to say 2 and 200, which let this script hand
+    // over values Moose silently replaced -- the CSV then recorded a refinement
+    // that was never used.  Clamping here instead keeps the record honest.
+    const  int    FFT_REFINEMENT_MIN  = 30;
+    const  int    FFT_REFINEMENT_MAX  = 100;
 
     // See the header note on the circular atom constructor: Moose's solver
     // reads the third argument of Atom(x, y, r, mat) as a RADIUS relative to
@@ -525,15 +551,24 @@ public class MooseScript
         }
     }
 
+    // Every return goes through the clamp, 1D included: Moose accepts nothing
+    // outside [30, 100] and silently substitutes, so a value returned here that
+    // Moose would not take is a value the CSV records and the solver never used.
+    // (The 1D rows of earlier runs say fft_refinement = 5 and were computed at
+    // 30.  Harmless for the results -- the 1D masks are exact and those columns
+    // match grcwa to six digits -- but the column was fiction.)
+    static int Clamp(int refinement)
+    {
+        if (refinement < FFT_REFINEMENT_MIN) return FFT_REFINEMENT_MIN;
+        if (refinement > FFT_REFINEMENT_MAX) return FFT_REFINEMENT_MAX;
+        return refinement;
+    }
+
     static int RefinementFor(BenchCase c, int m)
     {
-        if (c.Dim != 2) return FFT_REFINEMENT;
-        if (FFT_MODE == 0) return FFT_REFINEMENT;
+        if (c.Dim != 2 || FFT_MODE == 0) return Clamp(FFT_REFINEMENT);
         int q = 2 * m + 1;
-        int refinement = (int)Math.Ceiling((double)FFT_TARGET_SAMPLES / (double)q);
-        if (refinement < FFT_REFINEMENT_MIN) refinement = FFT_REFINEMENT_MIN;
-        if (refinement > FFT_REFINEMENT_MAX) refinement = FFT_REFINEMENT_MAX;
-        return refinement;
+        return Clamp((int)Math.Ceiling((double)FFT_TARGET_SAMPLES / (double)q));
     }
 
     // Process.WorkingSet64 comes back as 0 on some Mono builds (it did on the
@@ -1098,9 +1133,23 @@ public class MooseScript
                   + " deg, conical " + F(CONICAL, 2) + " deg");
         Io.output(" sweep 1D (m) : " + Join(SWEEP_1D));
         Io.output(" sweep 2D (m) : " + Join(SWEEP_2D));
+        // Say what the run will actually do, not what the mode was meant to do:
+        // Moose's floor of FFT_REFINEMENT_MIN swallows ceil(256/q) for every
+        // q > 8, so mode 1 degenerates into a fixed refinement there and the
+        // absolute grid grows with the order after all.
         Io.output(" fft mode     : " + (FFT_MODE == 1
-                  ? "constant grid ~" + FFT_TARGET_SAMPLES.ToString(INV) + " samples"
-                  : "fixed refinement " + FFT_REFINEMENT.ToString(INV)));
+                  ? "target ~" + FFT_TARGET_SAMPLES.ToString(INV) + " samples"
+                  : "fixed " + FFT_REFINEMENT.ToString(INV))
+                  + ",  Moose accepts [" + FFT_REFINEMENT_MIN.ToString(INV) + ", "
+                  + FFT_REFINEMENT_MAX.ToString(INV) + "]"
+                  + (FFT_MODE == 1
+                     ? "  ->  refinement " + Clamp((int)Math.Ceiling(
+                           (double)FFT_TARGET_SAMPLES / 21.0)).ToString(INV)
+                       + " at q = 21, "
+                       + Clamp((int)Math.Ceiling(
+                           (double)FFT_TARGET_SAMPLES / 61.0)).ToString(INV)
+                       + " at q = 61 (absolute grid grows with q)"
+                     : ""));
         Io.output(" cpu cores    : " + Environment.ProcessorCount.ToString(INV)
                   + ",  parallel solves: " + WorkerCount().ToString(INV)
                   + (WorkerCount() > 1 ? "  (per-solve times are noisier)" : "")
