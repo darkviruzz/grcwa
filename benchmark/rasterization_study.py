@@ -384,7 +384,7 @@ def cmd_grid(args):
             print("%s: no exact grid (curved boundary) -- use `circle`" % name)
             continue
         grids = [base * k for k in (1, 2, 4, 8)][:args.n_grids]
-        print("\n%s, exactly representable geometry (N a multiple of %d), q = %d"
+        print("\n%s, exactly representable geometry (grids %d x 1,2,4,...), q = %d"
               % (name, base, args.q))
         cols = ["Laurent", "Laurent+sinc"] + (
             ["ik-laurent", "ik-li", "ik-normal"] if have_ikarus() else [])

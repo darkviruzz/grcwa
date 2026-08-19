@@ -114,7 +114,8 @@ matched grid, the one-line `sinc` **is** the analytic method.
 * `li` is nearly grid-free on an axis-aligned rectangle — 0.396256166 /
   0.396256715 / 0.396256868 over the same three grids, a spread of 7e-7.
 * `normal` (the normal-vector rule) is **not**: 0.399130762 / 0.400938302 /
-  0.402119764 — 3e-3 of drift with no sign of settling. See §4.
+  0.402119764 / 0.402848294 over N = 260 / 520 / 1040 / 2080 — 3.7e-3 of drift,
+  and still 7.3e-4 per doubling at the end. See §4.
 * A grey (non-binary) grid can still be passed through the public API by
   quantizing the distinct values into the material list, so subpixel
   experiments do not need a patched Ikarus. Patching
@@ -203,7 +204,7 @@ grid-dependent in a way the direct rule is not.
 | 260 | 0.397270590 | 0.397270590 | 0.399130762 |
 | 520 | 0.385865456 | 0.395534357 | 0.400938302 |
 | 1040 | 0.392567850 | 0.394896877 | 0.402119764 |
-| 2080 | 0.378795724 | 0.394955771 | — |
+| 2080 | 0.378795724 | 0.394955771 | 0.402848294 |
 
 * grcwa's `pol_sigma` is specified **in pixels**, so the physical smoothing
   length shrinks as `1/N` and the answer does not converge at all — it swings by
@@ -222,7 +223,8 @@ grid-dependent in a way the direct rule is not.
   width depend on the grid. Ikarus avoids exactly this with double-angle
   (orientation) diffusion. Adopting that encoding is the obvious fix.
 * Ikarus's `normal` already scales its blur physically (`max(nx,ny)/12` px =
-  period/12) but still drifts 3e-3 over N = 260 → 1040 on the square pillar,
+  period/12) but still drifts 3.7e-3 over N = 260 → 2080 on the square pillar
+  (+1.8e-3, +1.2e-3, +7.3e-4 per step — converging, but like `N^-0.6`),
   because the double-angle field is not piecewise constant around a corner and
   therefore does **not** reduce to `li` on a 2D axis-aligned shape (only on 1D).
 
