@@ -1,19 +1,24 @@
-"""Load a convergence run into tidy arrays.
+"""A convergence run (``conv_results.json``) as tidy arrays.
 
-Defaults to ``benchmark/night_run_2``; set ``GRCWA_CONV_RUN`` to point at
-another snapshot directory containing ``conv_results.json``.
+Same lookup convention as ``plot_conv.py``: ``GRCWA_CONV_JSON`` wins, otherwise
+``benchmark/conv_results.json``.  When no run has been exported yet, the
+committed ``night_run_2`` snapshot is used so the figures are reproducible from
+a fresh checkout.
 """
 import json
 import os
 
 import numpy as np
 
-BENCH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-RUN = os.environ.get("GRCWA_CONV_RUN", os.path.join(BENCH, "night_run_2"))
+HERE = os.path.dirname(os.path.abspath(__file__))
+_DEFAULT = os.path.join(HERE, "conv_results.json")
+_SNAPSHOT = os.path.join(HERE, "night_run_2", "conv_results.json")
+JSON = os.environ.get("GRCWA_CONV_JSON") or (
+    _DEFAULT if os.path.exists(_DEFAULT) else _SNAPSHOT)
 
-with open(os.path.join(RUN, "conv_results.json")) as _f:
+with open(JSON) as _f:
     J = json.load(_f)
-with open(os.path.join(BENCH, "moose_reference.json")) as _f:
+with open(os.path.join(HERE, "moose_reference.json")) as _f:
     MOOSE = json.load(_f)
 
 COLUMNS = J["columns"]

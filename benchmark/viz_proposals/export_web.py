@@ -4,10 +4,13 @@ Writes ``figures/conv_web.json``: per case, per column, the retained-order grid,
 R, |R - R_ref| and the modelled solve time -- everything the browser chart needs
 and nothing else.
 """
-import json
 import os
+import sys
 
-import conv_data as D
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import json
+
+import viz_conv as D
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUTDIR = os.environ.get("GRCWA_VIZ_OUT", os.path.join(HERE, "figures"))

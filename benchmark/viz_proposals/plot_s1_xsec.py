@@ -1,10 +1,13 @@
 import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np, matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle, Patch
-import palette as V
+import viz_palette as V
 
 
 from draw_xsec import draw_xsec, draw_topview, INK, MUTED

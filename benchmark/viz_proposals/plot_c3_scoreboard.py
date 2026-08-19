@@ -1,11 +1,14 @@
 """C3 -- the scoreboard: what it costs each rule to reach 1e-4, in orders and in ms."""
 import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np, matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
-import conv_data as D
+import viz_conv as D
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUTDIR = os.environ.get("GRCWA_VIZ_OUT", os.path.join(HERE, "figures"))

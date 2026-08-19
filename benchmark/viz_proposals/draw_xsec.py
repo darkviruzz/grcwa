@@ -1,10 +1,14 @@
 """Style S1 -- dimensioned x-z cross-section cards (+ x-y top view for 2D)."""
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle, FancyArrow, Circle, FancyArrowPatch
-import palette as V
+import viz_palette as V
 
 GRID = "#c9d3dc"
 INK = "#1b2733"

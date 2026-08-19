@@ -265,6 +265,9 @@ themselves (all are git-ignored):
 python benchmark/plot_benchmark.py   # reads results.csv      -> bench_*.png
 python benchmark/plot_conv.py        # reads conv_results.json -> conv_*.png
 python benchmark/plot_moose.py       # reads conv_results.json + moose_reference.json
+python benchmark/plot_structures.py  # reads structures.py     -> struct_*.png
+python benchmark/plot_conv_cost.py   # reads conv_results.json -> conv_cost_staircase.png
+python benchmark/plot_deviation.py   # reads conv_results.json -> conv_deviation_*.png
 ```
 
 `plot_benchmark.py` shows R/T/A per suite, timing, the Pol-port-faithfulness and
@@ -277,9 +280,53 @@ Moose figures also have a `_tight.png` copy whose per-case vertical range is
 `conv_convergence.csv` with the first sustained `1e-4` convergence point and its
 raw and estimated solve time.
 
-In both, colour is the **codebase** and linestyle the **factorization rule**:
-solid for the direct (Laurent) rule, and a distinct broken style for each
+In those three, colour is the **codebase** and linestyle the **factorization
+rule**: solid for the direct (Laurent) rule, and a distinct broken style for each
 faithful one — `--` Pol (grcwa), `-.` Li and `:` NV (Ikarus).
+
+### The structure figures
+
+`plot_structures.py` draws the battery itself, straight out of `structures.py`, so
+a figure can never drift from the geometry it claims to show:
+
+* `struct_iso.png` — one isometric solid unit cell per structure. **Air is absent,
+  not grey**: the gaps between ridges and pillars are open space, a perforated film
+  is cut through to its substrate, and a free-standing case gets a dashed phantom
+  half space instead of a substrate block. **E** is drawn along the axis the
+  polarization actually selects, so TE-along-the-grooves versus TM-across-them
+  reads as geometry rather than as a letter.
+* `struct_atlas.png` — all 13 on **one shared length scale**, sorted by period. Every
+  row is the same 3.3 λ-wide window, so how many periods you see *is* the
+  sub-wavelength/diffracting story, and the thicknesses are on that scale too.
+
+### The convergence figures
+
+Two additions that answer the questions the order sweep exists to settle, rather
+than "what is R at this order":
+
+* `conv_cost_staircase.png` — the best `|R - R_ref|` a wall-time budget can buy.
+  Faint markers are the raw measurements; the thick step is the running best, so a
+  rule that oscillates over nG becomes a flat tread rather than a scribble. A flat
+  tread means spending more time buys nothing.
+* `conv_deviation_orders.png` / `conv_deviation_time.png` — **signed** deviation
+  from the reference on a **symlog** axis. Outside `±1e-4` the axis is logarithmic,
+  so you read the transient and the *sign* of the approach; inside the band it goes
+  linear, so the endgame is legible in the same panel instead of needing a `_tight`
+  twin. Moose is overlaid in black on the order variant; it carries no timings, so
+  it cannot appear on the time variant.
+
+These two use the opposite encoding to the older plotters, deliberately: **colour
+is the factorization rule** and **dash plus marker the codebase**, because the
+story this battery exists to tell is direct-versus-faithful rather than
+fork-versus-ikarus. A consequence worth stating: both Laurent columns collapse
+onto the same grey, which *is* the claim that the direct rule behaves identically
+in both codes. The palette is Okabe-Ito, so the figures survive colour-blind
+readers and greyscale printing.
+
+`viz_palette.py`, `viz_iso.py` and `viz_conv.py` hold the shared material palette,
+the isometric renderer and the tidy-array view of a convergence run.
+`benchmark/viz_proposals/` holds figures that are still proposals plus a committed
+gallery of everything rendered — see its README.
 
 ## Night job
 
