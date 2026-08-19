@@ -139,6 +139,15 @@ three factorization rules, one cause. What is left over is the size of Moose's
 own scatter along its 2D sweep (±0.001 on C1, ±0.002 on C1b), which is itself
 consistent with `FFT_MODE = 1` re-choosing the eps grid at every order.
 
+It is the *width*, not the grid. `C1`'s nominal rectangle rendered on 260² and
+on 1280² — two FFT grids a factor of five apart, both representing the same
+rectangle exactly — gives Li 0.396804 and 0.396800, agreeing to 4e-6. So neither
+the sampling density nor the aliasing of the eps transform carries the effect;
+what the codes disagree about is which rectangle they were handed. (The
+normal-vector rule is the exception, 0.397477 vs 0.399886, because it builds its
+tangent field *from* the rendered grid — one more reason not to compare rules
+across rasterizations.)
+
 **That is what the 2D Moose disagreement is**, and it is not a factorization
 difference. Different rules cannot converge to different limits on one
 structure, and at `nG = 2601` they do not: on `C1b` all four columns land within
