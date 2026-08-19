@@ -99,6 +99,7 @@
 
 using System;
 using System.IO;
+using System.Threading;
 using System.Collections.Generic;
 using System.Globalization;
 
@@ -179,6 +180,31 @@ public class MooseScript
     static readonly int[] SWEEP_1D = { 1, 3, 5, 10, 20, 50, 100, 200, 500 };
     static readonly int[] SWEEP_2D = { 1, 2, 3, 4, 5, 7, 10, 15, 20, 30 };
 
+    // To land on exactly the points the Python sweep uses, swap the two lines
+    // above for these.  benchmark/run_overnight.bat sets
+    //     FULL_Q_LIST = 1,3,5,...,61        (per-axis retained orders q)
+    //     GRCWA_NG1D_FROM_Q2D = 1
+    // and benchmark/conv_worker.py turns that into
+    //     2D:  (q,q) for every q          -> nG = q*q
+    //     1D:  sorted(set(q) | set(q*q))  -> nG = that union
+    // Moose takes the max order m with q = 2m+1, so m = (q-1)/2 for 2D and
+    // m = (nG-1)/2 for 1D:
+    //
+    // static readonly int[] SWEEP_2D = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+    //     12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,
+    //     29, 30 };
+    // static readonly int[] SWEEP_1D = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+    //     12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,
+    //     29, 30, 40, 60, 84, 112, 144, 180, 220, 264, 312, 364, 420, 480,
+    //     544, 612, 684, 760, 840, 924, 1012, 1104, 1200, 1300, 1404, 1512,
+    //     1624, 1740, 1860 };
+    //
+    // Both top out at nG = 3721.  Note what that means for 1D: m = 1860 keeps
+    // 3721 orders in ONE axis, so the eigenproblem is about 7400 x 7400 -- the
+    // same size as 2D at (30,30), and hours plus many GB per point.  The 1D
+    // list is long because it is the union of q and q*q: its first 31 entries
+    // are cheap, the last 27 are not.
+
     // Case filter.  Empty ONLY_CASES = run everything.  Comma separated,
     // matched against the case name, e.g. "B1_Si_grating_TM,C2_Au_holes".
     // A group letter also works: "A", "B", "C", "D".
@@ -216,6 +242,38 @@ public class MooseScript
     // Skip (case, order) pairs already present in the CSV, so an aborted sweep
     // can simply be started again.
     static bool   RESUME          = true;
+
+    // How many structures to solve at the same time.  A single Moose solve is
+    // single-threaded -- the eigenproblem is not parallelized -- so on a 20
+    // core box one solve leaves 19 cores idle.  Different structures are
+    // completely independent, though, so the sweep runs them on a pool of
+    // worker threads, each with its own Rcwa instance.
+    //   1 = the old sequential behaviour: one solve at a time, exactly timed.
+    //   N = N solves at once.  Wall time drops by roughly min(N, cases per
+    //       stage); per-solve times get noisier because the cores share memory
+    //       bandwidth, so a timing run wants 1.
+    //   0 = use Environment.ProcessorCount.
+    // MEMORY SCALES WITH THIS.  Each concurrent solve holds its own matrices;
+    // 2D at m = 30 is several GB on its own, so N of those at once will not
+    // fit. PARALLEL_NG_LIMIT below is the guard for that.
+    static int    PARALLEL_TASKS  = 1;
+
+    // A run whose nG exceeds this is given the whole machine: only one such
+    // run at a time, though cheap runs may still go alongside it.  0 disables
+    // the guard.  Set it to whatever nG your RAM tolerates in duplicate.
+    static long   PARALLEL_NG_LIMIT = 0;
+
+    // Run a handful of points sequentially AND on the pool, compare them
+    // bit-for-bit, then stop.  Worth one minute before trusting a long
+    // parallel run: it is what proves that concurrent Rcwa instances do not
+    // interfere on YOUR Moose build.  Any mismatch means PARALLEL_TASKS = 1.
+    static bool   PARALLEL_SELFTEST = false;
+    // Which entry of the sweep the self test uses (index, not order count).
+    static int    SELFTEST_STAGE  = 2;
+    // How many times the parallel pass is repeated.  Interference is timing
+    // dependent, so one clean pass proves very little; every repeat must match
+    // the sequential reference.
+    static int    SELFTEST_REPEATS = 3;
 
     // Incidence.  The battery is a normal incidence battery.
     const  double WAVELENGTH   = 1.0;    // um
@@ -621,6 +679,211 @@ public class MooseScript
 
 
     // =======================================================================
+    //  worker pool -- one solve per thread, one Rcwa instance per solve
+    // =======================================================================
+    // A Moose solve is single-threaded, so the only way to use a many-core box
+    // is to solve several structures at once.  Everything a solve touches is
+    // created and deleted inside RunOne, so the threads share nothing but the
+    // bookkeeping below, which is why one lock covers all of it.
+    static readonly object sLock    = new object();
+    // Held for the duration of a run whose nG exceeds PARALLEL_NG_LIMIT, so
+    // only one memory-hungry solve is ever in flight.
+    static readonly object sBigLock = new object();
+
+    static List<BenchCase> sQueueCase = new List<BenchCase>();
+    static List<int>       sQueueM    = new List<int>();
+    static int             sQueueNext;
+    static StreamWriter    sCsv, sLog;
+    static Dictionary<string, List<BenchResult>> sPerCase;
+    static Dictionary<string, BenchResult>       sBatch;
+    static int             sTotalRuns, sOkRuns;
+    static bool            sQuiet;          // self test: do not touch the CSV
+
+    static string FormatLine(BenchCase c, BenchResult r)
+    {
+        if (r.Status == "failed")
+            return "  " + Pad(c.Name, 26) + " m=" + Pad(r.M.ToString(INV), 4)
+                 + " FAILED: " + r.Note;
+        return "  " + Pad(c.Name, 26)
+             + " m=" + Pad(r.M.ToString(INV), 4)
+             + " nG=" + Pad(((long)r.NG).ToString(INV), 7)
+             + " R=" + Pad(F(r.R, 6), 10)
+             + " T=" + Pad(F(r.T, 6), 10)
+             + " A=" + Pad(F(r.A, 6), 10)
+             + " |1-E|=" + Pad(E(Math.Abs(1.0 - r.Energy)), 10)
+             + " " + Pad(r.Harvest, 6)
+             + " solve=" + Pad(F(r.TSolve, 3) + "s", 10)
+             + " mem=" + F(r.MemAfter, 0) + "MB";
+    }
+
+    static void Record(BenchCase c, BenchResult r)
+    {
+        string line = FormatLine(c, r);
+        lock (sLock)
+        {
+            sBatch[c.Name + "@" + r.M.ToString(INV)] = r;
+            if (sQuiet) return;
+            sTotalRuns++;
+            if (r.Status == "ok") sOkRuns++;
+            sPerCase[c.Name].Add(r);
+            // A row whose energy balance is broken is still printed with its
+            // numbers -- they are the evidence -- but in red, so it is never
+            // mistaken for a sound one.
+            if (r.Status == "ok") Io.output(line);
+            else if (r.Status == "failed") Io.error(line);
+            else Io.error(line + "   <-- ENERGY CHECK FAILED");
+            if (sCsv != null)
+            {
+                try { sCsv.WriteLine(CsvRow(c, r)); sCsv.Flush(); }
+                catch (Exception e) { Io.error("csv write failed: " + e.Message); }
+            }
+            if (sLog != null)
+            {
+                try { sLog.WriteLine(line); sLog.Flush(); }
+                catch (Exception) { }
+            }
+        }
+    }
+
+    static void Worker()
+    {
+        while (true)
+        {
+            BenchCase c; int m;
+            lock (sLock)
+            {
+                if (sQueueNext >= sQueueCase.Count) return;
+                c = sQueueCase[sQueueNext];
+                m = sQueueM[sQueueNext];
+                sQueueNext++;
+            }
+            long ng = NgOf(c, m);
+            BenchResult r;
+            if (PARALLEL_NG_LIMIT > 0 && ng > PARALLEL_NG_LIMIT)
+                lock (sBigLock) { r = RunOne(c, m); }
+            else
+                r = RunOne(c, m);
+            Record(c, r);
+        }
+    }
+
+    static long NgOf(BenchCase c, int m)
+    {
+        long q = 2L * m + 1L;
+        return (c.Dim == 2) ? q * q : q;
+    }
+
+    static int WorkerCount()
+    {
+        int n = PARALLEL_TASKS;
+        if (n == 0) n = Environment.ProcessorCount;
+        if (n < 1) n = 1;
+        return n;
+    }
+
+    // Runs the queue to completion.  With one worker nothing is spawned at all,
+    // so the sequential path stays exactly what it was.
+    static void RunQueue(List<BenchCase> qc, List<int> qm)
+    {
+        sQueueCase = qc; sQueueM = qm; sQueueNext = 0;
+        sBatch = new Dictionary<string, BenchResult>();
+        int workers = Math.Min(WorkerCount(), qc.Count);
+        if (workers <= 1) { Worker(); return; }
+        Thread[] pool = new Thread[workers];
+        for (int i = 0; i < workers; i++)
+        {
+            pool[i] = new Thread(new ThreadStart(Worker));
+            pool[i].IsBackground = false;
+            pool[i].Start();
+        }
+        for (int i = 0; i < workers; i++) pool[i].Join();
+    }
+
+    // Solve the same points twice, once alone and once on the pool, and compare
+    // them bit for bit.  Concurrent Rcwa instances SHOULD be independent -- the
+    // shipped ParallelRcwa does the same thing internally -- but "should" is
+    // not something to bet a night of compute on, and a shared FFT plan cache
+    // would be exactly the kind of thing that quietly corrupts results.
+    static bool SelfTest(List<BenchCase> cases)
+    {
+        List<BenchCase> qc = new List<BenchCase>();
+        List<int> qm = new List<int>();
+        for (int i = 0; i < cases.Count; i++)
+        {
+            int[] sweep = (cases[i].Dim == 2) ? SWEEP_2D : SWEEP_1D;
+            if (sweep.Length == 0) continue;
+            int idx = Math.Min(SELFTEST_STAGE, sweep.Length - 1);
+            qc.Add(cases[i]); qm.Add(sweep[idx]);
+        }
+        Io.output("");
+        Io.output(" self test: " + qc.Count.ToString(INV)
+                  + " points, sequential vs " + WorkerCount().ToString(INV)
+                  + " workers, "
+                  + Math.Max(1, SELFTEST_REPEATS).ToString(INV)
+                  + " parallel passes");
+
+        sQuiet = true;
+        int saved = PARALLEL_TASKS;
+        PARALLEL_TASKS = 1;
+        RunQueue(qc, qm);
+        Dictionary<string, BenchResult> seq = sBatch;
+        PARALLEL_TASKS = saved;
+
+        int repeats = Math.Max(1, SELFTEST_REPEATS);
+        List<Dictionary<string, BenchResult>> runs =
+            new List<Dictionary<string, BenchResult>>();
+        for (int rep = 0; rep < repeats; rep++)
+        {
+            RunQueue(qc, qm);
+            runs.Add(sBatch);
+        }
+        sQuiet = false;
+
+        bool ok = true;
+        Io.output(" " + Pad("point", 32) + Pad("sequential", 14)
+                  + Pad("parallel", 14) + "verdict");
+        for (int i = 0; i < qc.Count; i++)
+        {
+            string key = qc[i].Name + "@" + qm[i].ToString(INV);
+            BenchResult a = seq.ContainsKey(key) ? seq[key] : null;
+            BenchResult shown = null;
+            int mismatches = 0;
+            for (int rep = 0; rep < repeats; rep++)
+            {
+                BenchResult b = runs[rep].ContainsKey(key) ? runs[rep][key] : null;
+                if (shown == null) shown = b;
+                bool same = a != null && b != null
+                            && a.R == b.R && a.T == b.T && a.A == b.A
+                            && a.R0 == b.R0 && a.T0 == b.T0
+                            && a.Status == b.Status && a.Harvest == b.Harvest;
+                if (!same) { mismatches++; if (shown == null || b != null) shown = b; }
+            }
+            if (mismatches > 0) ok = false;
+            Io.output(" " + Pad(key, 32)
+                      + Pad(a == null ? "-" : F(a.R, 9), 14)
+                      + Pad(shown == null ? "-" : F(shown.R, 9), 14)
+                      + (mismatches == 0
+                         ? "identical"
+                         : "DIFFERENT in " + mismatches.ToString(INV) + " of "
+                           + repeats.ToString(INV) + " passes"));
+        }
+        Io.output("");
+        if (ok)
+            Io.success(" self test passed: parallel results are bit-identical to "
+                       + "sequential. PARALLEL_TASKS = "
+                       + WorkerCount().ToString(INV) + " is safe on this build.");
+        else
+            Io.error(" SELF TEST FAILED: parallel results differ from "
+                     + "sequential. Concurrent Rcwa instances interfere on "
+                     + "this build -- set PARALLEL_TASKS = 1. A failure in "
+                     + "only some passes is still a failure: interference is "
+                     + "timing dependent, so a long run would corrupt "
+                     + "different points every time.");
+        return ok;
+    }
+
+
+    // =======================================================================
     //  output helpers
     // =======================================================================
     static string F(double v, int digits)
@@ -839,7 +1102,12 @@ public class MooseScript
         Io.output(" fft mode     : " + (FFT_MODE == 1
                   ? "constant grid ~" + FFT_TARGET_SAMPLES.ToString(INV) + " samples"
                   : "fixed refinement " + FFT_REFINEMENT.ToString(INV)));
-        Io.output(" cpu cores    : " + Environment.ProcessorCount.ToString(INV));
+        Io.output(" cpu cores    : " + Environment.ProcessorCount.ToString(INV)
+                  + ",  parallel solves: " + WorkerCount().ToString(INV)
+                  + (WorkerCount() > 1 ? "  (per-solve times are noisier)" : "")
+                  + (PARALLEL_NG_LIMIT > 0
+                     ? ",  nG > " + PARALLEL_NG_LIMIT.ToString(INV) + " runs alone"
+                     : ""));
         Io.output(" output       : " + (dir == null ? "<console only>" : dir));
         Io.output("=================================================================");
 
@@ -859,6 +1127,13 @@ public class MooseScript
         {
             Io.success("dry run: structures built" + (SHOW_STRUCTURES ? " and shown" : "")
                        + ", nothing solved.");
+            return;
+        }
+
+        if (PARALLEL_SELFTEST)
+        {
+            SelfTest(cases);
+            Io.output("self test only -- set PARALLEL_SELFTEST = false to sweep.");
             return;
         }
 
@@ -894,6 +1169,8 @@ public class MooseScript
         // one result list per case, for the summary at the end
         Dictionary<string, List<BenchResult>> per_case =
             new Dictionary<string, List<BenchResult>>();
+        sPerCase = per_case;
+        sCsv = csv; sLog = log;
         Dictionary<string, bool> exhausted = new Dictionary<string, bool>();
         for (int i = 0; i < cases.Count; i++)
         {
@@ -917,12 +1194,17 @@ public class MooseScript
         // EVERY case are finished before the expensive ones start, so aborting
         // half way still leaves a complete low-order picture.
         int stages = Math.Max(SWEEP_1D.Length, SWEEP_2D.Length);
-        int total_runs = 0, ok_runs = 0;
+        sTotalRuns = 0; sOkRuns = 0;
         double t_wall = 0.0;
         System.Diagnostics.Stopwatch sw_all = System.Diagnostics.Stopwatch.StartNew();
 
         for (int stage = 0; stage < stages; stage++)
         {
+            // Collect this stage's work first, then hand it to the pool. The
+            // expensive runs go in first so the last worker to finish is not
+            // one that only just picked up the biggest job.
+            List<BenchCase> qc = new List<BenchCase>();
+            List<int> qm = new List<int>();
             for (int i = 0; i < cases.Count; i++)
             {
                 BenchCase c = cases[i];
@@ -930,60 +1212,33 @@ public class MooseScript
                 if (stage >= sweep.Length) continue;
                 if (exhausted[c.Name]) continue;
                 int m = sweep[stage];
-
-                string key = c.Name + "@" + m.ToString(INV);
-                if (done.ContainsKey(key))
+                if (done.ContainsKey(c.Name + "@" + m.ToString(INV)))
                 {
-                    Io.output("  skip (done)  " + Pad(c.Name, 26) + " m=" + m.ToString(INV));
+                    Io.output("  skip (done)  " + Pad(c.Name, 26)
+                              + " m=" + m.ToString(INV));
                     continue;
                 }
+                int at = qc.Count;
+                while (at > 0 && NgOf(qc[at - 1], qm[at - 1]) < NgOf(c, m)) at--;
+                qc.Insert(at, c); qm.Insert(at, m);
+            }
+            if (qc.Count == 0) continue;
 
-                BenchResult r = RunOne(c, m);
-                total_runs++;
-                if (r.Status == "ok") ok_runs++;
-                per_case[c.Name].Add(r);
+            RunQueue(qc, qm);
 
-                string line;
-                if (r.Status == "failed")
+            // The cost guard runs once the stage is done rather than the
+            // instant a solve overruns: with several solves in flight there is
+            // no sensible way to stop the ones already started.
+            if (MAX_SECONDS_PER_SOLVE > 0.0)
+            {
+                for (int i = 0; i < qc.Count; i++)
                 {
-                    line = "  " + Pad(c.Name, 26) + " m=" + Pad(m.ToString(INV), 4)
-                        + " FAILED: " + r.Note;
-                    Io.error(line);
-                }
-                else
-                {
-                    line = "  " + Pad(c.Name, 26)
-                        + " m=" + Pad(m.ToString(INV), 4)
-                        + " nG=" + Pad(((long)r.NG).ToString(INV), 7)
-                        + " R=" + Pad(F(r.R, 6), 10)
-                        + " T=" + Pad(F(r.T, 6), 10)
-                        + " A=" + Pad(F(r.A, 6), 10)
-                        + " |1-E|=" + Pad(E(Math.Abs(1.0 - r.Energy)), 10)
-                        + " " + Pad(r.Harvest, 6)
-                        + " solve=" + Pad(F(r.TSolve, 3) + "s", 10)
-                        + " mem=" + F(r.MemAfter, 0) + "MB";
-                    // A row whose energy balance is broken is still printed
-                    // with its numbers -- they are the evidence -- but in red
-                    // and with status "energy", so it is never merged as sound.
-                    if (r.Status == "ok") Io.output(line);
-                    else Io.error(line + "   <-- ENERGY CHECK FAILED");
-                }
-
-                if (csv != null)
-                {
-                    try { csv.WriteLine(CsvRow(c, r)); csv.Flush(); }
-                    catch (Exception e) { Io.error("csv write failed: " + e.Message); }
-                }
-                if (log != null)
-                {
-                    try { log.WriteLine(line); log.Flush(); }
-                    catch (Exception) { }
-                }
-
-                if (MAX_SECONDS_PER_SOLVE > 0.0 && r.TSolve > MAX_SECONDS_PER_SOLVE)
-                {
-                    exhausted[c.Name] = true;
-                    Io.output("  -> " + c.Name + ": solve took "
+                    string k = qc[i].Name + "@" + qm[i].ToString(INV);
+                    if (!sBatch.ContainsKey(k)) continue;
+                    BenchResult r = sBatch[k];
+                    if (r.TSolve <= MAX_SECONDS_PER_SOLVE) continue;
+                    exhausted[qc[i].Name] = true;
+                    Io.output("  -> " + qc[i].Name + ": solve took "
                               + F(r.TSolve, 1) + "s > budget "
                               + F(MAX_SECONDS_PER_SOLVE, 0)
                               + "s, skipping the higher orders of this case");
@@ -1022,8 +1277,8 @@ public class MooseScript
                       + (Double.IsNaN(p) ? "n/a" : F(p, 2)));
         }
         Io.output("");
-        Io.output(" this session: " + ok_runs.ToString(INV) + " ok / "
-                  + total_runs.ToString(INV) + " attempted, wall time "
+        Io.output(" this session: " + sOkRuns.ToString(INV) + " ok / "
+                  + sTotalRuns.ToString(INV) + " attempted, wall time "
                   + F(t_wall, 1) + " s"
                   + (done.Count > 0
                      ? "  (+ " + done.Count.ToString(INV) + " resumed from CSV)"

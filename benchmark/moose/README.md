@@ -33,6 +33,9 @@ The resolved path is printed in the header of the console output.
 | constant | meaning |
 |---|---|
 | `SWEEP_1D`, `SWEEP_2D` | the truncation sweep, as Moose **max orders** `m` |
+| `PARALLEL_TASKS` | how many structures to solve at once (`1` = sequential, `0` = one per core) |
+| `PARALLEL_NG_LIMIT` | a run above this `nG` gets the machine to itself; `0` disables |
+| `PARALLEL_SELFTEST` | prove parallel == sequential on your build, then stop |
 | `ONLY_CASES`, `SKIP_CASES` | comma separated case names *or* group letters (`"B"`, `"C1_Si_pillars,C2_Au_holes"`) |
 | `MAX_SECONDS_PER_SOLVE` | after a solve exceeds this, the higher orders **of that case** are skipped; the rest of the battery keeps going. `0` = no limit |
 | `FFT_MODE` | `1` = keep the absolute unit-cell sampling at `FFT_TARGET_SAMPLES` (what grcwa does), `0` = fixed `FFT_REFINEMENT` |
@@ -51,6 +54,78 @@ Budget warning: 1D at `m = 500` keeps 1001 orders; 2D at `m = 30` keeps
 `61 x 61 = 3721` orders, i.e. a ~7400 x 7400 eigenproblem. That last point is
 hours and many GB, not minutes. `MAX_SECONDS_PER_SOLVE` is what keeps an
 overnight run from turning into a week.
+
+## Running several structures at once
+
+A Moose solve is single-threaded — the eigenproblem is not parallelized — so on
+a 20-core box one solve leaves 19 cores idle, no matter what you set. Different
+structures are completely independent, though, so the sweep runs them on a pool
+of worker threads, each with its own `Rcwa` instance:
+
+```csharp
+static int PARALLEL_TASKS = 8;   // 0 = Environment.ProcessorCount
+```
+
+The stage structure is unchanged — cheap orders of every case still finish
+before the expensive ones start — but a stage's runs now go out together,
+biggest `nG` first so the pool does not end up waiting on a job it picked up
+last. Wall time drops by roughly `min(PARALLEL_TASKS, cases in the stage)`.
+
+**Two things to know before turning it up.**
+
+*Memory scales with it.* Each concurrent solve holds its own matrices, and 2D at
+`m = 30` is several GB on its own. `PARALLEL_NG_LIMIT` is the guard: a run whose
+`nG` exceeds it takes an exclusive lock, so only one memory-hungry solve is ever
+in flight while cheap ones still run alongside.
+
+*Per-solve timings get noisier.* Concurrent solves share memory bandwidth and
+cache, so `t_solve_s` measured with a full pool runs longer than the same solve
+alone. For a timing run — anything feeding the scaling exponent — use
+`PARALLEL_TASKS = 1`. For collecting R values, turn it up.
+
+### Prove it is safe first
+
+Concurrent `Rcwa` instances *should* be independent; the shipped `ParallelRcwa`
+does the same thing internally. But "should" is not worth a night of compute,
+and something like a shared FFT plan cache is exactly the kind of thing that
+corrupts results quietly rather than crashing. So before the first long parallel
+run:
+
+```csharp
+static bool PARALLEL_SELFTEST = true;
+```
+
+That solves a handful of points sequentially, then the same points on the pool
+`SELFTEST_REPEATS` times (default 3), compares every value bit-for-bit, and
+stops. Repeating matters: interference is timing dependent, so a single clean
+pass proves very little — a deliberately race-y build under test showed
+mismatches in only 1 of 3 passes. **Any** mismatch, in any pass, means
+`PARALLEL_TASKS = 1`.
+
+## Matching the Python sweep exactly
+
+`benchmark/run_overnight.bat` drives the Python side with
+
+```bat
+set "GRCWA_NG1D_FROM_Q2D=1"
+set "FULL_Q_LIST=1,3,5,...,61"
+```
+
+where `q` is the per-axis retained order **count**. `conv_worker.py` expands
+that into `2D: (q,q)` for every `q`, and `1D: sorted(set(q) | set(q*q))` — the
+union of the list with its own squares. Moose takes the max order `m` with
+`q = 2m+1`, so:
+
+| | Python | Moose `m` |
+|---|---|---|
+| 2D | `q = 1 … 61` | `(q-1)/2` → `0, 1, 2, … 30` |
+| 1D | `nG = {q} ∪ {q²}` | `(nG-1)/2` → `0 … 30, 40, 60, 84, 112, 144, 180, 220, 264, 312, 364, 420, 480, 544, 612, 684, 760, 840, 924, 1012, 1104, 1200, 1300, 1404, 1512, 1624, 1740, 1860` |
+
+Both lists are in the script as commented-out alternatives, ready to swap in.
+Both top out at `nG = 3721`. Watch what that means for 1D: `m = 1860` keeps 3721
+orders in *one* axis, so the eigenproblem is about `7400 x 7400` — the same size
+as 2D at `(30,30)`, hours and many GB per point. The 1D list looks long because
+it is a union: its first 31 entries are cheap, its last 27 are not.
 
 ## What is measured
 
