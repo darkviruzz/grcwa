@@ -360,8 +360,10 @@ public class MooseScript
                     // The atom's permittivity and the background's, as this build
                     // reports them -- read off the model rather than recomputed,
                     // so a dispersion or convention surprise shows up here.
-                    Complex e_atom = c.Pillar().GetEpsilon(WAVELENGTH);
-                    double target = (e_atom == null) ? 0.0 : e_atom.Re();
+                    // Complex is a value type on the real build (the stubs in
+                    // moose_api_stubs.cs make it a class), so no null checks
+                    // here -- they compile to CS0472 warnings and dead code.
+                    double target = c.Pillar().GetEpsilon(WAVELENGTH).Re();
 
                     int atom_px = 0;
                     List<double> levels = new List<double>();
@@ -369,8 +371,7 @@ public class MooseScript
                     {
                         for (int y = 0; y < ny; y++)
                         {
-                            Complex v = model.GetValue(x, y);
-                            double re = (v == null) ? 0.0 : v.Re();
+                            double re = model.GetValue(x, y).Re();
                             if (Math.Abs(re - target) < 1.0e-9) atom_px++;
                             bool known = false;
                             for (int L = 0; L < levels.Count; L++)
@@ -382,8 +383,7 @@ public class MooseScript
                     int yc = ny / 2;
                     for (int x = 0; x < nx; x++)
                     {
-                        Complex v = model.GetValue(x, yc);
-                        double re = (v == null) ? 0.0 : v.Re();
+                        double re = model.GetValue(x, yc).Re();
                         if (Math.Abs(re - target) < 1.0e-9) row_px++;
                     }
 
