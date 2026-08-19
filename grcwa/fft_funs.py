@@ -313,11 +313,32 @@ def get_ifft(Nx,Ny,s_in,G):
     '''
     dN = 1.0 / Nx / Ny
 
-    # Directly assign each Fourier coefficient to its corresponding
-    # location in the frequency domain array.  This is equivalent to
-    # the previous explicit loop but vectorised for efficiency.
-    s0 = bd.zeros((Nx, Ny), dtype=complex)
-    s0[G[:, 0], G[:, 1]] = s_in
+    # Scatter each Fourier coefficient to its location in the frequency
+    # domain array.  This is done by gathering from a padded copy of s_in
+    # rather than by assigning into a zero array: writing a traced value
+    # into a concrete array (s0[idx] = s_in) is not differentiable under
+    # autograd -- it raises "must be real number, not ArrayBox" -- while
+    # indexing *out of* a traced array is a differentiable primitive.
+    # Vectorised, so the speed of the assignment version is retained.
+    nG = G.shape[0]
+
+    # Negative orders wrap around, matching numpy's negative indexing.
+    flat = (G[:, 0] % Nx) * Ny + (G[:, 1] % Ny)
+
+    if len(np.unique(flat)) != nG:
+        raise ValueError(
+            'get_ifft: the %dx%d real-space grid is too coarse for the '
+            'given G vectors; distinct orders alias onto the same grid '
+            'point. Use a finer grid or a smaller truncation order.'
+            % (Nx, Ny))
+
+    # take[p] selects, for flat position p, the coefficient living there;
+    # positions carrying no coefficient point at the trailing zero.
+    take = np.full(Nx * Ny, nG, dtype=int)
+    take[flat] = np.arange(nG)
+
+    padded = bd.concatenate((s_in, bd.zeros(1, dtype=complex)))
+    s0 = bd.reshape(padded[take], (Nx, Ny))
 
     s_out = bd.ifft2(s0)/dN
     return s_out
