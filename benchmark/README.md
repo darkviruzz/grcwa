@@ -162,9 +162,12 @@ there the faithful columns match Moose to five or six digits
 (`B1_Si_grating_TM` 0.213710, `B2_HCG_TM` 0.873329, `D1_ikarus_hcg_TM`
 0.100173, `B3_Au_slits_TM` 0.79330 vs 0.79326).
 
-`D2_ikarus_cylinder_TE` is the one 2D case where the mask is *not* the problem.
-There Moose is simply not converged: its points follow `R(m) = R∞ − c/m` with an
-rms residual of 1.8e-4 and `R∞ = 0.9401`, against the python normal-vector value
+`D2_ikarus_cylinder_TE` is the one 2D case where the mask is *not* the problem —
+its circle branch already samples cell centres, and refining it from 256² to
+512² and 1024² moves R by at most 0.0015 in either rule at either order (Li
+0.9180 / 0.9166 / 0.9169 and NV 0.9421 / 0.9408 / 0.9411 at q = 31). There Moose
+is simply not converged: its points follow `R(m) = R∞ − c/m` with an rms
+residual of 1.8e-4 and `R∞ = 0.9401`, against the python normal-vector value
 0.9428.
 
 Everything else that could differ between the three constructs was checked and
