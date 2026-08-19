@@ -398,10 +398,13 @@ public class MooseScript
                               + Pad(levels.Count.ToString(INV), 8) + note);
                     if (csv != null)
                     {
+                        // fields 9..14 are solve-only (nG, w, w_tag, refinement,
+                        // t_solve, status), so skip them and land `note` in the
+                        // same column the solve rows use.
                         csv.WriteLine(c.Name + ",geometry," + res.ToString(INV) + ","
                             + G(fill) + "," + G(fill_nom) + "," + row_px.ToString(INV)
                             + "," + G(w_eff) + "," + levels.Count.ToString(INV)
-                            + ",,,,,,,," + note);
+                            + ",,,,,," + note + ",,");
                         csv.Flush();
                     }
                     model.Delete();
