@@ -110,6 +110,36 @@
         ]
       }
     },
+    "A2_formbiref_TE|dim=1|q=1089": {
+      "result": {
+        "A": 6.899876781041314e-10,
+        "R": 0.5457597338651079,
+        "T": 0.4542402654449044,
+        "label": "1089",
+        "mode": "native",
+        "nG": 1089,
+        "q": 1089
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          16148.926699534059
+        ]
+      }
+    },
     "A2_formbiref_TE|dim=1|q=11": {
       "result": {
         "A": 6.866638369018574e-10,
@@ -174,6 +204,36 @@
         ]
       }
     },
+    "A2_formbiref_TE|dim=1|q=1225": {
+      "result": {
+        "A": 5.801956137752029e-10,
+        "R": 0.5457597341314234,
+        "T": 0.45424026528838096,
+        "label": "1225",
+        "mode": "native",
+        "nG": 1225,
+        "q": 1225
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          21319.487299770117
+        ]
+      }
+    },
     "A2_formbiref_TE|dim=1|q=13": {
       "result": {
         "A": 6.8666711205978e-10,
@@ -206,6 +266,36 @@
         ]
       }
     },
+    "A2_formbiref_TE|dim=1|q=1369": {
+      "result": {
+        "A": 6.799533158741156e-10,
+        "R": 0.545759734025331,
+        "T": 0.45424026529471573,
+        "label": "1369",
+        "mode": "native",
+        "nG": 1369,
+        "q": 1369
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          27685.29130052775
+        ]
+      }
+    },
     "A2_formbiref_TE|dim=1|q=15": {
       "result": {
         "A": 6.867296731272177e-10,
@@ -235,6 +325,66 @@
           60.639699921011925,
           70.01159992069006,
           60.181000269949436
+        ]
+      }
+    },
+    "A2_formbiref_TE|dim=1|q=1521": {
+      "result": {
+        "A": 7.442566007931362e-10,
+        "R": 0.5457597338819727,
+        "T": 0.45424026537377066,
+        "label": "1521",
+        "mode": "native",
+        "nG": 1521,
+        "q": 1521
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          43540.66670034081
+        ]
+      }
+    },
+    "A2_formbiref_TE|dim=1|q=1681": {
+      "result": {
+        "A": 6.807219787852148e-10,
+        "R": 0.5457597336627885,
+        "T": 0.4542402656564895,
+        "label": "1681",
+        "mode": "native",
+        "nG": 1681,
+        "q": 1681
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          46466.35860018432
         ]
       }
     },
@@ -302,6 +452,36 @@
         ]
       }
     },
+    "A2_formbiref_TE|dim=1|q=1849": {
+      "result": {
+        "A": 8.663618156212749e-10,
+        "R": 0.5457597345624674,
+        "T": 0.4542402645711708,
+        "label": "1849",
+        "mode": "native",
+        "nG": 1849,
+        "q": 1849
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          57908.170900307596
+        ]
+      }
+    },
     "A2_formbiref_TE|dim=1|q=19": {
       "result": {
         "A": 6.867438839819329e-10,
@@ -334,6 +514,36 @@
         ]
       }
     },
+    "A2_formbiref_TE|dim=1|q=2025": {
+      "result": {
+        "A": 8.891627989449091e-10,
+        "R": 0.5457597339716361,
+        "T": 0.45424026513920107,
+        "label": "2025",
+        "mode": "native",
+        "nG": 2025,
+        "q": 2025
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          73126.20310019702
+        ]
+      }
+    },
     "A2_formbiref_TE|dim=1|q=21": {
       "result": {
         "A": 6.867629798179564e-10,
@@ -363,6 +573,36 @@
           139.37690015882254,
           74.23780020326376,
           61.39720045030117
+        ]
+      }
+    },
+    "A2_formbiref_TE|dim=1|q=2209": {
+      "result": {
+        "A": 5.956476978319358e-10,
+        "R": 0.5457597336510477,
+        "T": 0.4542402657533046,
+        "label": "2209",
+        "mode": "native",
+        "nG": 2209,
+        "q": 2209
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          90834.41540040076
         ]
       }
     },
@@ -430,6 +670,36 @@
         ]
       }
     },
+    "A2_formbiref_TE|dim=1|q=2401": {
+      "result": {
+        "A": 1.7496809556760695e-10,
+        "R": 0.5457597375998887,
+        "T": 0.4542402622251432,
+        "label": "2401",
+        "mode": "native",
+        "nG": 2401,
+        "q": 2401
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          112890.25530032814
+        ]
+      }
+    },
     "A2_formbiref_TE|dim=1|q=25": {
       "result": {
         "A": 6.867670321319963e-10,
@@ -459,6 +729,36 @@
           68.31349991261959,
           63.34349978715181,
           62.2851001098752
+        ]
+      }
+    },
+    "A2_formbiref_TE|dim=1|q=2601": {
+      "result": {
+        "A": 7.24516613370696e-10,
+        "R": 0.5457597336395683,
+        "T": 0.4542402656359151,
+        "label": "2601",
+        "mode": "native",
+        "nG": 2601,
+        "q": 2601
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          133961.60179935396
         ]
       }
     },
@@ -620,6 +920,70 @@
         ]
       }
     },
+    "A2_formbiref_TE|dim=1|q=33": {
+      "result": {
+        "A": 6.867791335629647e-10,
+        "R": 0.5457611097886709,
+        "T": 0.45423888952455,
+        "label": "33",
+        "mode": "native",
+        "nG": 33,
+        "q": 33
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          126.3688001781702,
+          66.57420005649328,
+          66.77769962698221
+        ]
+      }
+    },
+    "A2_formbiref_TE|dim=1|q=35": {
+      "result": {
+        "A": 6.868616786448456e-10,
+        "R": 0.5457607049858615,
+        "T": 0.45423929432727683,
+        "label": "35",
+        "mode": "native",
+        "nG": 35,
+        "q": 35
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          109.64519996196032,
+          68.34369990974665,
+          67.18180049210787
+        ]
+      }
+    },
     "A2_formbiref_TE|dim=1|q=361": {
       "result": {
         "A": 6.859306456163949e-10,
@@ -650,6 +1014,134 @@
         ]
       }
     },
+    "A2_formbiref_TE|dim=1|q=37": {
+      "result": {
+        "A": 6.868076107835464e-10,
+        "R": 0.5457607049302841,
+        "T": 0.45423929438290833,
+        "label": "37",
+        "mode": "native",
+        "nG": 37,
+        "q": 37
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          134.86330024898052,
+          68.87759920209646,
+          68.95340047776699
+        ]
+      }
+    },
+    "A2_formbiref_TE|dim=1|q=39": {
+      "result": {
+        "A": 6.868727808750918e-10,
+        "R": 0.5457604444757224,
+        "T": 0.45423955483740486,
+        "label": "39",
+        "mode": "native",
+        "nG": 39,
+        "q": 39
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          195.7820998504758,
+          233.2803001627326,
+          88.81979994475842
+        ]
+      }
+    },
+    "A2_formbiref_TE|dim=1|q=41": {
+      "result": {
+        "A": 6.868048352259848e-10,
+        "R": 0.5457604444461108,
+        "T": 0.45423955486708434,
+        "label": "41",
+        "mode": "native",
+        "nG": 41,
+        "q": 41
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          108.47460012882948,
+          71.68149948120117,
+          71.79789990186691
+        ]
+      }
+    },
+    "A2_formbiref_TE|dim=1|q=43": {
+      "result": {
+        "A": 6.868189905695488e-10,
+        "R": 0.5457602693631118,
+        "T": 0.45423972995006917,
+        "label": "43",
+        "mode": "native",
+        "nG": 43,
+        "q": 43
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          140.09530004113913,
+          82.27459993213415,
+          82.85930007696152
+        ]
+      }
+    },
     "A2_formbiref_TE|dim=1|q=441": {
       "result": {
         "A": 6.902853288970334e-10,
@@ -677,6 +1169,70 @@
         },
         "samples_ms": [
           2084.064400754869
+        ]
+      }
+    },
+    "A2_formbiref_TE|dim=1|q=45": {
+      "result": {
+        "A": 6.868111079860739e-10,
+        "R": 0.5457602693465049,
+        "T": 0.454239729966684,
+        "label": "45",
+        "mode": "native",
+        "nG": 45,
+        "q": 45
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          142.90810003876686,
+          84.6821004524827,
+          84.52789951115847
+        ]
+      }
+    },
+    "A2_formbiref_TE|dim=1|q=47": {
+      "result": {
+        "A": 6.868490776135161e-10,
+        "R": 0.545760147351404,
+        "T": 0.45423985196174693,
+        "label": "47",
+        "mode": "native",
+        "nG": 47,
+        "q": 47
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          135.40989998728037,
+          86.32750064134598,
+          82.53300003707409
         ]
       }
     },
@@ -741,6 +1297,38 @@
           70.19480038434267,
           83.53610057383776,
           57.67390038818121
+        ]
+      }
+    },
+    "A2_formbiref_TE|dim=1|q=51": {
+      "result": {
+        "A": 6.865624180285579e-10,
+        "R": 0.5457600597549592,
+        "T": 0.45423993955847836,
+        "label": "51",
+        "mode": "native",
+        "nG": 51,
+        "q": 51
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          123.74980002641678,
+          79.53539956361055,
+          79.25959955900908
         ]
       }
     },
@@ -1022,6 +1610,36 @@
         ]
       }
     },
+    "A2_formbiref_TM|dim=1|q=1089": {
+      "result": {
+        "A": 1.8912452715014183e-09,
+        "R": 0.0026287303498486645,
+        "T": 0.997371267758906,
+        "label": "1089",
+        "mode": "native",
+        "nG": 1089,
+        "q": 1089
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          15810.807899571955
+        ]
+      }
+    },
     "A2_formbiref_TM|dim=1|q=11": {
       "result": {
         "A": 2.453997338669467e-09,
@@ -1086,6 +1704,36 @@
         ]
       }
     },
+    "A2_formbiref_TM|dim=1|q=1225": {
+      "result": {
+        "A": 2.2034284397065562e-09,
+        "R": 0.002628725253805272,
+        "T": 0.9973712725427663,
+        "label": "1225",
+        "mode": "native",
+        "nG": 1225,
+        "q": 1225
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          21238.457299768925
+        ]
+      }
+    },
     "A2_formbiref_TM|dim=1|q=13": {
       "result": {
         "A": 2.453709568861484e-09,
@@ -1118,6 +1766,36 @@
         ]
       }
     },
+    "A2_formbiref_TM|dim=1|q=1369": {
+      "result": {
+        "A": 2.3377074720443147e-09,
+        "R": 0.0026287211019736367,
+        "T": 0.9973712765603189,
+        "label": "1369",
+        "mode": "native",
+        "nG": 1369,
+        "q": 1369
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          27451.70329976827
+        ]
+      }
+    },
     "A2_formbiref_TM|dim=1|q=15": {
       "result": {
         "A": 2.4530941722389343e-09,
@@ -1147,6 +1825,66 @@
           62.27920018136501,
           59.85619965940714,
           59.61670074611902
+        ]
+      }
+    },
+    "A2_formbiref_TM|dim=1|q=1521": {
+      "result": {
+        "A": 1.94162863564884e-09,
+        "R": 0.0026287171157764774,
+        "T": 0.9973712809425949,
+        "label": "1521",
+        "mode": "native",
+        "nG": 1521,
+        "q": 1521
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          52030.40139935911
+        ]
+      }
+    },
+    "A2_formbiref_TM|dim=1|q=1681": {
+      "result": {
+        "A": 5.348155251994058e-10,
+        "R": 0.0026287143918568593,
+        "T": 0.9973712850733276,
+        "label": "1681",
+        "mode": "native",
+        "nG": 1681,
+        "q": 1681
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          46027.89909951389
         ]
       }
     },
@@ -1214,6 +1952,36 @@
         ]
       }
     },
+    "A2_formbiref_TM|dim=1|q=1849": {
+      "result": {
+        "A": -5.512713618927023e-10,
+        "R": 0.002628710596594775,
+        "T": 0.9973712899546766,
+        "label": "1849",
+        "mode": "native",
+        "nG": 1849,
+        "q": 1849
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          57025.2652997151
+        ]
+      }
+    },
     "A2_formbiref_TM|dim=1|q=19": {
       "result": {
         "A": 2.4529059894362604e-09,
@@ -1246,6 +2014,36 @@
         ]
       }
     },
+    "A2_formbiref_TM|dim=1|q=2025": {
+      "result": {
+        "A": -2.8875146718121414e-10,
+        "R": 0.0026287095119940144,
+        "T": 0.9973712907767575,
+        "label": "2025",
+        "mode": "native",
+        "nG": 2025,
+        "q": 2025
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          73230.08270002902
+        ]
+      }
+    },
     "A2_formbiref_TM|dim=1|q=21": {
       "result": {
         "A": 2.4528764575038053e-09,
@@ -1275,6 +2073,36 @@
           63.30799963325262,
           61.533099971711636,
           61.00379955023527
+        ]
+      }
+    },
+    "A2_formbiref_TM|dim=1|q=2209": {
+      "result": {
+        "A": 2.2772874697096768e-09,
+        "R": 0.002628708503750171,
+        "T": 0.9973712892189623,
+        "label": "2209",
+        "mode": "native",
+        "nG": 2209,
+        "q": 2209
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          92086.72740031034
         ]
       }
     },
@@ -1342,6 +2170,36 @@
         ]
       }
     },
+    "A2_formbiref_TM|dim=1|q=2401": {
+      "result": {
+        "A": -1.8702994708519327e-09,
+        "R": 0.0026287065659580237,
+        "T": 0.9973712953043414,
+        "label": "2401",
+        "mode": "native",
+        "nG": 2401,
+        "q": 2401
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          112629.3516997248
+        ]
+      }
+    },
     "A2_formbiref_TM|dim=1|q=25": {
       "result": {
         "A": 2.452661518326238e-09,
@@ -1371,6 +2229,36 @@
           62.814800068736076,
           73.13490007072687,
           62.68629990518093
+        ]
+      }
+    },
+    "A2_formbiref_TM|dim=1|q=2601": {
+      "result": {
+        "A": 3.4668548032357194e-09,
+        "R": 0.0026287057536928133,
+        "T": 0.9973712907794524,
+        "label": "2601",
+        "mode": "native",
+        "nG": 2601,
+        "q": 2601
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          132131.72030076385
         ]
       }
     },
@@ -1534,6 +2422,70 @@
         ]
       }
     },
+    "A2_formbiref_TM|dim=1|q=33": {
+      "result": {
+        "A": 2.452672620556484e-09,
+        "R": 0.0026201197788836054,
+        "T": 0.9973798777684437,
+        "label": "33",
+        "mode": "native",
+        "nG": 33,
+        "q": 33
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          78.70190031826496,
+          75.85460040718317,
+          66.09820015728474
+        ]
+      }
+    },
+    "A2_formbiref_TM|dim=1|q=35": {
+      "result": {
+        "A": 2.4526614073039354e-09,
+        "R": 0.0026229570065193233,
+        "T": 0.9973770405408192,
+        "label": "35",
+        "mode": "native",
+        "nG": 35,
+        "q": 35
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          68.45820043236017,
+          85.46710014343262,
+          83.11100024729967
+        ]
+      }
+    },
     "A2_formbiref_TM|dim=1|q=361": {
       "result": {
         "A": 2.5040441942181246e-09,
@@ -1564,6 +2516,134 @@
         ]
       }
     },
+    "A2_formbiref_TM|dim=1|q=37": {
+      "result": {
+        "A": 2.452783975925854e-09,
+        "R": 0.0026224420263218575,
+        "T": 0.9973775555208941,
+        "label": "37",
+        "mode": "native",
+        "nG": 37,
+        "q": 37
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          75.65800007432699,
+          73.20350036025047,
+          68.69029998779297
+        ]
+      }
+    },
+    "A2_formbiref_TM|dim=1|q=39": {
+      "result": {
+        "A": 2.451963743155261e-09,
+        "R": 0.002624464820738307,
+        "T": 0.997375532727298,
+        "label": "39",
+        "mode": "native",
+        "nG": 39,
+        "q": 39
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          202.75490079075098,
+          87.17000018805265,
+          76.09100081026554
+        ]
+      }
+    },
+    "A2_formbiref_TM|dim=1|q=41": {
+      "result": {
+        "A": 2.4522708308438723e-09,
+        "R": 0.0026240297417799716,
+        "T": 0.9973759678059492,
+        "label": "41",
+        "mode": "native",
+        "nG": 41,
+        "q": 41
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          71.76390010863543,
+          71.30239997059107,
+          71.32400013506413
+        ]
+      }
+    },
+    "A2_formbiref_TM|dim=1|q=43": {
+      "result": {
+        "A": 2.4526917163925077e-09,
+        "R": 0.0026255175949010433,
+        "T": 0.9973744799524072,
+        "label": "43",
+        "mode": "native",
+        "nG": 43,
+        "q": 43
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          81.82589989155531,
+          81.96210023015738,
+          81.7120997235179
+        ]
+      }
+    },
     "A2_formbiref_TM|dim=1|q=441": {
       "result": {
         "A": 2.4067919879300348e-09,
@@ -1591,6 +2671,70 @@
         },
         "samples_ms": [
           2024.7063003480434
+        ]
+      }
+    },
+    "A2_formbiref_TM|dim=1|q=45": {
+      "result": {
+        "A": 2.4526413122671897e-09,
+        "R": 0.0026251525229023047,
+        "T": 0.9973748450244564,
+        "label": "45",
+        "mode": "native",
+        "nG": 45,
+        "q": 45
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          96.79270070046186,
+          84.72980000078678,
+          84.80029925704002
+        ]
+      }
+    },
+    "A2_formbiref_TM|dim=1|q=47": {
+      "result": {
+        "A": 2.4531494613455607e-09,
+        "R": 0.002626275310037215,
+        "T": 0.9973737222368133,
+        "label": "47",
+        "mode": "native",
+        "nG": 47,
+        "q": 47
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          84.19620059430599,
+          85.84400080144405,
+          85.99019981920719
         ]
       }
     },
@@ -1655,6 +2799,38 @@
           57.41220060735941,
           57.16979969292879,
           57.28850048035383
+        ]
+      }
+    },
+    "A2_formbiref_TM|dim=1|q=51": {
+      "result": {
+        "A": 2.4517824437353397e-09,
+        "R": 0.002626834361534455,
+        "T": 0.9973731631866831,
+        "label": "51",
+        "mode": "native",
+        "nG": 51,
+        "q": 51
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          92.69730001688004,
+          78.90869956463575,
+          79.1986994445324
         ]
       }
     },
@@ -1936,6 +3112,36 @@
         ]
       }
     },
+    "B1_Si_grating_TE|dim=1|q=1089": {
+      "result": {
+        "A": 2.782347241492289e-09,
+        "R": 0.37976533435827775,
+        "T": 0.620234662859375,
+        "label": "1089",
+        "mode": "native",
+        "nG": 1089,
+        "q": 1089
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          19798.22380002588
+        ]
+      }
+    },
     "B1_Si_grating_TE|dim=1|q=11": {
       "result": {
         "A": 2.905839457945092e-09,
@@ -2000,6 +3206,36 @@
         ]
       }
     },
+    "B1_Si_grating_TE|dim=1|q=1225": {
+      "result": {
+        "A": 2.7758110254794133e-09,
+        "R": 0.37976533262699813,
+        "T": 0.6202346645971909,
+        "label": "1225",
+        "mode": "native",
+        "nG": 1225,
+        "q": 1225
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          25652.615200728178
+        ]
+      }
+    },
     "B1_Si_grating_TE|dim=1|q=13": {
       "result": {
         "A": 2.806907706265349e-09,
@@ -2032,6 +3268,36 @@
         ]
       }
     },
+    "B1_Si_grating_TE|dim=1|q=1369": {
+      "result": {
+        "A": 2.769281137737778e-09,
+        "R": 0.3797653314607957,
+        "T": 0.6202346657699231,
+        "label": "1369",
+        "mode": "native",
+        "nG": 1369,
+        "q": 1369
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          32788.07709924877
+        ]
+      }
+    },
     "B1_Si_grating_TE|dim=1|q=15": {
       "result": {
         "A": 2.7914451861121847e-09,
@@ -2061,6 +3327,66 @@
           59.93430037051439,
           67.84479971975088,
           71.53830025345087
+        ]
+      }
+    },
+    "B1_Si_grating_TE|dim=1|q=1521": {
+      "result": {
+        "A": 2.7845060701636726e-09,
+        "R": 0.37976533065218154,
+        "T": 0.6202346665633124,
+        "label": "1521",
+        "mode": "native",
+        "nG": 1521,
+        "q": 1521
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          82909.5135005191
+        ]
+      }
+    },
+    "B1_Si_grating_TE|dim=1|q=1681": {
+      "result": {
+        "A": 2.795188636106616e-09,
+        "R": 0.3797653300899678,
+        "T": 0.6202346671148435,
+        "label": "1681",
+        "mode": "native",
+        "nG": 1681,
+        "q": 1681
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          51690.40870014578
         ]
       }
     },
@@ -2128,6 +3454,36 @@
         ]
       }
     },
+    "B1_Si_grating_TE|dim=1|q=1849": {
+      "result": {
+        "A": 2.7908025890255317e-09,
+        "R": 0.37976532968815363,
+        "T": 0.6202346675210438,
+        "label": "1849",
+        "mode": "native",
+        "nG": 1849,
+        "q": 1849
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          67251.02770049125
+        ]
+      }
+    },
     "B1_Si_grating_TE|dim=1|q=19": {
       "result": {
         "A": 2.7820259429489624e-09,
@@ -2160,6 +3516,36 @@
         ]
       }
     },
+    "B1_Si_grating_TE|dim=1|q=2025": {
+      "result": {
+        "A": 2.789045328022155e-09,
+        "R": 0.37976532939336616,
+        "T": 0.6202346678175885,
+        "label": "2025",
+        "mode": "native",
+        "nG": 2025,
+        "q": 2025
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          81699.80170018971
+        ]
+      }
+    },
     "B1_Si_grating_TE|dim=1|q=21": {
       "result": {
         "A": 2.7809340386042436e-09,
@@ -2189,6 +3575,36 @@
           76.33970025926828,
           62.37119995057583,
           61.44049949944019
+        ]
+      }
+    },
+    "B1_Si_grating_TE|dim=1|q=2209": {
+      "result": {
+        "A": 2.791453179717962e-09,
+        "R": 0.37976532917957073,
+        "T": 0.6202346680289761,
+        "label": "2209",
+        "mode": "native",
+        "nG": 2209,
+        "q": 2209
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          102115.88449962437
         ]
       }
     },
@@ -2256,6 +3672,36 @@
         ]
       }
     },
+    "B1_Si_grating_TE|dim=1|q=2401": {
+      "result": {
+        "A": 2.823159817033627e-09,
+        "R": 0.37976532900863785,
+        "T": 0.6202346681682024,
+        "label": "2401",
+        "mode": "native",
+        "nG": 2401,
+        "q": 2401
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          127843.45030039549
+        ]
+      }
+    },
     "B1_Si_grating_TE|dim=1|q=25": {
       "result": {
         "A": 2.7792468326737207e-09,
@@ -2285,6 +3731,36 @@
           91.007299721241,
           83.78850016742945,
           61.889500357210636
+        ]
+      }
+    },
+    "B1_Si_grating_TE|dim=1|q=2601": {
+      "result": {
+        "A": 2.8089587322810416e-09,
+        "R": 0.37976532887826514,
+        "T": 0.6202346683127761,
+        "label": "2601",
+        "mode": "native",
+        "nG": 2601,
+        "q": 2601
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          149376.0179998353
         ]
       }
     },
@@ -2446,6 +3922,70 @@
         ]
       }
     },
+    "B1_Si_grating_TE|dim=1|q=33": {
+      "result": {
+        "A": 2.7781051903374987e-09,
+        "R": 0.38000085863973443,
+        "T": 0.6199991385821604,
+        "label": "33",
+        "mode": "native",
+        "nG": 33,
+        "q": 33
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          73.67679942399263,
+          77.73049920797348,
+          66.31480064243078
+        ]
+      }
+    },
+    "B1_Si_grating_TE|dim=1|q=35": {
+      "result": {
+        "A": 2.777895469208147e-09,
+        "R": 0.3799331666081719,
+        "T": 0.6200668306139326,
+        "label": "35",
+        "mode": "native",
+        "nG": 35,
+        "q": 35
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          70.03919966518879,
+          66.93459954112768,
+          66.96019973605871
+        ]
+      }
+    },
     "B1_Si_grating_TE|dim=1|q=361": {
       "result": {
         "A": 2.7771038801915893e-09,
@@ -2476,6 +4016,134 @@
         ]
       }
     },
+    "B1_Si_grating_TE|dim=1|q=37": {
+      "result": {
+        "A": 2.7778728206584447e-09,
+        "R": 0.37992911566194343,
+        "T": 0.6200708815601838,
+        "label": "37",
+        "mode": "native",
+        "nG": 37,
+        "q": 37
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          82.77270011603832,
+          68.88340041041374,
+          68.89070011675358
+        ]
+      }
+    },
+    "B1_Si_grating_TE|dim=1|q=39": {
+      "result": {
+        "A": 2.777749030791199e-09,
+        "R": 0.37988597113907097,
+        "T": 0.62011402608318,
+        "label": "39",
+        "mode": "native",
+        "nG": 39,
+        "q": 39
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          272.62469939887524,
+          304.0495999157429,
+          309.38650015741587
+        ]
+      }
+    },
+    "B1_Si_grating_TE|dim=1|q=41": {
+      "result": {
+        "A": 2.777736041181811e-09,
+        "R": 0.379883890966998,
+        "T": 0.620116106255266,
+        "label": "41",
+        "mode": "native",
+        "nG": 41,
+        "q": 41
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          99.82059989124537,
+          71.21580000966787,
+          71.24929968267679
+        ]
+      }
+    },
+    "B1_Si_grating_TE|dim=1|q=43": {
+      "result": {
+        "A": 2.777649221741285e-09,
+        "R": 0.37985508833830106,
+        "T": 0.6201449088840497,
+        "label": "43",
+        "mode": "native",
+        "nG": 43,
+        "q": 43
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          81.182099878788,
+          83.39769951999187,
+          80.07939998060465
+        ]
+      }
+    },
     "B1_Si_grating_TE|dim=1|q=441": {
       "result": {
         "A": 2.7780122646703376e-09,
@@ -2503,6 +4171,70 @@
         },
         "samples_ms": [
           1968.728399835527
+        ]
+      }
+    },
+    "B1_Si_grating_TE|dim=1|q=45": {
+      "result": {
+        "A": 2.7776408950686005e-09,
+        "R": 0.3798539462118132,
+        "T": 0.620146051010546,
+        "label": "45",
+        "mode": "native",
+        "nG": 45,
+        "q": 45
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          84.28600057959557,
+          85.47129947692156,
+          85.9195003286004
+        ]
+      }
+    },
+    "B1_Si_grating_TE|dim=1|q=47": {
+      "result": {
+        "A": 2.7775933775231465e-09,
+        "R": 0.3798339826389038,
+        "T": 0.6201660145835028,
+        "label": "47",
+        "mode": "native",
+        "nG": 47,
+        "q": 47
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          84.39520001411438,
+          85.26850026100874,
+          85.85720043629408
         ]
       }
     },
@@ -2567,6 +4299,38 @@
           72.1091004088521,
           57.02790059149265,
           56.93429987877607
+        ]
+      }
+    },
+    "B1_Si_grating_TE|dim=1|q=51": {
+      "result": {
+        "A": 2.777537311260403e-09,
+        "R": 0.37981904666040617,
+        "T": 0.6201809505620566,
+        "label": "51",
+        "mode": "native",
+        "nG": 51,
+        "q": 51
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          96.46449983119965,
+          78.72330024838448,
+          79.59359977394342
         ]
       }
     },
@@ -2848,6 +4612,36 @@
         ]
       }
     },
+    "B1_Si_grating_TM|dim=1|q=1089": {
+      "result": {
+        "A": 2.1237222980197146e-08,
+        "R": 0.21370681340840747,
+        "T": 0.7862931653543695,
+        "label": "1089",
+        "mode": "native",
+        "nG": 1089,
+        "q": 1089
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          19673.937800340354
+        ]
+      }
+    },
     "B1_Si_grating_TM|dim=1|q=11": {
       "result": {
         "A": 3.5515634877469893e-09,
@@ -2912,6 +4706,36 @@
         ]
       }
     },
+    "B1_Si_grating_TM|dim=1|q=1225": {
+      "result": {
+        "A": 2.1244102144102328e-08,
+        "R": 0.21370651299774668,
+        "T": 0.7862934657581512,
+        "label": "1225",
+        "mode": "native",
+        "nG": 1225,
+        "q": 1225
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          25551.052100025117
+        ]
+      }
+    },
     "B1_Si_grating_TM|dim=1|q=13": {
       "result": {
         "A": 5.932758950777384e-09,
@@ -2944,6 +4768,36 @@
         ]
       }
     },
+    "B1_Si_grating_TM|dim=1|q=1369": {
+      "result": {
+        "A": 2.1249171755499674e-08,
+        "R": 0.21370633219367327,
+        "T": 0.786293646557155,
+        "label": "1369",
+        "mode": "native",
+        "nG": 1369,
+        "q": 1369
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          32901.143399998546
+        ]
+      }
+    },
     "B1_Si_grating_TM|dim=1|q=15": {
       "result": {
         "A": 7.579243344046915e-09,
@@ -2973,6 +4827,66 @@
           59.59609989076853,
           59.29629970341921,
           58.868699707090855
+        ]
+      }
+    },
+    "B1_Si_grating_TM|dim=1|q=1521": {
+      "result": {
+        "A": 2.128886211760772e-08,
+        "R": 0.21370622411063106,
+        "T": 0.7862937546005068,
+        "label": "1521",
+        "mode": "native",
+        "nG": 1521,
+        "q": 1521
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          47672.105399891734
+        ]
+      }
+    },
+    "B1_Si_grating_TM|dim=1|q=1681": {
+      "result": {
+        "A": 2.1334955802032596e-08,
+        "R": 0.21370615926102474,
+        "T": 0.7862938194040194,
+        "label": "1681",
+        "mode": "native",
+        "nG": 1681,
+        "q": 1681
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          52195.55910024792
         ]
       }
     },
@@ -3040,6 +4954,36 @@
         ]
       }
     },
+    "B1_Si_grating_TM|dim=1|q=1849": {
+      "result": {
+        "A": 2.0994364136051047e-08,
+        "R": 0.21370612226417585,
+        "T": 0.78629385674146,
+        "label": "1849",
+        "mode": "native",
+        "nG": 1849,
+        "q": 1849
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          67421.81169986725
+        ]
+      }
+    },
     "B1_Si_grating_TM|dim=1|q=19": {
       "result": {
         "A": 1.9803798906314896e-08,
@@ -3072,6 +5016,36 @@
         ]
       }
     },
+    "B1_Si_grating_TM|dim=1|q=2025": {
+      "result": {
+        "A": 2.1176415621049216e-08,
+        "R": 0.21370610217456154,
+        "T": 0.7862938766490228,
+        "label": "2025",
+        "mode": "native",
+        "nG": 2025,
+        "q": 2025
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          82742.06620082259
+        ]
+      }
+    },
     "B1_Si_grating_TM|dim=1|q=21": {
       "result": {
         "A": 3.0943770101821144e-08,
@@ -3101,6 +5075,36 @@
           62.484899535775185,
           61.51170004159212,
           61.342500150203705
+        ]
+      }
+    },
+    "B1_Si_grating_TM|dim=1|q=2209": {
+      "result": {
+        "A": 2.1163366503706982e-08,
+        "R": 0.21370609318031952,
+        "T": 0.786293885656314,
+        "label": "2209",
+        "mode": "native",
+        "nG": 2209,
+        "q": 2209
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          103814.16290067136
         ]
       }
     },
@@ -3168,6 +5172,36 @@
         ]
       }
     },
+    "B1_Si_grating_TM|dim=1|q=2401": {
+      "result": {
+        "A": 2.116218977832318e-08,
+        "R": 0.21370609017657893,
+        "T": 0.7862938886612313,
+        "label": "2401",
+        "mode": "native",
+        "nG": 2401,
+        "q": 2401
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          130765.50980005413
+        ]
+      }
+    },
     "B1_Si_grating_TM|dim=1|q=25": {
       "result": {
         "A": 3.2787458636995837e-08,
@@ -3197,6 +5231,36 @@
           94.71450001001358,
           62.49229982495308,
           62.01060023158789
+        ]
+      }
+    },
+    "B1_Si_grating_TM|dim=1|q=2601": {
+      "result": {
+        "A": 2.142099331248204e-08,
+        "R": 0.21370609016129408,
+        "T": 0.7862938884177126,
+        "label": "2601",
+        "mode": "native",
+        "nG": 2601,
+        "q": 2601
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          150208.30569975078
         ]
       }
     },
@@ -3358,6 +5422,70 @@
         ]
       }
     },
+    "B1_Si_grating_TM|dim=1|q=33": {
+      "result": {
+        "A": 2.7271369495984743e-08,
+        "R": 0.30350974227260735,
+        "T": 0.6964902304560231,
+        "label": "33",
+        "mode": "native",
+        "nG": 33,
+        "q": 33
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          79.07939981669188,
+          66.16849917918444,
+          66.18670001626015
+        ]
+      }
+    },
+    "B1_Si_grating_TM|dim=1|q=35": {
+      "result": {
+        "A": 2.705679269521255e-08,
+        "R": 0.30052263371186944,
+        "T": 0.6994773392313379,
+        "label": "35",
+        "mode": "native",
+        "nG": 35,
+        "q": 35
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          81.21190033853054,
+          67.65569932758808,
+          67.42440070956945
+        ]
+      }
+    },
     "B1_Si_grating_TM|dim=1|q=361": {
       "result": {
         "A": 2.125655429452422e-08,
@@ -3388,6 +5516,134 @@
         ]
       }
     },
+    "B1_Si_grating_TM|dim=1|q=37": {
+      "result": {
+        "A": 2.555041156426796e-08,
+        "R": 0.27097796812310354,
+        "T": 0.729022006326485,
+        "label": "37",
+        "mode": "native",
+        "nG": 37,
+        "q": 37
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          68.8902996480465,
+          69.13939956575632,
+          77.52140052616596
+        ]
+      }
+    },
+    "B1_Si_grating_TM|dim=1|q=39": {
+      "result": {
+        "A": 2.5435931805262157e-08,
+        "R": 0.26980786901379067,
+        "T": 0.7301921055502776,
+        "label": "39",
+        "mode": "native",
+        "nG": 39,
+        "q": 39
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          236.02190054953098,
+          414.65859953314066,
+          88.76310009509325
+        ]
+      }
+    },
+    "B1_Si_grating_TM|dim=1|q=41": {
+      "result": {
+        "A": 2.4407111665070147e-08,
+        "R": 0.2528098769735309,
+        "T": 0.7471900986193574,
+        "label": "41",
+        "mode": "native",
+        "nG": 41,
+        "q": 41
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          92.30799973011017,
+          72.0210000872612,
+          71.99770025908947
+        ]
+      }
+    },
+    "B1_Si_grating_TM|dim=1|q=43": {
+      "result": {
+        "A": 2.4344992355374018e-08,
+        "R": 0.25232980764967056,
+        "T": 0.7476701680053371,
+        "label": "43",
+        "mode": "native",
+        "nG": 43,
+        "q": 43
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          84.13060009479523,
+          82.91830029338598,
+          83.18919967859983
+        ]
+      }
+    },
     "B1_Si_grating_TM|dim=1|q=441": {
       "result": {
         "A": 2.1258151017278237e-08,
@@ -3415,6 +5671,70 @@
         },
         "samples_ms": [
           2004.993200302124
+        ]
+      }
+    },
+    "B1_Si_grating_TM|dim=1|q=45": {
+      "result": {
+        "A": 2.362985374038118e-08,
+        "R": 0.2417979304788807,
+        "T": 0.7582020458912656,
+        "label": "45",
+        "mode": "native",
+        "nG": 45,
+        "q": 45
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          99.33239966630936,
+          86.25030051916838,
+          86.01680025458336
+        ]
+      }
+    },
+    "B1_Si_grating_TM|dim=1|q=47": {
+      "result": {
+        "A": 2.3595309150969968e-08,
+        "R": 0.24160191408400244,
+        "T": 0.7583980623206884,
+        "label": "47",
+        "mode": "native",
+        "nG": 47,
+        "q": 47
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          83.4240997210145,
+          85.35300008952618,
+          83.3620997145772
         ]
       }
     },
@@ -3479,6 +5799,38 @@
           57.50979948788881,
           57.126699946820736,
           58.79330076277256
+        ]
+      }
+    },
+    "B1_Si_grating_TM|dim=1|q=51": {
+      "result": {
+        "A": 2.3066176746411315e-08,
+        "R": 0.2346087807417633,
+        "T": 0.76539119619206,
+        "label": "51",
+        "mode": "native",
+        "nG": 51,
+        "q": 51
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          83.18520057946444,
+          79.0828000754118,
+          78.79519928246737
         ]
       }
     },
@@ -3760,6 +6112,36 @@
         ]
       }
     },
+    "B2_HCG_TM|dim=1|q=1089": {
+      "result": {
+        "A": 3.318787494821507e-09,
+        "R": 0.873330223712428,
+        "T": 0.12666977296878454,
+        "label": "1089",
+        "mode": "native",
+        "nG": 1089,
+        "q": 1089
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          18080.752500332892
+        ]
+      }
+    },
     "B2_HCG_TM|dim=1|q=11": {
       "result": {
         "A": 3.395543485273933e-09,
@@ -3824,6 +6206,36 @@
         ]
       }
     },
+    "B2_HCG_TM|dim=1|q=1225": {
+      "result": {
+        "A": 3.315653557267595e-09,
+        "R": 0.8733298053084462,
+        "T": 0.12667019137590027,
+        "label": "1225",
+        "mode": "native",
+        "nG": 1225,
+        "q": 1225
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          25509.724400006235
+        ]
+      }
+    },
     "B2_HCG_TM|dim=1|q=13": {
       "result": {
         "A": 3.3464000459559884e-09,
@@ -3856,6 +6268,36 @@
         ]
       }
     },
+    "B2_HCG_TM|dim=1|q=1369": {
+      "result": {
+        "A": 3.3039022351299963e-09,
+        "R": 0.8733294642944006,
+        "T": 0.12667053240169715,
+        "label": "1369",
+        "mode": "native",
+        "nG": 1369,
+        "q": 1369
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          32084.176399745047
+        ]
+      }
+    },
     "B2_HCG_TM|dim=1|q=15": {
       "result": {
         "A": 3.344638510593967e-09,
@@ -3885,6 +6327,66 @@
           72.0244999974966,
           60.77149976044893,
           59.493400156497955
+        ]
+      }
+    },
+    "B2_HCG_TM|dim=1|q=1521": {
+      "result": {
+        "A": 3.1651748999550477e-09,
+        "R": 0.8733291836491118,
+        "T": 0.12667081318571327,
+        "label": "1521",
+        "mode": "native",
+        "nG": 1521,
+        "q": 1521
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          42035.036500543356
+        ]
+      }
+    },
+    "B2_HCG_TM|dim=1|q=1681": {
+      "result": {
+        "A": 3.34660660294972e-09,
+        "R": 0.8733289504400223,
+        "T": 0.12667104621337105,
+        "label": "1681",
+        "mode": "native",
+        "nG": 1681,
+        "q": 1681
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          51803.60020045191
         ]
       }
     },
@@ -3952,6 +6454,36 @@
         ]
       }
     },
+    "B2_HCG_TM|dim=1|q=1849": {
+      "result": {
+        "A": 3.34110603072979e-09,
+        "R": 0.8733287568688077,
+        "T": 0.12667123979008624,
+        "label": "1849",
+        "mode": "native",
+        "nG": 1849,
+        "q": 1849
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          63961.06310002506
+        ]
+      }
+    },
     "B2_HCG_TM|dim=1|q=19": {
       "result": {
         "A": 3.3244665631482206e-09,
@@ -3984,6 +6516,36 @@
         ]
       }
     },
+    "B2_HCG_TM|dim=1|q=2025": {
+      "result": {
+        "A": 3.336363768591255e-09,
+        "R": 0.8733285896847099,
+        "T": 0.1266714069789263,
+        "label": "2025",
+        "mode": "native",
+        "nG": 2025,
+        "q": 2025
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          86100.19439924508
+        ]
+      }
+    },
     "B2_HCG_TM|dim=1|q=21": {
       "result": {
         "A": 3.314682167632199e-09,
@@ -4013,6 +6575,36 @@
           66.78629945963621,
           67.4515999853611,
           61.23729981482029
+        ]
+      }
+    },
+    "B2_HCG_TM|dim=1|q=2209": {
+      "result": {
+        "A": 3.2349995737757098e-09,
+        "R": 0.8733284480944196,
+        "T": 0.12667154867058086,
+        "label": "2209",
+        "mode": "native",
+        "nG": 2209,
+        "q": 2209
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          106503.76950018108
         ]
       }
     },
@@ -4080,6 +6672,36 @@
         ]
       }
     },
+    "B2_HCG_TM|dim=1|q=2401": {
+      "result": {
+        "A": 3.3221978501529748e-09,
+        "R": 0.8733283279304598,
+        "T": 0.12667166874734237,
+        "label": "2401",
+        "mode": "native",
+        "nG": 2401,
+        "q": 2401
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          124898.33540003747
+        ]
+      }
+    },
     "B2_HCG_TM|dim=1|q=25": {
       "result": {
         "A": 3.3099468166319923e-09,
@@ -4109,6 +6731,36 @@
           79.53990064561367,
           62.25939933210611,
           62.07810062915087
+        ]
+      }
+    },
+    "B2_HCG_TM|dim=1|q=2601": {
+      "result": {
+        "A": 3.0170270448603986e-09,
+        "R": 0.8733282243280364,
+        "T": 0.1266717726549366,
+        "label": "2601",
+        "mode": "native",
+        "nG": 2601,
+        "q": 2601
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          151052.70619969815
         ]
       }
     },
@@ -4270,6 +6922,70 @@
         ]
       }
     },
+    "B2_HCG_TM|dim=1|q=33": {
+      "result": {
+        "A": 3.3057001025404986e-09,
+        "R": 0.8731022088001241,
+        "T": 0.12689778789417577,
+        "label": "33",
+        "mode": "native",
+        "nG": 33,
+        "q": 33
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          66.35290011763573,
+          82.53400027751923,
+          66.088299266994
+        ]
+      }
+    },
+    "B2_HCG_TM|dim=1|q=35": {
+      "result": {
+        "A": 3.306067697383952e-09,
+        "R": 0.8732237062397767,
+        "T": 0.12677629045415556,
+        "label": "35",
+        "mode": "native",
+        "nG": 35,
+        "q": 35
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          80.19480016082525,
+          70.97750063985586,
+          67.42960028350353
+        ]
+      }
+    },
     "B2_HCG_TM|dim=1|q=361": {
       "result": {
         "A": 3.305670459585741e-09,
@@ -4300,6 +7016,134 @@
         ]
       }
     },
+    "B2_HCG_TM|dim=1|q=37": {
+      "result": {
+        "A": 3.30480387500387e-09,
+        "R": 0.8731863995274385,
+        "T": 0.12681359716775764,
+        "label": "37",
+        "mode": "native",
+        "nG": 37,
+        "q": 37
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          86.70320082455873,
+          68.81139986217022,
+          68.83030012249947
+        ]
+      }
+    },
+    "B2_HCG_TM|dim=1|q=39": {
+      "result": {
+        "A": 3.305124618435684e-09,
+        "R": 0.8732726787378626,
+        "T": 0.12672731795701275,
+        "label": "39",
+        "mode": "native",
+        "nG": 39,
+        "q": 39
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          78.32659967243671,
+          79.88769933581352,
+          80.03149926662445
+        ]
+      }
+    },
+    "B2_HCG_TM|dim=1|q=41": {
+      "result": {
+        "A": 3.3042675817718248e-09,
+        "R": 0.8732413067054001,
+        "T": 0.1267586899903323,
+        "label": "41",
+        "mode": "native",
+        "nG": 41,
+        "q": 41
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          73.47590010613203,
+          83.05490016937256,
+          71.5888999402523
+        ]
+      }
+    },
+    "B2_HCG_TM|dim=1|q=43": {
+      "result": {
+        "A": 3.304471335452419e-09,
+        "R": 0.8733042729234395,
+        "T": 0.12669572377208918,
+        "label": "43",
+        "mode": "native",
+        "nG": 43,
+        "q": 43
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          82.27290026843548,
+          82.42580015212297,
+          81.721399910748
+        ]
+      }
+    },
     "B2_HCG_TM|dim=1|q=441": {
       "result": {
         "A": 3.3035951196858093e-09,
@@ -4327,6 +7171,70 @@
         },
         "samples_ms": [
           1919.7121001780033
+        ]
+      }
+    },
+    "B2_HCG_TM|dim=1|q=45": {
+      "result": {
+        "A": 3.3037334534746776e-09,
+        "R": 0.8732782117102726,
+        "T": 0.1267217849859939,
+        "label": "45",
+        "mode": "native",
+        "nG": 45,
+        "q": 45
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          98.92969951033592,
+          84.98319983482361,
+          85.27769986540079
+        ]
+      }
+    },
+    "B2_HCG_TM|dim=1|q=47": {
+      "result": {
+        "A": 3.303895768080878e-09,
+        "R": 0.8733252393619931,
+        "T": 0.1266747573341111,
+        "label": "47",
+        "mode": "native",
+        "nG": 47,
+        "q": 47
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          84.50349979102612,
+          86.1691003665328,
+          86.52709983289242
         ]
       }
     },
@@ -4391,6 +7299,38 @@
           57.40060005337,
           57.115599513053894,
           57.05559998750687
+        ]
+      }
+    },
+    "B2_HCG_TM|dim=1|q=51": {
+      "result": {
+        "A": 3.3037097224575263e-09,
+        "R": 0.8733394200580556,
+        "T": 0.12666057663823463,
+        "label": "51",
+        "mode": "native",
+        "nG": 51,
+        "q": 51
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          96.0504999384284,
+          79.49549984186888,
+          88.28129991889
         ]
       }
     },
@@ -4672,6 +7612,36 @@
         ]
       }
     },
+    "B3_Au_slits_TM|dim=1|q=1089": {
+      "result": {
+        "A": 0.027237989876975982,
+        "R": 0.7932954332906437,
+        "T": 0.17946657683238035,
+        "label": "1089",
+        "mode": "native",
+        "nG": 1089,
+        "q": 1089
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          18640.870899893343
+        ]
+      }
+    },
     "B3_Au_slits_TM|dim=1|q=11": {
       "result": {
         "A": 0.0908927827985763,
@@ -4736,6 +7706,36 @@
         ]
       }
     },
+    "B3_Au_slits_TM|dim=1|q=1225": {
+      "result": {
+        "A": 0.027223162299532977,
+        "R": 0.7933086453854081,
+        "T": 0.1794681923150589,
+        "label": "1225",
+        "mode": "native",
+        "nG": 1225,
+        "q": 1225
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          25482.18770045787
+        ]
+      }
+    },
     "B3_Au_slits_TM|dim=1|q=13": {
       "result": {
         "A": 0.039613310210849656,
@@ -4768,6 +7768,36 @@
         ]
       }
     },
+    "B3_Au_slits_TM|dim=1|q=1369": {
+      "result": {
+        "A": 0.027226797519418172,
+        "R": 0.7933045612667108,
+        "T": 0.17946864121387104,
+        "label": "1369",
+        "mode": "native",
+        "nG": 1369,
+        "q": 1369
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          33411.55990026891
+        ]
+      }
+    },
     "B3_Au_slits_TM|dim=1|q=15": {
       "result": {
         "A": 0.04832147980194504,
@@ -4797,6 +7827,66 @@
           59.258599765598774,
           58.98129940032959,
           58.976300060749054
+        ]
+      }
+    },
+    "B3_Au_slits_TM|dim=1|q=1521": {
+      "result": {
+        "A": 0.02722543276670447,
+        "R": 0.7933059687610581,
+        "T": 0.17946859847223745,
+        "label": "1521",
+        "mode": "native",
+        "nG": 1521,
+        "q": 1521
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          41155.483099631965
+        ]
+      }
+    },
+    "B3_Au_slits_TM|dim=1|q=1681": {
+      "result": {
+        "A": 0.027221864322849204,
+        "R": 0.7933088169711581,
+        "T": 0.17946931870599273,
+        "label": "1681",
+        "mode": "native",
+        "nG": 1681,
+        "q": 1681
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          53691.19089934975
         ]
       }
     },
@@ -4864,6 +7954,36 @@
         ]
       }
     },
+    "B3_Au_slits_TM|dim=1|q=1849": {
+      "result": {
+        "A": 0.0272166100151659,
+        "R": 0.7933128903184705,
+        "T": 0.17947049966636358,
+        "label": "1849",
+        "mode": "native",
+        "nG": 1849,
+        "q": 1849
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          67881.6232001409
+        ]
+      }
+    },
     "B3_Au_slits_TM|dim=1|q=19": {
       "result": {
         "A": 0.028596203249364016,
@@ -4896,6 +8016,36 @@
         ]
       }
     },
+    "B3_Au_slits_TM|dim=1|q=2025": {
+      "result": {
+        "A": 0.027214900692584726,
+        "R": 0.7933150524096555,
+        "T": 0.17947004689775978,
+        "label": "2025",
+        "mode": "native",
+        "nG": 2025,
+        "q": 2025
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          82181.50530010462
+        ]
+      }
+    },
     "B3_Au_slits_TM|dim=1|q=21": {
       "result": {
         "A": 0.028702479738350217,
@@ -4925,6 +8075,36 @@
           62.16020043939352,
           76.19160041213036,
           64.33209963142872
+        ]
+      }
+    },
+    "B3_Au_slits_TM|dim=1|q=2209": {
+      "result": {
+        "A": 0.02721231573228483,
+        "R": 0.7933164042782017,
+        "T": 0.17947127998951345,
+        "label": "2209",
+        "mode": "native",
+        "nG": 2209,
+        "q": 2209
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          103420.11850047857
         ]
       }
     },
@@ -4992,6 +8172,36 @@
         ]
       }
     },
+    "B3_Au_slits_TM|dim=1|q=2401": {
+      "result": {
+        "A": 0.027212364399760658,
+        "R": 0.793316433121773,
+        "T": 0.17947120247846632,
+        "label": "2401",
+        "mode": "native",
+        "nG": 2401,
+        "q": 2401
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          129786.4186996594
+        ]
+      }
+    },
     "B3_Au_slits_TM|dim=1|q=25": {
       "result": {
         "A": 0.03318536112120746,
@@ -5021,6 +8231,36 @@
           62.43319995701313,
           69.26350016146898,
           67.10770074278116
+        ]
+      }
+    },
+    "B3_Au_slits_TM|dim=1|q=2601": {
+      "result": {
+        "A": 0.027210781432260744,
+        "R": 0.7933177076632173,
+        "T": 0.17947151090452196,
+        "label": "2601",
+        "mode": "native",
+        "nG": 2601,
+        "q": 2601
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          152227.32450067997
         ]
       }
     },
@@ -5184,6 +8424,70 @@
         ]
       }
     },
+    "B3_Au_slits_TM|dim=1|q=33": {
+      "result": {
+        "A": 0.029703371735558814,
+        "R": 0.79186922545405,
+        "T": 0.17842740281039116,
+        "label": "33",
+        "mode": "native",
+        "nG": 33,
+        "q": 33
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          78.23320012539625,
+          66.53890013694763,
+          70.01900020986795
+        ]
+      }
+    },
+    "B3_Au_slits_TM|dim=1|q=35": {
+      "result": {
+        "A": 0.03222719474084296,
+        "R": 0.7899193635334711,
+        "T": 0.1778534417256859,
+        "label": "35",
+        "mode": "native",
+        "nG": 35,
+        "q": 35
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          79.99049965292215,
+          67.29310005903244,
+          67.11249984800816
+        ]
+      }
+    },
     "B3_Au_slits_TM|dim=1|q=361": {
       "result": {
         "A": 0.02736642747221582,
@@ -5214,6 +8518,134 @@
         ]
       }
     },
+    "B3_Au_slits_TM|dim=1|q=37": {
+      "result": {
+        "A": 0.030700324076327556,
+        "R": 0.7905834634242572,
+        "T": 0.17871621249941522,
+        "label": "37",
+        "mode": "native",
+        "nG": 37,
+        "q": 37
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          70.51970064640045,
+          70.56799996644258,
+          69.95879951864481
+        ]
+      }
+    },
+    "B3_Au_slits_TM|dim=1|q=39": {
+      "result": {
+        "A": 0.028082419800572356,
+        "R": 0.7925125034360816,
+        "T": 0.17940507676334605,
+        "label": "39",
+        "mode": "native",
+        "nG": 39,
+        "q": 39
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          75.19489992409945,
+          73.63840006291866,
+          76.59349963068962
+        ]
+      }
+    },
+    "B3_Au_slits_TM|dim=1|q=41": {
+      "result": {
+        "A": 0.029235063004763168,
+        "R": 0.7913684454410997,
+        "T": 0.1793964915541371,
+        "label": "41",
+        "mode": "native",
+        "nG": 41,
+        "q": 41
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          90.25869984179735,
+          71.6002993285656,
+          71.2168999016285
+        ]
+      }
+    },
+    "B3_Au_slits_TM|dim=1|q=43": {
+      "result": {
+        "A": 0.03077068359170121,
+        "R": 0.790295647758786,
+        "T": 0.17893366864951277,
+        "label": "43",
+        "mode": "native",
+        "nG": 43,
+        "q": 43
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          93.13629940152168,
+          80.2714005112648,
+          80.53539972752333
+        ]
+      }
+    },
     "B3_Au_slits_TM|dim=1|q=441": {
       "result": {
         "A": 0.027333882809775695,
@@ -5241,6 +8673,70 @@
         },
         "samples_ms": [
           1951.7094995826483
+        ]
+      }
+    },
+    "B3_Au_slits_TM|dim=1|q=45": {
+      "result": {
+        "A": 0.030518975561829642,
+        "R": 0.7904311636327835,
+        "T": 0.17904986080538682,
+        "label": "45",
+        "mode": "native",
+        "nG": 45,
+        "q": 45
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          96.57410066574812,
+          83.71520042419434,
+          84.66979954391718
+        ]
+      }
+    },
+    "B3_Au_slits_TM|dim=1|q=47": {
+      "result": {
+        "A": 0.029803521537148187,
+        "R": 0.7913511891591768,
+        "T": 0.17884528930367502,
+        "label": "47",
+        "mode": "native",
+        "nG": 47,
+        "q": 47
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          100.06090067327023,
+          84.6447991207242,
+          85.2811997756362
         ]
       }
     },
@@ -5305,6 +8801,38 @@
           57.43199959397316,
           57.152400724589825,
           56.989300064742565
+        ]
+      }
+    },
+    "B3_Au_slits_TM|dim=1|q=51": {
+      "result": {
+        "A": 0.028248494900294824,
+        "R": 0.792467202226983,
+        "T": 0.1792843028727222,
+        "label": "51",
+        "mode": "native",
+        "nG": 51,
+        "q": 51
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          78.89789994806051,
+          79.31100018322468,
+          105.76120018959045
         ]
       }
     },
@@ -5954,6 +9482,276 @@
         ]
       }
     },
+    "C1_Si_pillars|dim=2|q=33": {
+      "result": {
+        "A": 2.1809089229440914e-05,
+        "R": 0.38920602698400514,
+        "T": 0.6107721639267654,
+        "label": "(33,33)",
+        "mode": "native",
+        "nG": 1089,
+        "q": 33
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          16312.49319948256
+        ]
+      }
+    },
+    "C1_Si_pillars|dim=2|q=35": {
+      "result": {
+        "A": -6.73867018308183e-06,
+        "R": 0.3898273751202735,
+        "T": 0.6101793635499096,
+        "label": "(35,35)",
+        "mode": "native",
+        "nG": 1225,
+        "q": 35
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          22101.66859999299
+        ]
+      }
+    },
+    "C1_Si_pillars|dim=2|q=37": {
+      "result": {
+        "A": 6.2252523808092874e-06,
+        "R": 0.3898786539442992,
+        "T": 0.61011512080332,
+        "label": "(37,37)",
+        "mode": "native",
+        "nG": 1369,
+        "q": 37
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          28708.572700619698
+        ]
+      }
+    },
+    "C1_Si_pillars|dim=2|q=39": {
+      "result": {
+        "A": 2.3001772736508386e-05,
+        "R": 0.38917126106577454,
+        "T": 0.610805737161489,
+        "label": "(39,39)",
+        "mode": "native",
+        "nG": 1521,
+        "q": 39
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          39743.63119993359
+        ]
+      }
+    },
+    "C1_Si_pillars|dim=2|q=41": {
+      "result": {
+        "A": -4.275538627140918e-06,
+        "R": 0.3899221115646053,
+        "T": 0.6100821639740218,
+        "label": "(41,41)",
+        "mode": "native",
+        "nG": 1681,
+        "q": 41
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          49377.51360051334
+        ]
+      }
+    },
+    "C1_Si_pillars|dim=2|q=43": {
+      "result": {
+        "A": 1.5886031288214753e-06,
+        "R": 0.38921254645960707,
+        "T": 0.6107858649372642,
+        "label": "(43,43)",
+        "mode": "native",
+        "nG": 1849,
+        "q": 43
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          63694.22159995884
+        ]
+      }
+    },
+    "C1_Si_pillars|dim=2|q=45": {
+      "result": {
+        "A": 1.4671378344432995e-05,
+        "R": 0.38957861534349136,
+        "T": 0.6104067132781642,
+        "label": "(45,45)",
+        "mode": "native",
+        "nG": 2025,
+        "q": 45
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          78348.38620014489
+        ]
+      }
+    },
+    "C1_Si_pillars|dim=2|q=47": {
+      "result": {
+        "A": 1.1534620486530756e-06,
+        "R": 0.38952254551719706,
+        "T": 0.6104763010207542,
+        "label": "(47,47)",
+        "mode": "native",
+        "nG": 2209,
+        "q": 47
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          97000.3744000569
+        ]
+      }
+    },
+    "C1_Si_pillars|dim=2|q=49": {
+      "result": {
+        "A": 1.9473556789328939e-07,
+        "R": 0.38920264602590654,
+        "T": 0.6107971592385255,
+        "label": "(49,49)",
+        "mode": "native",
+        "nG": 2401,
+        "q": 49
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          120381.87970034778
+        ]
+      }
+    },
     "C1_Si_pillars|dim=2|q=5": {
       "result": {
         "A": 0.008678056891044617,
@@ -5983,6 +9781,36 @@
           74.60729964077473,
           73.71330074965954,
           72.06939999014139
+        ]
+      }
+    },
+    "C1_Si_pillars|dim=2|q=51": {
+      "result": {
+        "A": 6.305077402180004e-06,
+        "R": 0.3897402162747009,
+        "T": 0.6102534786478969,
+        "label": "(51,51)",
+        "mode": "native",
+        "nG": 2601,
+        "q": 51
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          141982.82739985734
         ]
       }
     },
@@ -6450,6 +10278,276 @@
         ]
       }
     },
+    "C1b_Si_pillars_diffract|dim=2|q=33": {
+      "result": {
+        "A": 0.0019668400416414933,
+        "R": 0.14609510867764136,
+        "T": 0.8519380512807171,
+        "label": "(33,33)",
+        "mode": "native",
+        "nG": 1089,
+        "q": 33
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          16054.533399641514
+        ]
+      }
+    },
+    "C1b_Si_pillars_diffract|dim=2|q=35": {
+      "result": {
+        "A": 0.0014416269057464515,
+        "R": 0.14620988518555367,
+        "T": 0.8523484879086999,
+        "label": "(35,35)",
+        "mode": "native",
+        "nG": 1225,
+        "q": 35
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          21771.346300840378
+        ]
+      }
+    },
+    "C1b_Si_pillars_diffract|dim=2|q=37": {
+      "result": {
+        "A": -0.0004678894872592876,
+        "R": 0.1460340984433768,
+        "T": 0.8544337910438825,
+        "label": "(37,37)",
+        "mode": "native",
+        "nG": 1369,
+        "q": 37
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          28567.145300097764
+        ]
+      }
+    },
+    "C1b_Si_pillars_diffract|dim=2|q=39": {
+      "result": {
+        "A": -0.0013444612393715971,
+        "R": 0.14615594163876636,
+        "T": 0.8551885196006053,
+        "label": "(39,39)",
+        "mode": "native",
+        "nG": 1521,
+        "q": 39
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          39839.014399796724
+        ]
+      }
+    },
+    "C1b_Si_pillars_diffract|dim=2|q=41": {
+      "result": {
+        "A": -0.0002193957961849069,
+        "R": 0.14579954704596432,
+        "T": 0.8544198487502206,
+        "label": "(41,41)",
+        "mode": "native",
+        "nG": 1681,
+        "q": 41
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          48340.10380040854
+        ]
+      }
+    },
+    "C1b_Si_pillars_diffract|dim=2|q=43": {
+      "result": {
+        "A": 0.0008884429136543082,
+        "R": 0.14543087621321957,
+        "T": 0.8536806808731261,
+        "label": "(43,43)",
+        "mode": "native",
+        "nG": 1849,
+        "q": 43
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          62275.210299529135
+        ]
+      }
+    },
+    "C1b_Si_pillars_diffract|dim=2|q=45": {
+      "result": {
+        "A": 0.0006136378315407809,
+        "R": 0.14553451386370592,
+        "T": 0.8538518483047534,
+        "label": "(45,45)",
+        "mode": "native",
+        "nG": 2025,
+        "q": 45
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          79521.71160001308
+        ]
+      }
+    },
+    "C1b_Si_pillars_diffract|dim=2|q=47": {
+      "result": {
+        "A": -0.00023653016997582377,
+        "R": 0.14547545789537225,
+        "T": 0.8547610722746035,
+        "label": "(47,47)",
+        "mode": "native",
+        "nG": 2209,
+        "q": 47
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          97008.54269973934
+        ]
+      }
+    },
+    "C1b_Si_pillars_diffract|dim=2|q=49": {
+      "result": {
+        "A": -0.0006396865056841339,
+        "R": 0.1455420408521882,
+        "T": 0.855097645653496,
+        "label": "(49,49)",
+        "mode": "native",
+        "nG": 2401,
+        "q": 49
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          118828.37629970163
+        ]
+      }
+    },
     "C1b_Si_pillars_diffract|dim=2|q=5": {
       "result": {
         "A": -0.017054875097043953,
@@ -6479,6 +10577,36 @@
           75.41509997099638,
           71.7675993219018,
           73.05070012807846
+        ]
+      }
+    },
+    "C1b_Si_pillars_diffract|dim=2|q=51": {
+      "result": {
+        "A": -6.605823543348599e-05,
+        "R": 0.14538898557332025,
+        "T": 0.8546770726621132,
+        "label": "(51,51)",
+        "mode": "native",
+        "nG": 2601,
+        "q": 51
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          142892.64519978315
         ]
       }
     },
@@ -6946,6 +11074,276 @@
         ]
       }
     },
+    "C2_Au_holes|dim=2|q=33": {
+      "result": {
+        "A": 0.08227983905235231,
+        "R": 0.6853162624644035,
+        "T": 0.23240389848324422,
+        "label": "(33,33)",
+        "mode": "native",
+        "nG": 1089,
+        "q": 33
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          16075.666199438274
+        ]
+      }
+    },
+    "C2_Au_holes|dim=2|q=35": {
+      "result": {
+        "A": 0.09077995386888715,
+        "R": 0.6843089861966569,
+        "T": 0.22491105993445593,
+        "label": "(35,35)",
+        "mode": "native",
+        "nG": 1225,
+        "q": 35
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          22067.864700220525
+        ]
+      }
+    },
+    "C2_Au_holes|dim=2|q=37": {
+      "result": {
+        "A": 0.09815066494544708,
+        "R": 0.6766571679244412,
+        "T": 0.22519216713011173,
+        "label": "(37,37)",
+        "mode": "native",
+        "nG": 1369,
+        "q": 37
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          28770.118699409068
+        ]
+      }
+    },
+    "C2_Au_holes|dim=2|q=39": {
+      "result": {
+        "A": 0.09553920654747589,
+        "R": 0.680689582478876,
+        "T": 0.2237712109736481,
+        "label": "(39,39)",
+        "mode": "native",
+        "nG": 1521,
+        "q": 39
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          40081.87120035291
+        ]
+      }
+    },
+    "C2_Au_holes|dim=2|q=41": {
+      "result": {
+        "A": 0.07616279720800329,
+        "R": 0.6866894701478362,
+        "T": 0.2371477326441605,
+        "label": "(41,41)",
+        "mode": "native",
+        "nG": 1681,
+        "q": 41
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          48809.857700020075
+        ]
+      }
+    },
+    "C2_Au_holes|dim=2|q=43": {
+      "result": {
+        "A": 0.09091459685872808,
+        "R": 0.681501550813224,
+        "T": 0.22758385232804787,
+        "label": "(43,43)",
+        "mode": "native",
+        "nG": 1849,
+        "q": 43
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          62387.17690017074
+        ]
+      }
+    },
+    "C2_Au_holes|dim=2|q=45": {
+      "result": {
+        "A": 0.08608371059047251,
+        "R": 0.6752874633705824,
+        "T": 0.23862882603894506,
+        "label": "(45,45)",
+        "mode": "native",
+        "nG": 2025,
+        "q": 45
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          80850.56370031089
+        ]
+      }
+    },
+    "C2_Au_holes|dim=2|q=47": {
+      "result": {
+        "A": 0.09344624243188926,
+        "R": 0.6812287594423491,
+        "T": 0.22532499812576168,
+        "label": "(47,47)",
+        "mode": "native",
+        "nG": 2209,
+        "q": 47
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          96585.13360004872
+        ]
+      }
+    },
+    "C2_Au_holes|dim=2|q=49": {
+      "result": {
+        "A": 0.08503816384656424,
+        "R": 0.6713861543210294,
+        "T": 0.24357568183240633,
+        "label": "(49,49)",
+        "mode": "native",
+        "nG": 2401,
+        "q": 49
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          120634.1647002846
+        ]
+      }
+    },
     "C2_Au_holes|dim=2|q=5": {
       "result": {
         "A": -1.9370123386967224,
@@ -6975,6 +11373,36 @@
           73.60469922423363,
           74.20310005545616,
           74.01190046221018
+        ]
+      }
+    },
+    "C2_Au_holes|dim=2|q=51": {
+      "result": {
+        "A": 0.09251750406059131,
+        "R": 0.6792876031526429,
+        "T": 0.22819489278676577,
+        "label": "(51,51)",
+        "mode": "native",
+        "nG": 2601,
+        "q": 51
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          144195.74439991266
         ]
       }
     },
@@ -7074,6 +11502,36 @@
         ]
       }
     },
+    "D1_ikarus_hcg_TM|dim=1|q=1089": {
+      "result": {
+        "A": 4.060685565576705e-09,
+        "R": 0.10017405889032405,
+        "T": 0.8998259370489904,
+        "label": "1089",
+        "mode": "native",
+        "nG": 1089,
+        "q": 1089
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          17573.05789925158
+        ]
+      }
+    },
     "D1_ikarus_hcg_TM|dim=1|q=11": {
       "result": {
         "A": 4.156998412163659e-09,
@@ -7138,6 +11596,36 @@
         ]
       }
     },
+    "D1_ikarus_hcg_TM|dim=1|q=1225": {
+      "result": {
+        "A": 4.180549129095823e-09,
+        "R": 0.10017371722234353,
+        "T": 0.8998262785971073,
+        "label": "1225",
+        "mode": "native",
+        "nG": 1225,
+        "q": 1225
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          22485.67030020058
+        ]
+      }
+    },
     "D1_ikarus_hcg_TM|dim=1|q=13": {
       "result": {
         "A": 4.161308742034464e-09,
@@ -7170,6 +11658,36 @@
         ]
       }
     },
+    "D1_ikarus_hcg_TM|dim=1|q=1369": {
+      "result": {
+        "A": 4.1795185090620635e-09,
+        "R": 0.1001734415668311,
+        "T": 0.8998265542536504,
+        "label": "1369",
+        "mode": "native",
+        "nG": 1369,
+        "q": 1369
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          28997.780400328338
+        ]
+      }
+    },
     "D1_ikarus_hcg_TM|dim=1|q=15": {
       "result": {
         "A": 4.166961442564343e-09,
@@ -7199,6 +11717,66 @@
           59.26459934562445,
           58.761900290846825,
           59.313700534403324
+        ]
+      }
+    },
+    "D1_ikarus_hcg_TM|dim=1|q=1521": {
+      "result": {
+        "A": 3.5148935983997376e-09,
+        "R": 0.10017321672510231,
+        "T": 0.8998267797600041,
+        "label": "1521",
+        "mode": "native",
+        "nG": 1521,
+        "q": 1521
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          39969.898799434304
+        ]
+      }
+    },
+    "D1_ikarus_hcg_TM|dim=1|q=1681": {
+      "result": {
+        "A": 3.0368544345904525e-09,
+        "R": 0.10017303195240523,
+        "T": 0.8998269650107403,
+        "label": "1681",
+        "mode": "native",
+        "nG": 1681,
+        "q": 1681
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          48695.307799614966
         ]
       }
     },
@@ -7266,6 +11844,36 @@
         ]
       }
     },
+    "D1_ikarus_hcg_TM|dim=1|q=1849": {
+      "result": {
+        "A": 3.379192814456644e-09,
+        "R": 0.10017287784902214,
+        "T": 0.899827118771785,
+        "label": "1849",
+        "mode": "native",
+        "nG": 1849,
+        "q": 1849
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          61426.997299306095
+        ]
+      }
+    },
     "D1_ikarus_hcg_TM|dim=1|q=19": {
       "result": {
         "A": 4.169294798295198e-09,
@@ -7298,6 +11906,36 @@
         ]
       }
     },
+    "D1_ikarus_hcg_TM|dim=1|q=2025": {
+      "result": {
+        "A": 3.040445117896695e-09,
+        "R": 0.10017274791882169,
+        "T": 0.8998272490407332,
+        "label": "2025",
+        "mode": "native",
+        "nG": 2025,
+        "q": 2025
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          77665.0892002508
+        ]
+      }
+    },
     "D1_ikarus_hcg_TM|dim=1|q=21": {
       "result": {
         "A": 4.168979717000809e-09,
@@ -7327,6 +11965,36 @@
           64.73950017243624,
           61.052500270307064,
           60.86619943380356
+        ]
+      }
+    },
+    "D1_ikarus_hcg_TM|dim=1|q=2209": {
+      "result": {
+        "A": 5.473823949664336e-09,
+        "R": 0.1001726378845487,
+        "T": 0.8998273566416274,
+        "label": "2209",
+        "mode": "native",
+        "nG": 2209,
+        "q": 2209
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          96881.08529988676
         ]
       }
     },
@@ -7394,6 +12062,36 @@
         ]
       }
     },
+    "D1_ikarus_hcg_TM|dim=1|q=2401": {
+      "result": {
+        "A": 5.0444972643504116e-09,
+        "R": 0.1001725451448873,
+        "T": 0.8998274498106155,
+        "label": "2401",
+        "mode": "native",
+        "nG": 2401,
+        "q": 2401
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          117004.21349983662
+        ]
+      }
+    },
     "D1_ikarus_hcg_TM|dim=1|q=25": {
       "result": {
         "A": 4.169406153664568e-09,
@@ -7423,6 +12121,36 @@
           64.9931002408266,
           62.04380001872778,
           62.24159989506006
+        ]
+      }
+    },
+    "D1_ikarus_hcg_TM|dim=1|q=2601": {
+      "result": {
+        "A": 4.703527789473583e-09,
+        "R": 0.10017246506095326,
+        "T": 0.899827530235519,
+        "label": "2601",
+        "mode": "native",
+        "nG": 2601,
+        "q": 2601
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          140042.42859967053
         ]
       }
     },
@@ -7584,6 +12312,70 @@
         ]
       }
     },
+    "D1_ikarus_hcg_TM|dim=1|q=33": {
+      "result": {
+        "A": 4.169955158950245e-09,
+        "R": 0.10023290372012078,
+        "T": 0.899767092109924,
+        "label": "33",
+        "mode": "native",
+        "nG": 33,
+        "q": 33
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          70.87660022079945,
+          85.57020034641027,
+          66.36940035969019
+        ]
+      }
+    },
+    "D1_ikarus_hcg_TM|dim=1|q=35": {
+      "result": {
+        "A": 4.170091272293064e-09,
+        "R": 0.10035235549924498,
+        "T": 0.8996476403306638,
+        "label": "35",
+        "mode": "native",
+        "nG": 35,
+        "q": 35
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          67.80009996145964,
+          71.35479990392923,
+          67.02120043337345
+        ]
+      }
+    },
     "D1_ikarus_hcg_TM|dim=1|q=361": {
       "result": {
         "A": 4.172943546265628e-09,
@@ -7614,6 +12406,134 @@
         ]
       }
     },
+    "D1_ikarus_hcg_TM|dim=1|q=37": {
+      "result": {
+        "A": 4.169897649397569e-09,
+        "R": 0.10025548077121758,
+        "T": 0.8997445150588848,
+        "label": "37",
+        "mode": "native",
+        "nG": 37,
+        "q": 37
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          76.58869959414005,
+          68.3598006144166,
+          68.04930046200752
+        ]
+      }
+    },
+    "D1_ikarus_hcg_TM|dim=1|q=39": {
+      "result": {
+        "A": 4.169831591127604e-09,
+        "R": 0.10033605832434749,
+        "T": 0.899663937505821,
+        "label": "39",
+        "mode": "native",
+        "nG": 39,
+        "q": 39
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          95.90690024197102,
+          81.21060021221638,
+          80.36439958959818
+        ]
+      }
+    },
+    "D1_ikarus_hcg_TM|dim=1|q=41": {
+      "result": {
+        "A": 4.169645628770979e-09,
+        "R": 0.10026508259356265,
+        "T": 0.8997349132367917,
+        "label": "41",
+        "mode": "native",
+        "nG": 41,
+        "q": 41
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          72.38820008933544,
+          71.45019993185997,
+          72.21349980682135
+        ]
+      }
+    },
+    "D1_ikarus_hcg_TM|dim=1|q=43": {
+      "result": {
+        "A": 4.169609102433469e-09,
+        "R": 0.10032148123375612,
+        "T": 0.8996785145966348,
+        "label": "43",
+        "mode": "native",
+        "nG": 43,
+        "q": 43
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          94.33110058307648,
+          82.49230030924082,
+          82.97429978847504
+        ]
+      }
+    },
     "D1_ikarus_hcg_TM|dim=1|q=441": {
       "result": {
         "A": 4.154006916223807e-09,
@@ -7641,6 +12561,70 @@
         },
         "samples_ms": [
           2204.474899917841
+        ]
+      }
+    },
+    "D1_ikarus_hcg_TM|dim=1|q=45": {
+      "result": {
+        "A": 4.1697102437510125e-09,
+        "R": 0.10026796144142315,
+        "T": 0.8997320343888666,
+        "label": "45",
+        "mode": "native",
+        "nG": 45,
+        "q": 45
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          95.46620026230812,
+          83.1214003264904,
+          84.72390007227659
+        ]
+      }
+    },
+    "D1_ikarus_hcg_TM|dim=1|q=47": {
+      "result": {
+        "A": 4.1697856278943846e-09,
+        "R": 0.1003086328854321,
+        "T": 0.8996913629447822,
+        "label": "47",
+        "mode": "native",
+        "nG": 47,
+        "q": 47
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          88.84030021727085,
+          75.74510015547276,
+          75.80329943448305
         ]
       }
     },
@@ -7705,6 +12689,38 @@
           57.31699988245964,
           57.05390032380819,
           56.98349978774786
+        ]
+      }
+    },
+    "D1_ikarus_hcg_TM|dim=1|q=51": {
+      "result": {
+        "A": 4.170362277733375e-09,
+        "R": 0.10029735711171936,
+        "T": 0.8997026387179183,
+        "label": "51",
+        "mode": "native",
+        "nG": 51,
+        "q": 51
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          91.62020031362772,
+          79.22230008989573,
+          79.72090039402246
         ]
       }
     },
@@ -8354,6 +13370,276 @@
         ]
       }
     },
+    "D2_ikarus_cylinder_TE|dim=2|q=33": {
+      "result": {
+        "A": 3.787019017820192e-09,
+        "R": 0.9421891961452071,
+        "T": 0.05781080006777385,
+        "label": "(33,33)",
+        "mode": "native",
+        "nG": 1089,
+        "q": 33
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          16323.263900354505
+        ]
+      }
+    },
+    "D2_ikarus_cylinder_TE|dim=2|q=35": {
+      "result": {
+        "A": 3.7993694371185605e-09,
+        "R": 0.9432170955636149,
+        "T": 0.05678290063701568,
+        "label": "(35,35)",
+        "mode": "native",
+        "nG": 1225,
+        "q": 35
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          22007.69849959761
+        ]
+      }
+    },
+    "D2_ikarus_cylinder_TE|dim=2|q=37": {
+      "result": {
+        "A": 3.794147170055329e-09,
+        "R": 0.9427652864799093,
+        "T": 0.057234709725943515,
+        "label": "(37,37)",
+        "mode": "native",
+        "nG": 1369,
+        "q": 37
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          29058.939900249243
+        ]
+      }
+    },
+    "D2_ikarus_cylinder_TE|dim=2|q=39": {
+      "result": {
+        "A": 3.789981592450253e-09,
+        "R": 0.9423531571352833,
+        "T": 0.05764683907473507,
+        "label": "(39,39)",
+        "mode": "native",
+        "nG": 1521,
+        "q": 39
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          54907.53160044551
+        ]
+      }
+    },
+    "D2_ikarus_cylinder_TE|dim=2|q=41": {
+      "result": {
+        "A": 3.798574996216608e-09,
+        "R": 0.9430599906117578,
+        "T": 0.05694000558966718,
+        "label": "(41,41)",
+        "mode": "native",
+        "nG": 1681,
+        "q": 41
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          48385.26140060276
+        ]
+      }
+    },
+    "D2_ikarus_cylinder_TE|dim=2|q=43": {
+      "result": {
+        "A": 3.797312533859731e-09,
+        "R": 0.943006956618094,
+        "T": 0.056993039584593494,
+        "label": "(43,43)",
+        "mode": "native",
+        "nG": 1849,
+        "q": 43
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          63437.32920009643
+        ]
+      }
+    },
+    "D2_ikarus_cylinder_TE|dim=2|q=45": {
+      "result": {
+        "A": 3.79436759095908e-09,
+        "R": 0.9426324338989718,
+        "T": 0.05736756230666063,
+        "label": "(45,45)",
+        "mode": "native",
+        "nG": 2025,
+        "q": 45
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          78995.1535994187
+        ]
+      }
+    },
+    "D2_ikarus_cylinder_TE|dim=2|q=47": {
+      "result": {
+        "A": 3.797283439077592e-09,
+        "R": 0.9428925135574104,
+        "T": 0.05710748264530612,
+        "label": "(47,47)",
+        "mode": "native",
+        "nG": 2209,
+        "q": 47
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          95815.32160006464
+        ]
+      }
+    },
+    "D2_ikarus_cylinder_TE|dim=2|q=49": {
+      "result": {
+        "A": 3.798929178178145e-09,
+        "R": 0.9431251618664789,
+        "T": 0.056874834334591944,
+        "label": "(49,49)",
+        "mode": "native",
+        "nG": 2401,
+        "q": 49
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          120022.49020058662
+        ]
+      }
+    },
     "D2_ikarus_cylinder_TE|dim=2|q=5": {
       "result": {
         "A": 2.5275634085719645e-09,
@@ -8383,6 +13669,36 @@
           78.89789994806051,
           71.38749957084656,
           71.44470047205687
+        ]
+      }
+    },
+    "D2_ikarus_cylinder_TE|dim=2|q=51": {
+      "result": {
+        "A": 3.796277299461526e-09,
+        "R": 0.9428228648809606,
+        "T": 0.057177131322762136,
+        "label": "(51,51)",
+        "mode": "native",
+        "nG": 2601,
+        "q": 51
+      },
+      "timing": {
+        "fingerprint": "f81f76b97e3fc8b0089d2b376c2040a208c60617c8e3d4cf25ff8e399da7f8c5",
+        "identity": {
+          "machine": "AMD64",
+          "numpy": "2.3.5",
+          "platform": "Windows-2019Server-10.0.17763-SP0",
+          "processor": "Intel64 Family 6 Model 85 Stepping 7, GenuineIntel",
+          "python": "3.12.12",
+          "threads": {
+            "MKL_NUM_THREADS": null,
+            "NUMEXPR_NUM_THREADS": null,
+            "OMP_NUM_THREADS": null,
+            "OPENBLAS_NUM_THREADS": null
+          }
+        },
+        "samples_ms": [
+          144658.54630060494
         ]
       }
     },
