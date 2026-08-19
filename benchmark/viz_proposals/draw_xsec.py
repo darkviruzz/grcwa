@@ -96,11 +96,13 @@ def draw_xsec(ax, g, nper=2.6, fs=8, title=True, aspect=None, marg=0.13):
                 arrowprops=dict(arrowstyle="-|>", color=BEAM, lw=1.9,
                                 mutation_scale=11), zorder=8)
     polarization_glyph(ax, xb, ytop - .19 * hair, g["pol"], min(hair, W) * .5)
-    ax.annotate("", (xb + .11 * W, d + .04 * hair), (xb + .11 * W, d + .40 * hair),
+    # reflected: away from the stack, i.e. upward
+    ax.annotate("", (xb + .11 * W, d + .40 * hair), (xb + .11 * W, d + .04 * hair),
                 arrowprops=dict(arrowstyle="-|>", color=BEAM, lw=1.1, alpha=.65,
                                 mutation_scale=8), zorder=8)
     ax.text(xb + .125 * W, d + .26 * hair, "R", color=BEAM, fontsize=fs - .5, alpha=.9)
-    ax.annotate("", (xb, -.04 * hsub), (xb, -.66 * hsub),
+    # transmitted: onward into the substrate, i.e. downward
+    ax.annotate("", (xb, -.66 * hsub), (xb, -.04 * hsub),
                 arrowprops=dict(arrowstyle="-|>", color=BEAM, lw=1.1, alpha=.65,
                                 mutation_scale=8), zorder=8)
     ax.text(xb + .015 * W, -.62 * hsub, "T", color=BEAM, fontsize=fs - .5, alpha=.9)

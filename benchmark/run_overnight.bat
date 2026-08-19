@@ -102,6 +102,9 @@ for %%Q in (%GROW_ORDERS%) do (
 call :run_stage "Moose comparison plots" "benchmark\plot_moose.py"
 if errorlevel 1 goto :failed
 
+call :run_stage "structure figures" "benchmark\plot_structures.py"
+if errorlevel 1 goto :failed
+
 echo Completed: %DATE% %TIME%>> "%LOG%"
 echo.
 echo Benchmark completed successfully. Log: %CD%\%LOG%
@@ -119,6 +122,10 @@ echo [stage !STAGE_INDEX!/!STAGE_TOTAL!] Expanding through q=!CURRENT_Q_MAX! ^(2
 call :run_stage "convergence sweep through q=!CURRENT_Q_MAX!" "benchmark\conv_run.py"
 if errorlevel 1 exit /b 1
 call :run_stage "convergence plots through q=!CURRENT_Q_MAX!" "benchmark\plot_conv.py"
+if errorlevel 1 exit /b 1
+call :run_stage "cost staircase through q=!CURRENT_Q_MAX!" "benchmark\plot_conv_cost.py"
+if errorlevel 1 exit /b 1
+call :run_stage "deviation plots through q=!CURRENT_Q_MAX!" "benchmark\plot_deviation.py"
 if errorlevel 1 exit /b 1
 exit /b 0
 

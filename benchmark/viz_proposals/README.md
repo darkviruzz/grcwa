@@ -42,8 +42,36 @@ matches `conv_run.py`).
 A self-contained review page: every plate side by side, click-to-zoom, plus an
 interactive explorer over the whole run — case selector, y-axis switch (raw R /
 signed symlog / \|ΔR\| / correct digits), x-axis switch (orders / wall time),
-per-series toggles. `export_web.py` writes the ~46 kB payload it embeds
-(`figures/conv_web.json`).
+per-series toggles.
 
-It is a one-off review tool by decision, not a build output: no HTML export is
-wired into the shipped plotters.
+```bash
+python benchmark/viz_proposals/make_all.py          # figures/ + conv_web.json
+python benchmark/viz_proposals/build_plate_book.py  # -> plate_book.html
+```
+
+Templates live in `plate_book/`: `head.html` (title, fonts, stylesheet),
+`body.html` (content, with `{{IMG:<figure>.png}}` placeholders resolved against
+`figures/`) and `app.html` (the script, with a `{{DATA}}` placeholder that takes
+`figures/conv_web.json`). Every figure is inlined as a base64 data URI and the
+whole payload as JSON, so the page opens from disk with no external requests.
+`GRCWA_VIZ_FIGURES` and `GRCWA_PLATE_BOOK` override the input and output paths.
+
+It is a review tool by decision, not a build output: no HTML export is wired into
+the shipped plotters, so it only refreshes when you run the two commands above.
+
+## Where the data comes from
+
+Everything in this directory is downstream of four inputs. Nothing is
+transcribed; add data at the source and every figure follows.
+
+| file | holds | consumed by |
+|---|---|---|
+| `benchmark/structures.py` | the 13-case battery: materials `(n, k)`, period, fill factor, thickness, substrate, polarization, and `layer_mask` — the single rasterization both backends see | `viz_palette.py` → the structure figures. Add a `dict` to `STRUCTURES` and it appears in `struct_iso.png` and `struct_atlas.png` with no other edit. |
+| `conv_results.json` (a run, or the committed `night_run_2` snapshot) | per case × column: the order grid `nG`, `R`, `T`, `A`, `err_R`, raw and modelled solve times, cache flags; plus `meta` (the order config the run used), `ref` (which reference each case is judged against) and `convergence` | `viz_conv.py` → `conv_cost_staircase.png`, `conv_deviation_*.png`, and `conv_web.json` for the plate book |
+| `benchmark/moose_reference.json` | the external Moose reference per case: the converged `ref` and a `sweep` of truncation → R. 1D keys are totals (`"50"`), 2D keys are per-axis pairs (`"(7,7)"`, read as 49 total) | `conv_run.py` picks the per-case reference from it; `viz_conv.moose_series` draws the black overlay on `conv_deviation_orders.png` |
+| `conv_convergence.csv` | the first sustained `1e-4` crossing per case × column, with its `nG`, raw and estimated time | not read by the figures — it is the tabular form of what the parked `C3` scoreboard plots |
+
+`viz_conv.py` locates the run the same way `plot_conv.py` does: `GRCWA_CONV_JSON`
+wins, otherwise `benchmark/conv_results.json`, and if no run has been exported it
+falls back to the committed `night_run_2` snapshot so a fresh checkout still
+renders.

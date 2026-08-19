@@ -111,23 +111,29 @@ def _is_air(nk):
     return (float(nk[0]), float(nk[1])) == (1.0, 0.0)
 
 
-def _ghost_halfspace(ax, Lx, Ly, hs, label=True, fs=7):
-    """A free-standing case has no substrate -- outline the half space instead."""
-    for a, b in [((0, 0, 0), (0, 0, -hs)), ((Lx, 0, 0), (Lx, 0, -hs)),
-                 ((0, Ly, 0), (0, Ly, -hs)), ((0, 0, -hs), (Lx, 0, -hs)),
-                 ((0, 0, -hs), (0, Ly, -hs))]:
+def _ghost_halfspace(ax, Lx, Ly, hs):
+    """A free-standing case has no substrate -- outline the half space instead.
+
+    The full wireframe, top face included: without the z = 0 rectangle the
+    solids look like they float over nothing rather than over open space.
+    """
+    box = [(0, 0), (Lx, 0), (Lx, Ly), (0, Ly)]
+    edges = []
+    for z in (0.0, -hs):                                  # top and bottom faces
+        edges += [((box[i][0], box[i][1], z), (box[(i + 1) % 4][0],
+                                               box[(i + 1) % 4][1], z))
+                  for i in range(4)]
+    edges += [((x, y, 0.0), (x, y, -hs)) for x, y in box]  # verticals
+    for a, b in edges:
         ax.plot(*zip(P(*a), P(*b)), color=GHOST, lw=.8, ls=(0, (2, 3)), zorder=2)
 
 
-def draw_iso(ax, g, nper_1d=3, nper_2d=2, fs=8.5, show_beam=True):
+def draw_iso(ax, g, nper=2, fs=8.5, show_beam=True):
     dim = g["dim"]
     Lam = g["period"] or 0.9
-    if dim == 0:
-        Lx = Ly = 1.0
-    elif dim == 1:
-        Lx, Ly = nper_1d * Lam, 1.20 * Lam
-    else:
-        Lx = Ly = nper_2d * Lam
+    # every patterned case gets the same nper x nper cell footprint, so the
+    # depth along y is identical across the sheet
+    Lx = Ly = 1.0 if dim == 0 else nper * Lam
     d = g["d"]
     hs = max(0.45 * d, 0.20 * Lx)
     inc_rgb = to_rgb(V.mat(g["hi"])["color"])
@@ -156,17 +162,17 @@ def draw_iso(ax, g, nper_1d=3, nper_2d=2, fs=8.5, show_beam=True):
         _box(ax, 0, Lx, 0, Ly, 0, d, bg_rgb, 5)
         wx, wy = g["ax"] / 2, g["ay"] / 2
         pits = [((i + .5) * Lam, (j + .5) * Lam)
-                for i in range(nper_2d) for j in range(nper_2d)]
+                for i in range(nper) for j in range(nper)]
         for xc, yc in sorted(pits, key=lambda c: -(c[0] + c[1])):
             _pit(ax, xc - wx, xc + wx, yc - wy, yc + wy, d, 0.0,
                  bg_rgb, sub_rgb if not air_sub else (1, 1, 1), 6)
     elif dim == 1:
         w = g["ff"] * Lam / 2
-        for k in sorted(range(nper_1d), key=lambda k: -k):
+        for k in sorted(range(nper), key=lambda k: -k):
             xc = (k + .5) * Lam
-            _box(ax, xc - w, xc + w, 0, Ly, 0, d, inc_rgb, 5 + (nper_1d - k) * .1)
+            _box(ax, xc - w, xc + w, 0, Ly, 0, d, inc_rgb, 5 + (nper - k) * .1)
     else:
-        cells = [(i, j) for i in range(nper_2d) for j in range(nper_2d)]
+        cells = [(i, j) for i in range(nper) for j in range(nper)]
         for n, (i, j) in enumerate(sorted(cells, key=lambda c: -(c[0] + c[1]))):
             xc, yc = (i + .5) * Lam, (j + .5) * Lam
             z = 5 + n * .1
