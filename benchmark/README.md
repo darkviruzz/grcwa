@@ -123,17 +123,21 @@ sweep. Ikarus, Li's rule, nothing varied but the rasterization
 
 | case | geometry | `w_eff` | R (q=31) | R (q=41) | Moose, same order |
 |---|---|---|---|---|---|
-| `C1_Si_pillars` | mask 256² | 0.597656 | 0.389961 | | 0.398436 |
+| `C1_Si_pillars` | mask 256² | 0.597656 | 0.389961 | | 0.398436 (q=31) |
 | | one pixel wider | 0.601562 | 0.401687 | | |
-| `C1b_Si_pillars_diffract` | mask 256² | 0.402344 | 0.146998 | 0.145824 | 0.154774 |
+| | nominal | 0.600000 | 0.396804 | | |
+| `C1b_Si_pillars_diffract` | mask 256² | 0.402344 | 0.146998 | 0.145824 | 0.154774 (q=41) |
 | | nominal | 0.400000 | 0.157185 | 0.156324 | |
-| `C2_Au_holes` | mask 256² | 0.496094 | 0.672335 | 0.666899 | 0.648546 |
+| `C2_Au_holes` | mask 256² | 0.496094 | 0.672335 | 0.666899 | 0.648546 (q=41) |
 | | nominal | 0.500000 | 0.659043 | 0.649316 | |
 
 One pixel of the 256 grid moves `C1`'s R by ~0.012 — more than the whole
-disagreement with Moose. At matched order, feeding the nominal rectangle instead
-of the mask closes 82 % of the gap on `C1b` (0.0090 → 0.0016) and 96 % on `C2`
-(0.0184 → 0.0008).
+disagreement with Moose. At matched order, swapping the mask for the nominal
+rectangle closes **81 %** of the gap on `C1` (0.0085 → 0.0016), **82 %** on
+`C1b` (0.0090 → 0.0016) and **96 %** on `C2` (0.0184 → 0.0008) — three cases,
+three factorization rules, one cause. What is left over is the size of Moose's
+own scatter along its 2D sweep (±0.001 on C1, ±0.002 on C1b), which is itself
+consistent with `FFT_MODE = 1` re-choosing the eps grid at every order.
 
 **That is what the 2D Moose disagreement is**, and it is not a factorization
 difference. Different rules cannot converge to different limits on one
