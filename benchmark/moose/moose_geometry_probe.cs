@@ -703,12 +703,18 @@ public class MooseScript
                       + (FIXED_REFINEMENT > 0
                          ? "pinned at " + FIXED_REFINEMENT.ToString(INV)
                          : "same rule as the main sweep, ceil(256/q))"));
-            Io.output(" python, ikarus Li rule, q = 31 (m = 15), for comparison:");
-            Io.output("   C1_Si_pillars    w=0.597656 -> 0.389961   w=0.599219 -> 0.394456   w=0.601562 -> 0.401687");
-            Io.output("   C1b_..._diffract w=0.402344 -> 0.146998   w=0.400000 -> 0.157185   w=0.398438 -> 0.160246");
-            Io.output(" (w=0.597656 and w=0.402344 are what the shared 256x256 mask");
-            Io.output("  actually rasterizes -- if Moose reproduces those numbers at");
-            Io.output("  those widths, the 2D gap is the rasterization and nothing else.)");
+            Io.output(" python (ikarus, Li rule) at the same widths, for comparison:");
+            Io.output("");
+            Io.output("   case                q    w=python-mask        w=nominal      moose");
+            Io.output("   C1_Si_pillars      31    0.597656 0.389961   0.600000 0.396804   0.398436");
+            Io.output("   C1b_..._diffract   31    0.402344 0.146998   0.400000 0.157185   0.155264");
+            Io.output("   C1b_..._diffract   41    0.402344 0.145824   0.400000 0.156324   0.154774");
+            Io.output("   C2_Au_holes        41    0.496094 0.666899   0.500000 0.649316   0.648546");
+            Io.output("");
+            Io.output(" The python columns move onto Moose when they are handed the");
+            Io.output(" nominal rectangle instead of the mask: 81 / 82 / 96 % of the gap.");
+            Io.output(" So if Moose at w=python-mask comes down onto the python numbers,");
+            Io.output(" the 2D disagreement is the rasterization and nothing else.");
             Io.output("=================================================================");
             for (int k = 0; k < ORDERS.Length; k++)
             {
