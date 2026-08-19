@@ -89,8 +89,71 @@ grows past the wavelength.
 
 Every patterned layer is rasterized **once**, by `structures.layer_mask`, and
 that same integer mask is handed to grcwa (as a flattened `eps` vector) and to
-Ikarus (as a topology plus one material per index). No backend draws its own
-geometry, so a cross-code disagreement can never be a pixel-grid artifact.
+Ikarus (as a topology plus one material per index). Neither backend draws its
+own geometry, so a disagreement *between those two* can never be a pixel-grid
+artifact.
+
+### The mask is not the structure — and on 2D it is not close
+
+Sharing one mask also means sharing its errors, and any code that builds the
+geometry from the parameters instead (Moose, S4, a fab process) solves a
+different structure. `python benchmark/geometry_fidelity.py` prints how
+different:
+
+| case | nominal | mask | rasterized | error |
+|---|---|---|---|---|
+| 1D, `ff = 0.5` | 0.500 | 4096 / 8192 | 0.500000 | 0.000 % |
+| `B3_Au_slits_TM` | 0.800 | 6554 / 8192 | 0.800049 | +0.006 % |
+| `C1_Si_pillars` | 0.600 | **153** / 256 | 0.597656 | **−0.391 %** |
+| `C1b_Si_pillars_diffract` | 0.400 | **103** / 256 | 0.402344 | **+0.586 %** |
+| `C2_Au_holes` | 0.500 | **127** / 256 | 0.496094 | **−0.781 %** |
+| `D2_ikarus_cylinder_TE` | area 0.282743 | 256², centred | 0.282959 | +0.076 % |
+
+`0.6 · 256 = 153.6` and `0.4 · 256 = 102.4` are not integers, and the rect
+branch samples the **left cell edge** with a strict `<` — so on `C2`, where the
+pillar edge lands exactly on a sample, a pixel is dropped on *each* side. The 1D
+masks have no such error, and the circle branch already samples cell centres,
+which is why group D's area error is an order of magnitude smaller. (Cell
+centres with `<=` is also what `ikarus.shapes.rectangle` uses, so the battery's
+rect convention does not even match Ikarus's own.)
+
+Half a pixel is worth far more here than the truncation error at the top of the
+sweep. Ikarus, Li's rule, nothing varied but the rasterization
+(`geometry_fidelity.py --solve --q 41`):
+
+| case | geometry | `w_eff` | R (q=31) | R (q=41) | Moose |
+|---|---|---|---|---|---|
+| `C1_Si_pillars` | mask 256² | 0.597656 | 0.389961 | | |
+| | one pixel wider | 0.601562 | 0.401687 | | |
+| | nominal | 0.600000 | | | 0.39817 |
+| `C1b_Si_pillars_diffract` | mask 256² | 0.402344 | 0.146998 | 0.145824 | |
+| | nominal | 0.400000 | 0.157185 | 0.156324 | 0.15477 |
+
+One pixel of the 256 grid moves `C1`'s R by ~0.012 — more than the whole
+disagreement with Moose. On `C1b`, at matched order, feeding the nominal
+rectangle instead of the mask closes 82 % of that gap (0.0090 → 0.0016).
+
+**That is what the 2D Moose disagreement is**, and it is not a factorization
+difference. Laurent, Pol, Li and the normal-vector method cannot converge to
+different limits on one structure, and on `C1`/`C1b` they do not: they agree to
+≤0.001 with each other and miss Moose by 0.008–0.010, because all four are
+solving the *mask* while Moose solves the nominal pillar. The 1D column is the
+control — identical conventions, exact masks, agreement with Moose to five or
+six digits (`B1_Si_grating_TM` 0.213710, `B2_HCG_TM` 0.873329,
+`D1_ikarus_hcg_TM` 0.100173, all matching).
+
+`D2_ikarus_cylinder_TE` is the one 2D case where the mask is *not* the problem.
+There Moose is simply not converged: its points follow `R(m) = R∞ − c/m` with an
+rms residual of 1.8e-4 and `R∞ = 0.9401`, against the python normal-vector value
+0.9428.
+
+Fixing the mask is one change in `structures.layer_mask` — sample cell centres,
+as the circle branch already does, and pick `NX_2D` so that `ax/Λ · NX_2D` is an
+integer (`260` suffices for all three rect cases; an axis-aligned rectangle whose
+edges fall on pixel boundaries has no staircase at all). It invalidates every
+recorded 2D number, so it is deliberately *not* done here — `geometry_fidelity.py`
+reports the error instead, and `benchmark/moose/moose_geometry_probe.cs` is the
+Moose-side script that measures the same thing from the other end.
 
 ## Ikarus, the independent code
 

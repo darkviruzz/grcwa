@@ -1,5 +1,11 @@
 # Moose side of the benchmark
 
+Two scripts live here:
+
+* `moose_convergence_bench.cs` — the battery and the order sweep (below);
+* `moose_geometry_probe.cs` — a short diagnostic for the **2D geometry gap**,
+  see [its own section](#the-2d-geometry-probe) at the end.
+
 `moose_convergence_bench.cs` is a Moose script (Mono/C#) that rebuilds the whole
 structure battery of [`benchmark/structures.py`](../structures.py) inside Moose,
 sweeps the RCWA truncation order, and writes the results **and** the cost of
@@ -324,3 +330,45 @@ The `moose_sweep.json` the Moose script itself writes (and echoes at the end of
 its console output) is the same data and is already filtered by the energy
 check, but it is only the inner `cases` block — no wrapper, no `note`, and no
 timing file. `--create` is the tidier route.
+
+## The 2D geometry probe
+
+`moose_geometry_probe.cs` exists because of one asymmetry in the results: on
+every **1D** case Moose and the well-factorized python columns agree to five or
+six digits, and on every **2D** case they do not (`C1_Si_pillars` 0.39817 vs
+0.3898, `C1b_Si_pillars_diffract` 0.15477 vs 0.1454). Three python columns using
+three different factorization rules agree with *each other* and miss Moose
+together, and different rules cannot converge to different limits on one
+structure — so what survives at high order is a difference in the structure, not
+in the physics.
+
+The python side has since been measured, and it is the rasterization: the shared
+`256 × 256` mask of `structures.py` renders the square pillars at 153/256 instead
+of 153.6 (`C1`, −0.39 %), 103/256 instead of 102.4 (`C1b`, +0.59 %) and 127/256
+instead of 128 (`C2`, −0.78 %), while the 1D masks are exact. One pixel of that
+grid is worth ~0.012 in R on `C1` — more than the whole gap. See
+[`benchmark/geometry_fidelity.py`](../geometry_fidelity.py) and the "The mask is
+not the structure" section of [`benchmark/README.md`](../README.md).
+
+This script asks the same question from Moose's side. Three probes, all
+configurable at the top of the file:
+
+| probe | what it does |
+|---|---|
+| **A — geometry dump** | renders each patterned layer with `GetEpsilonDistributionsAsCaModel` at 64/100/256/300/512 and reports fill fraction, pillar width in pixels and the number of distinct permittivity values. Binary rasterization shows up as `levels = 2`; anything more means Moose area-weights its boundary pixels, which is what would let it hit the nominal geometry on a coarse grid. Seconds, no solving. |
+| **B — width sweep** | solves each 2D case with the atom set to the nominal size, to **the size the python mask actually rasterizes**, and to ±1 %/±2 %. If Moose at the python width reproduces the python numbers (printed in the console header for comparison), the 2D disagreement is the rasterization and nothing else. |
+| **C — refinement sweep** | `rRefinementFactorEpsFT` = 2…40 at fixed geometry, i.e. how much of Moose's own value depends on its eps sampling — and therefore whether the ±0.001 wobble along the 2D sweep comes from `FFT_MODE = 1` picking a different refinement at every order. |
+
+Probe B uses the same refinement rule as the main sweep (`ceil(256/q)`), so its
+`nominal` row is directly comparable to `moose_reference.json`.
+
+`ORDERS` includes `m = 0` deliberately, and it costs nothing. With a single
+retained order RCWA can only be a transfer-matrix calculation on the
+cell-averaged permittivity, which makes R at `m = 0` a direct read-out of the
+fill fraction. **The `(0,0)` points currently in `moose_reference.json` fail that
+test**: `C1_Si_pillars` reports 0.363252, which is R of a *solid silicon film* to
+seven digits, where the averaged medium gives 0.151138 (grcwa at `nG = 1`
+reproduces that exactly); `C2_Au_holes` reports 0.040000, R of a *bare air/glass
+interface*, where a gold-dominated average gives 0.973. Until the probe explains
+what Moose does with zero orders, those two points should not be plotted or
+merged.

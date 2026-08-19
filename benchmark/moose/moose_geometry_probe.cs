@@ -160,7 +160,19 @@ public class MooseScript
     // Max orders m for the solving probes (q = 2m+1 retained per axis).
     // m = 10 -> q = 21 -> nG = 441;  m = 15 -> q = 31 -> nG = 961.  Those are
     // the two order counts the python numbers in the header were taken at.
-    static readonly int[] ORDERS = { 10, 15 };
+    //
+    // m = 0 is in the list for a different reason and costs nothing: with a
+    // single retained order RCWA can only be a transfer-matrix calculation on
+    // the CELL-AVERAGED permittivity, so R at m = 0 is a direct read-out of the
+    // fill fraction Moose used.  The (0,0) points already in
+    // benchmark/moose_reference.json do not survive that test -- C1 reports
+    // 0.363252, which is exactly R of a SOLID silicon film (the averaged medium
+    // gives 0.151138, and grcwa at nG = 1 reproduces that to eight digits), and
+    // C2 reports 0.040000, exactly R of a bare air/glass interface rather than
+    // the 0.973 of a gold-dominated average.  Whatever Moose does with zero
+    // orders, it is not the average medium; the width sweep at m = 0 says
+    // whether it looks at the geometry at all.
+    static readonly int[] ORDERS = { 0, 10, 15 };
 
     // Refinement factors for probe C.
     static readonly int[] REFINEMENTS = { 2, 3, 5, 10, 20, 40 };
