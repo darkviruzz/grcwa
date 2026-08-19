@@ -394,3 +394,73 @@ depend on the atom size at all** — `C1` returns 0.363252 for every width from
 −2 % to +2 %, `C1b` 0.039244, `D2` 0.021876. Moose ignores the geometry
 completely with zero orders. Those points are not low-order data, they are not
 data; drop them rather than plotting them.
+
+## The rasterization probe
+
+`moose_raster_probe.cs` is the Moose half of
+[`../RASTERIZATION.md`](../RASTERIZATION.md). That write-up separates the
+geometry error into two channels — the **shape** the pixel image represents
+(`O(1/N)`, zero on an aligned grid) and the **sampling** that turns it into
+Fourier coefficients (`O(1/N²)`, present on every grid) — and closes both on the
+python side. Moose is the one code whose grid we cannot reach into, so its three
+open questions have to be measured from the outside. One probe each, all
+switchable at the top of the file:
+
+| probe | question | what a "yes" would buy |
+|---|---|---|
+| **P1 — `RUN_CAMODEL`** | does `Layer(double thickness, CaModel epsilonDistribution)` let Moose be handed an explicit permittivity grid? | all three suites solve the **same pixel image**; the geometry drops out of the cross-code comparison entirely, circle included |
+| **P2 — `RUN_REFINEMENT`** | is the refinement residual `1/r²` (the sampling channel) or `1/r`? | a trustworthy `R(∞)`: the two models differ by 3e-4 on `C1`, well above the study's tolerance |
+| **P3 — `RUN_ALIGNMENT`** | is the rectangle rendered exactly on the grid a solve actually uses, `refinement × (2m+1)`? | refinement values at which channel 1 is exactly zero, at every order |
+
+**P1 is the one that matters most, and the one that might simply fail.** The
+`Layer(double, CaModel)` overload is transcribed from `moose.qch` into
+`moose_api_stubs.cs` and has never been exercised on a real build. If Moose
+rejects that line, set `RUN_CAMODEL = false`, run the rest, and send the
+compiler message back — "the overload does not exist" and "it exists with
+another signature" are different outcomes, and either one answers P1.
+
+P1 solves the same case five ways and compares them:
+
+* **round trip** — dump the Atom-built layer with
+  `GetEpsilonDistributionsAsCaModel`, hand that very grid straight back as a
+  `CaModel` layer. It must reproduce the Atom result *bit for bit*. Done twice,
+  once with the values as `eps` and once as `n + ik`, so whichever reproduces
+  also settles the value convention.
+* **mask** — the grid built from the formula, at 260² and 520², using exactly
+  the cell-centred rule of `benchmark/rasterization_study.py`
+  (`rect_fill(rule="centre")` / `circle_fill(rule="centre")`). Keep the two in
+  step or P1 stops comparing the same thing.
+* **±4 % width** — a control. These *must* differ from the nominal mask; if they
+  do not, the `CaModel` is being ignored and every other P1 row is meaningless.
+  A second control compares the `eps` grid against the `n + ik` grid: identical
+  would mean the values are not read either.
+* **two refinements per grid** — whether `rRefinementFactorEpsFT` still
+  resamples a grid that was handed in explicitly.
+* **`AN_aniso_control`** — a 0.6 × 0.4 pillar that is *not* part of the battery.
+  Its only job is to catch a transposed or shifted `CaModel` index convention,
+  which none of the four C4v-symmetric cases can: for them a transpose is
+  invisible.
+
+P2 fits `R(r) = a + b/r^p` for `p = 1` and `p = 2` over refinements
+**40, 60, 80, 100** and prints both `R(∞)` with their residuals. Those four are
+multiples of 20 on purpose — see P3. The fit is validated against the three
+points already on record (`C1`, m = 10: 30 → 0.398784, 50 → 0.397764,
+100 → 0.397322), which give `R(∞) = 0.397181` at `p = 2` with a max residual of
+5.2e-06, against 0.396618 and 1.2e-04 at `p = 1`.
+
+P3 renders the layer at `refinement × (2m+1)` and counts atom cells along the
+centre row. A centred rectangle of relative width `w` is exact on `N` cells iff
+`w·N` and `(1−w)N/2` are integral; `2m+1` is odd and never helps, so the
+condition falls on the refinement alone — a multiple of 5 for `C1` (w = 0.6), 10
+for `C1b` (w = 0.4), 4 for `C2` (w = 0.5), hence **a multiple of 20 for all
+three**. That is also the claim to check against the sweep on record:
+refinements 30 and 50 are fine for `C1` and `C1b` but **not** for `C2`, whose
+values therefore carry a shape error that `C1`'s do not. P3 does not solve
+anything and takes seconds. It also prints the distinct permittivity values it
+finds, which identifies the value convention (`eps` or `n + ik`) and the sign of
+the loss straight off the rendered grid.
+
+Output is `moose_raster_probe_<stamp>.csv` plus a log, one row per solve and one
+per rendered grid, and three verdict blocks on the console. On a pool it is
+minutes: ~60 solves at `nG = 441` for P1, 24 at `nG = 441…961` for P2, none for
+P3.

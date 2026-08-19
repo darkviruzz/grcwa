@@ -367,7 +367,7 @@ from being known.
 
 ## 7. Proposal
 
-### Step 0 — three questions for Moose (script to be written, user runs it)
+### Step 0 — three questions for Moose (`moose/moose_raster_probe.cs`, run in Moose)
 
 1. **`Layer(d, CaModel)`**: does Moose accept an explicit eps grid, does the
    result depend on the CaModel's resolution, and does
@@ -381,6 +381,13 @@ from being known.
 3. **Alignment**: dump `GetEpsilonDistributionsAsCaModel` at the refinement
    grids the sweep actually uses and confirm the pillar comes out at exactly
    `w·N` cells for the new (aligned) widths.
+
+The script is written and type-checks against `moose/moose_api_stubs.cs`; see
+[`moose/README.md`](moose/README.md#the-rasterization-probe) for what each probe
+compares and what a failure of each one would mean. The one construction it
+needs that no other script here uses is `Layer(double, CaModel)`, which has
+never been exercised on a real build — if Moose rejects it, that is itself the
+answer to P1, and P2/P3 are the fallback that answer needs.
 
 ### Step 1 — `structures.py` v2 (behaviour-preserving switch)
 
