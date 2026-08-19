@@ -1,9 +1,14 @@
 """Benchmark worker: runs the shared structure battery (benchmark/structures.py)
-on ONE grcwa installation (GRCWA_MOD + PYTHONPATH) at a single order count and
-prints the results as JSON.
+on ONE solver installation at a single order count and prints the results as JSON.
 
 Run by benchmark/run.py once per (variant, factorization-mode), in a separate
-process so several grcwa versions can be compared without import clashes.
+process so several versions can be compared without import clashes.
+
+Which solver is selected by SUITE:
+  * ``grcwa`` (default) -- the grcwa install named by GRCWA_MOD + PYTHONPATH,
+    with FMM = none|pol choosing Laurent or the Pol rule;
+  * ``ikarus``          -- the independent Ikarus code via benchmark/ikarus_suite.py,
+    with FMM = laurent|li|normal choosing its factorization.
 
 All structures are evaluated at ~the same TOTAL order count for a fair
 cross-version comparison: with per-axis count q (env GRCWA_Q, default 11),
@@ -16,17 +21,32 @@ import os
 import json
 import time
 
-_MOD = os.environ.get("GRCWA_MOD", "grcwa")
-grcwa = __import__(_MOD)
 import numpy as np
 import structures as ST
 
+_SUITE = os.environ.get("SUITE", "grcwa")
 _FMM = os.environ.get("FMM", "none")
 FMM = None if _FMM == "none" else _FMM
 REPEAT = int(os.environ.get("REPEAT", "3"))
 QAXIS = int(os.environ.get("GRCWA_Q", "11"))     # per-axis order count
 
-NATIVE = ST.supports_native_dim(grcwa)
+if _SUITE == "ikarus":
+    import ikarus_suite as IK
+
+    if not IK.available():
+        # Optional cross-check dependency: report it once, cleanly, instead of
+        # letting every case fail with its own ImportError.
+        print(json.dumps({"_error": "ikarus not installed"}))
+        raise SystemExit(0)
+
+    def solve(s, q):
+        return IK.solve(s, q, FMM)
+else:
+    grcwa = __import__(os.environ.get("GRCWA_MOD", "grcwa"))
+    NATIVE = ST.supports_native_dim(grcwa)
+
+    def solve(s, q):
+        return ST.solve(grcwa, s, q, FMM, NATIVE)
 
 
 def _qarg_label(s):
@@ -41,7 +61,7 @@ def _qarg_label(s):
 def run_structure(s):
     qarg, label = _qarg_label(s)
     try:
-        R, T, nG, mode = ST.solve(grcwa, s, qarg, FMM, NATIVE)
+        R, T, nG, mode = solve(s, qarg)
     except Exception as e:
         return {"error": repr(e)}
     if R is None:
@@ -50,7 +70,7 @@ def run_structure(s):
     for _ in range(REPEAT):
         t0 = time.perf_counter()
         try:
-            ST.solve(grcwa, s, qarg, FMM, NATIVE)
+            solve(s, qarg)
         except Exception as e:
             return {"error": repr(e)}
         best = min(best, time.perf_counter() - t0)

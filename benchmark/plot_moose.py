@@ -10,10 +10,20 @@ Which conv_results columns are drawn is controlled by WHITELIST below:
   * an entry without "[...]", e.g. "fork", matches ALL variants of that codebase
     (both [Laurent] and [Pol]).
 Set WHITELIST = None to draw every column present. Moose is always overlaid.
+Only cases Moose actually ran are drawn (the group-D factorization cases are not
+among them -- they are referenced against Ikarus instead, in plot_conv.py).
 
 x-axis = total retained orders. Moose 2D keys "(m,m)" are read as m per-axis
 orders -> m*m total (matching the (q,q) convention in structures.py); 1D keys
 "N" -> N. If Moose actually means max-order m (2m+1 per axis), change parse_key.
+
+CAVEAT on the 2D panels. `ref_of` uses the Moose value as the reference, so the
+error curves show |R(N) - R_moose|. On the 1D cases that is a convergence error.
+On C1/C1b/C2 it is not: those masks misrepresent their own nominal pillars by
+0.4-0.8 % in width (benchmark/geometry_fidelity.py), which is worth about 0.01
+in R -- more than the gap being plotted. The 2D error curves therefore flatten
+out on a geometry mismatch, not on a convergence floor. See "The mask is not the
+structure" in benchmark/README.md before reading anything into them.
 """
 import os
 import json
@@ -23,17 +33,21 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # ---- which conv_results columns to draw ------------------------------------
-WHITELIST = ["grcwaProjects[Laurent]", "weiliang-013[Pol]", "fork"]
+WHITELIST = ["grcwaProjects[Laurent]", "ikarus", "fork"]
 # WHITELIST = None   # <- draw ALL columns present in conv_results
 # WHITELIST = ["orig-0.1.2", "weiliang-013", "grcwaProjects", "codex",
 #              "original-grcwaProjects", "fork"]   # every variant, both rules
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = HERE
+OUT = os.environ.get("GRCWA_PLOT_OUTPUT_DIR", HERE)
+os.makedirs(OUT, exist_ok=True)
 FLOOR = 1e-7
+TIGHT_DELTA_R = 0.01
 
-CONV = json.load(open(os.path.join(HERE, "conv_results.json")))
-MOOSE = json.load(open(os.path.join(HERE, "moose_reference.json")))
+CONV = json.load(open(os.environ.get(
+    "GRCWA_CONV_JSON", os.path.join(HERE, "conv_results.json"))))
+MOOSE = json.load(open(os.environ.get(
+    "GRCWA_MOOSE_JSON", os.path.join(HERE, "moose_reference.json"))))
 conv_cases = CONV["cases"]
 moose_cases = MOOSE["cases"]
 all_cols = CONV["columns"]
@@ -68,11 +82,15 @@ for code in _codes:
         _i += 1
 
 
+# solid = the direct (Laurent) rule; every faithful rule gets its own broken style.
+_RULE_STYLE = {"Laurent": ("-", "o"), "Pol": ("--", "s"),
+               "Li": ("-.", "^"), "NV": (":", "D")}
+
+
 def style(col):
-    rule = "Pol" if col.endswith("[Pol]") else "Laurent"
     color = _code_color.get(col.split("[")[0], "#555")
-    ls = "--" if rule == "Pol" else "-"
-    mk = "s" if rule == "Pol" else "o"
+    rule = col.split("[")[-1].rstrip("]") if "[" in col else "Laurent"
+    ls, mk = _RULE_STYLE.get(rule, ("--", "x"))
     return color, ls, mk
 
 
@@ -127,8 +145,13 @@ def has_sweep(case):
     return any(len(conv_points(case, c)) >= 2 for c in COLS)
 
 
+# This figure is *about* the Moose reference, so a case Moose never ran has
+# nothing to be compared against here -- drawing it would silently fall back to
+# a high-order Laurent value as the "reference", which on the group-D
+# factorization cases is not converged and would be actively misleading. Those
+# cases have their own reference in ikarus_reference.json; see plot_conv.py.
 cases = [c for c in conv_cases if conv_cases[c]["info"].get("dim", 2) != 0
-         and has_sweep(c)]
+         and c in moose_cases and has_sweep(c)]
 
 # ---- console table ---------------------------------------------------------
 print("WHITELIST ->", COLS if WHITELIST else "ALL columns")
@@ -148,7 +171,7 @@ ncol = 3
 nrow = int(np.ceil(len(cases) / ncol))
 
 
-def grid(kind):
+def grid(kind, tight=False):
     fig, axes = plt.subplots(nrow, ncol, figsize=(6.4 * ncol, 4.1 * nrow),
                              squeeze=False)
     for i, case in enumerate(cases):
@@ -180,6 +203,8 @@ def grid(kind):
                             label="Moose", zorder=5)
         if kind != "error" and ref is not None:
             ax.axhline(ref, color="k", ls="--", lw=0.8, alpha=0.6)
+            if tight:
+                ax.set_ylim(ref - TIGHT_DELTA_R, ref + TIGHT_DELTA_R)
         prov = ""
         if case in moose_cases and moose_cases[case].get("ref_provisional"):
             prov = "  (prov. ref)"
@@ -200,11 +225,20 @@ f1.suptitle("conv_results vs Moose: |R(N) - R_ref|   (x = total retained orders)
             fontsize=13, fontweight="bold")
 f1.tight_layout()
 f1.savefig(f"{OUT}/moose_compare_error.png", dpi=150, bbox_inches="tight")
+plt.close(f1)
 
 f2 = grid("raw")
 f2.suptitle("conv_results vs Moose: raw R   (black = Moose; dashed line = reference)",
             fontsize=13, fontweight="bold")
 f2.tight_layout()
 f2.savefig(f"{OUT}/moose_compare_raw.png", dpi=150, bbox_inches="tight")
+plt.close(f2)
+
+f3 = grid("raw", tight=True)
+f3.suptitle("conv_results vs Moose: raw R, tight view (R_ref +/- 0.01)",
+            fontsize=13, fontweight="bold")
+f3.tight_layout()
+f3.savefig(f"{OUT}/moose_compare_raw_tight.png", dpi=150, bbox_inches="tight")
+plt.close(f3)
 
 print("\nfigures written to", OUT)

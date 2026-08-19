@@ -9,13 +9,21 @@ and exports everything to benchmark/results.{json,csv}.
 
 Variants are auto-discovered: every `benchmark/grcwa*` directory that is an
 importable package becomes a suite, plus the current branch (`fork`) at the repo
-root. Each variant is run with Laurent's rule, and additionally with the Pol
+root. Set ``GRCWA_VARIANTS`` to a comma-separated list of labels (for example,
+``fork,weiliang-013``) to run only those variants. Each variant is run with
+Laurent's rule, and additionally with the Pol
 method (`fmm_method='pol'`) if its `obj` supports it -- so Pol columns appear
 only for the versions that actually implement it (no hand-maintained list).
 
 Drop a package into benchmark/ (e.g. `grcwa-weiliang-013`, `grcwa-codex`, ...)
 and it shows up automatically; the label is the directory name with the leading
 `grcwa` stripped (`grcwa-weiliang-013` -> `weiliang-013`).
+
+On top of the grcwa family, the independent code **Ikarus** (`pip install
+ikarus-rcwa`, benchmark/ikarus_suite.py) contributes three more columns --
+`ikarus[Laurent]`, `ikarus[Li]` and `ikarus[NV]` -- when it is installed, and is
+silently skipped when it is not. Its `[Laurent]` column joins the Laurent
+cross-check, which turns that check into a *cross-codebase* one.
 """
 import os
 import sys
@@ -47,15 +55,37 @@ def discover_variants():
     return variants
 
 
-VARIANTS = discover_variants()
+def select_variants(variants):
+    """Apply the optional comma-separated ``GRCWA_VARIANTS`` label filter."""
+    value = os.environ.get("GRCWA_VARIANTS")
+    if not value:
+        return variants
+    wanted = {label.strip() for label in value.split(",") if label.strip()}
+    selected = [variant for variant in variants if variant[0] in wanted]
+    missing = wanted.difference(label for label, _, _ in selected)
+    if missing:
+        available = ", ".join(label for label, _, _ in variants)
+        raise SystemExit("Unknown GRCWA_VARIANTS label(s): "
+                         f"{', '.join(sorted(missing))}. Available: {available}")
+    return selected
 
 
-def run_variant(path, modname, fmm):
+VARIANTS = select_variants(discover_variants())
+
+# Ikarus factorization -> column suffix. Laurent is the direct rule (the one
+# grcwa's default implements), Li the classic inverse rule, NV the normal-vector
+# method (Ikarus's own default) -- the only one that is also faithful on curved
+# boundaries. See benchmark/ikarus_suite.py.
+IKARUS_MODES = [("laurent", "Laurent"), ("li", "Li"), ("normal", "NV")]
+
+
+def run_variant(path, modname, fmm, suite="grcwa"):
     env = os.environ.copy()
     env["PYTHONPATH"] = path            # parent dir; variants kept apart by name
     env["GRCWA_MOD"] = modname
     env["FMM"] = fmm
-    print(f"run process worker: {modname} ({fmm})")
+    env["SUITE"] = suite
+    print(f"run process worker: {modname or suite} ({fmm})")
     p = subprocess.run([sys.executable, WORKER], env=env,
                        capture_output=True, text=True)
     if p.returncode != 0:
@@ -80,6 +110,14 @@ def _has_results(res):
         isinstance(v, dict) and "R" in v for v in res.values())
 
 
+def case_R(data, col, name):
+    """Reflectance of case ``name`` in column ``col``, or None if it has none."""
+    d = data.get(col)
+    if isinstance(d, dict) and name in d and "R" in d[name]:
+        return d[name]["R"]
+    return None
+
+
 def main():
     # column label -> {case: result dict}
     columns = []
@@ -95,6 +133,17 @@ def main():
             colp = f"{label}[Pol]"
             columns.append(colp); data[colp] = pol
 
+    # Ikarus: a separate codebase with its own construct, so it gets its own
+    # columns rather than a variant directory. Optional -- skipped when absent.
+    for fmm, suffix in IKARUS_MODES:
+        res = run_variant(HERE, "", fmm, suite="ikarus")
+        if _has_results(res):
+            col = f"ikarus[{suffix}]"
+            columns.append(col); data[col] = res
+        elif fmm == IKARUS_MODES[0][0]:
+            print(f"   (no ikarus columns: {res.get('_error', 'unavailable')}"
+                  f"  --  pip install ikarus-rcwa)")
+
     # collect case order from any successful column
     case_names = []
     for col in columns:
@@ -104,7 +153,7 @@ def main():
     laurent_cols = [c for c in columns if "[Laurent]" in c]
     rows = []
     print("=" * 92)
-    print("grcwa benchmark / cross-validation   (lambda = 1 um, lengths in um)")
+    print("RCWA benchmark / cross-validation   (lambda = 1 um, lengths in um)")
     print("=" * 92)
     for name in case_names:
         print(f"\n{name}")
@@ -120,12 +169,20 @@ def main():
             else:
                 tag = r.get("skipped") or r.get("error") or "n/a"
                 print(f"   {col:<22} -- {tag}")
-        # cross-check: agreement among Laurent columns
-        rvals = [data[c][name]["R"] for c in laurent_cols
-                 if isinstance(data[c], dict) and name in data[c] and "R" in data[c][name]]
-        if len(rvals) > 1:
-            spread = max(rvals) - min(rvals)
-            print(f"   -> Laurent cross-check: max|dR| = {spread:.2e}", end="")
+        # cross-check: agreement among Laurent columns. Kept separate for the
+        # grcwa family (expected bit-identical) and across codebases (expected
+        # only to ~1e-6, since Ikarus takes a real frequency while this battery
+        # feeds grcwa the Q=1e7 complex FREQC).
+        same_code = [v for v in (case_R(data, c, name) for c in laurent_cols
+                                 if not c.startswith("ikarus")) if v is not None]
+        if len(same_code) > 1:
+            print(f"   -> grcwa Laurent cross-check: max|dR| = "
+                  f"{max(same_code) - min(same_code):.2e}", end="")
+        r_fork = case_R(data, "fork[Laurent]", name)
+        r_ik = case_R(data, "ikarus[Laurent]", name)
+        if r_fork is not None and r_ik is not None:
+            print(f"   -> cross-code (fork vs ikarus, Laurent): |dR| = "
+                  f"{abs(r_fork - r_ik):.2e}", end="")
         # physical sanity
         any_r = next((data[c][name] for c in columns
                       if isinstance(data[c], dict) and name in data[c]

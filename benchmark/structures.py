@@ -3,6 +3,22 @@
 Single source of truth, so benchmark/worker.py (cross-version, single order count)
 and benchmark/conv_worker.py (order sweep on the fork) test the SAME structures.
 
+The geometry of every patterned layer is rasterized once by :func:`layer_mask`
+and consumed by *both* backends -- grcwa (a flattened eps vector, this module's
+:func:`solve`) and Ikarus (an integer topology + material list, see
+benchmark/ikarus_suite.py). Neither backend rasterizes on its own, so a
+disagreement *between those two* can never be a pixel-grid artifact.
+
+It can be one against any third code, though, and on the 2D cases it is: at
+NX_2D = 256 the rect branch renders the pillars 0.4-0.8 % off their nominal
+width (0.6*256 = 153.6 is not an integer, and see the sampling note in
+:func:`layer_mask`), which moves R by about 0.01 -- an order of magnitude more
+than the truncation error at the top of the sweep, and the whole of the 2D
+disagreement with the external Moose reference. benchmark/geometry_fidelity.py
+measures it; "The mask is not the structure" in benchmark/README.md is the
+write-up. Fixing it invalidates every recorded 2D value, so the mask is left as
+it is until that re-run is wanted.
+
 Order-counting convention
 -------------------------
 Everything is parametrized by the PER-AXIS order count ``q`` (number of retained
@@ -23,7 +39,11 @@ import numpy as np
 FREQ = 1.0                       # lambda = 1 micron
 QABS = 1e7                       # tiny loss regularizes Rayleigh anomalies
 FREQC = FREQ * (1 + 1j / 2 / QABS)
-NX_1D = 2048
+# The overnight sweep derives 1D total orders from the 2D q values and reaches
+# q = 61**2 = 3721.  Convolution matrices need every difference order, so the
+# real-space grid must contain at least 2*q-1 = 7441 samples.  Use the next
+# power of two for efficient FFTs.
+NX_1D = 8192
 NX_2D = 256
 
 # materials at lambda = 1 um  (n, k)
@@ -39,7 +59,20 @@ def eps(nk):
     return (n + 1j * k) ** 2
 
 
-# group A: analytic anchors; B: 1D gratings; C: 2D rectangular pillars
+# The group-D cases come from the Ikarus whitepaper (CAVITY technologies GmbH,
+# doi 10.5281/zenodo.21966455) and its shipped test suite, which specifies them in
+# SI units at lambda = 700 nm. RCWA is scale-invariant, so they are re-expressed
+# here in this battery's lambda = 1 units by dividing every length by 700 nm.
+WL_D = 700e-9                    # the whitepaper's wavelength, for provenance
+
+
+def _d(x_nm):
+    """A group-D length: nanometres from the whitepaper -> lambda = 1 units."""
+    return x_nm * 1e-9 / WL_D
+
+
+# group A: analytic anchors; B: 1D gratings; C: 2D rectangular pillars;
+# D: the Ikarus whitepaper's cross-code cases
 STRUCTURES = [
     dict(name="A1_slab_air", group="A", dim=0, pol="s",
          film=SI, d=0.20, sub=AIR, desc="planar Si slab in air (exact Airy)"),
@@ -72,8 +105,69 @@ STRUCTURES = [
     dict(name="C2_Au_holes", group="C", dim=2, pol="s",
          pillar=AIR, bg=AU, period=0.60, ax=0.30, ay=0.30, d=0.20, sub=SIO2,
          desc="metal hole array, 2D EOT (hardest 2D)"),
+    dict(name="D1_ikarus_hcg_TM", group="D", dim=1, pol="p",
+         hi=SI, lo=AIR, period=_d(400), ff=0.5, d=_d(300), sub=AIR,
+         desc="Ikarus whitepaper Fig.1/Tab.1: free-standing n=3.5 lamellar "
+              "grating, TM (the factorization stress test)"),
+    dict(name="D2_ikarus_cylinder_TE", group="D", dim=2, pol="s", shape="circle",
+         pillar=SI, bg=AIR, period=_d(400), radius=0.30, d=_d(200), sub=AIR,
+         desc="Ikarus whitepaper: free-standing n=3.5 circular pillar, TE "
+              "(curved boundary oblique to both axes)"),
 ]
 STRUCT = {s["name"]: s for s in STRUCTURES}
+
+
+def layer_mask(s):
+    """Rasterize the patterned layer of ``s`` ONCE, for every backend.
+
+    Returns ``(mask, nk_pair)``: an integer ``(nx, ny)`` array whose value
+    indexes ``nk_pair`` -- ``0`` = background, ``1`` = inclusion -- with each
+    entry an ``(n, k)`` material tuple. 1D layers come back as ``(nx, 1)``.
+
+    grcwa consumes it as ``eps(nk)[mask].flatten()``, Ikarus as an integer
+    topology plus a material list, so both codes see the *same pixels* and a
+    disagreement can only come from the physics, never from the grid.
+
+    Raises ValueError for dim == 0 (uniform layers have no pattern).
+    """
+    dim = s["dim"]
+    if dim == 0:
+        raise ValueError(f"{s['name']}: 0D structure has no patterned layer")
+    if dim == 1:
+        # left-edge sampling: xs < ff fills exactly the first ff*NX_1D cells.
+        xs = np.linspace(0, 1, NX_1D, endpoint=False)
+        return (xs < s["ff"]).astype(int)[:, None], [s["lo"], s["hi"]]
+
+    Lam = s["period"]
+    if s.get("shape", "rect") == "circle":
+        # Cell-centred sampling, so a centred circle stays exactly symmetric
+        # under the lattice's C4v; it also reproduces the rasterization of
+        # ikarus.shapes.circle pixel for pixel, which is the point of group D.
+        # (The rectangular cases below keep their historical left-edge grid so
+        # their published reference values stay bit-comparable.)
+        c = (np.arange(NX_2D) + 0.5) / NX_2D
+        X, Y = np.meshgrid(c, c, indexing="ij")
+        inside = (X - 0.5) ** 2 + (Y - 0.5) ** 2 <= s["radius"] ** 2
+    else:
+        # Left-edge sampling with a strict "<", kept so the published rect
+        # values stay bit-comparable.  It is NOT faithful: 0.6*256 = 153.6 and
+        # 0.4*256 = 102.4 are not integers, so C1 comes out 153/256 (-0.39 %)
+        # and C1b 103/256 (+0.59 %); on C2 the edge lands exactly on a sample
+        # and the strict "<" drops a pixel on each side (127 instead of 128,
+        # -0.78 %).  Cell centres with "<=" and an NX_2D divisible by 5 (260
+        # works for all three) would render every rectangle exactly -- at the
+        # price of recomputing every 2D number on record.
+        x = np.linspace(0, 1, NX_2D, endpoint=False)
+        X, Y = np.meshgrid(x, x, indexing="ij")
+        inside = (np.abs(X - 0.5) < s["ax"] / (2 * Lam)) & \
+                 (np.abs(Y - 0.5) < s["ay"] / (2 * Lam))
+    return inside.astype(int), [s["bg"], s["pillar"]]
+
+
+def mask_eps(s):
+    """:func:`layer_mask` with the materials already turned into permittivity."""
+    mask, nk_pair = layer_mask(s)
+    return np.array([eps(nk) for nk in nk_pair], dtype=complex)[mask]
 
 
 def supports_native_dim(grcwa):
@@ -123,8 +217,7 @@ def solve(grcwa, s, q, fmm, native):
         o.Init_Setup()
         eps_flat, gmethod = None, 0
     elif dim == 1:
-        xs = np.linspace(0, 1, NX_1D, endpoint=False)
-        prof = np.where(xs < s["ff"], eps(s["hi"]), eps(s["lo"])).astype(complex)
+        prof = mask_eps(s)[:, 0]                 # shared rasterization (Nx,1)->(Nx,)
         if native:
             o = _obj(grcwa, q, [s["period"], 0], None, fmm)
             if o is None:
@@ -145,12 +238,7 @@ def solve(grcwa, s, q, fmm, native):
         eps_flat = prof
     else:  # dim == 2: q x q square block via parallelogramic truncation
         Lam = s["period"]
-        x = np.linspace(0, 1, NX_2D, endpoint=False)
-        X, Y = np.meshgrid(x, x, indexing="ij")
-        eg = np.ones((NX_2D, NX_2D), dtype=complex) * eps(s["bg"])
-        inside = (np.abs(X - 0.5) < s["ax"] / (2 * Lam)) & \
-                 (np.abs(Y - 0.5) < s["ay"] / (2 * Lam))
-        eg[inside] = eps(s["pillar"])
+        eg = mask_eps(s)                         # shared rasterization (Nx,Ny)
         o = _obj(grcwa, q * q, [Lam, 0], [0, Lam], fmm)
         if o is None:
             return None, None, None, "no-pol"

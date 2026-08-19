@@ -1,3 +1,4 @@
 results.*
 conv_results.*
+conv_convergence.csv
 *.png

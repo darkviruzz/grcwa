@@ -1,0 +1,158 @@
+{
+  "software": "Ikarus",
+  "version_benchmarked": "1.0.0",
+  "note": "External independent RCWA reference, and an audit of the claims its whitepaper makes about grcwa. Unlike moose_reference.json, this file is not the only way to get the numbers: Ikarus is installable (pip install ikarus-rcwa), so benchmark/run.py and benchmark/conv_run.py compute the 'measured' values live via benchmark/ikarus_suite.py. What is recorded here and cannot be regenerated is the set of values PUBLISHED in the whitepaper, so the live run stays falsifiable against them. Reproduce with: python benchmark/ikarus_whitepaper_check.py",
+  "source": {
+    "title": "Ikarus: High-fidelity RCWA simulation and inverse design for metasurfaces",
+    "author": "Shelling Neto, Liam",
+    "institution": "CAVITY technologies GmbH",
+    "year": 2026,
+    "type": "White paper",
+    "doi": "10.5281/zenodo.21966455",
+    "software_doi": "10.5281/zenodo.21744163",
+    "pypi": "ikarus-rcwa",
+    "repo": "github.com/CAVITYtechnologies/ikarus",
+    "local_pdf": "Ikarus High-fidelity RCWA simulation and inverse design for metasurfaces.pdf"
+  },
+  "structures": {
+    "D1_ikarus_hcg_TM": {
+      "published_as": "period 400 nm, n_hi 3.5, height 300 nm, duty 0.5, free-standing in air, TM, normal incidence, lambda 700 nm",
+      "provenance": "ikarus/tests/validation/test_crosscode.py: PERIOD, N_HI, H, WL",
+      "battery_units": "lambda = 1: period = 400/700, d = 300/700",
+      "role": "the whitepaper's Fig. 1 / Table 1 factorization stress test"
+    },
+    "D2_ikarus_cylinder_TE": {
+      "published_as": "period 400 nm, n 3.5, height 200 nm, circular pillar radius 0.30 of the period, free-standing in air, TE, normal incidence, lambda 700 nm",
+      "provenance": "ikarus/tests/validation/test_crosscode.py: CYL_PERIOD, CYL_N, CYL_H, CYL_WL",
+      "battery_units": "lambda = 1: period = 400/700, d = 200/700, radius = 0.30",
+      "role": "curved boundary oblique to both axes -- where the normal-vector method beats Li's separable inverse rule"
+    }
+  },
+  "published_table1": {
+    "case": "D1_ikarus_hcg_TM",
+    "caption": "The same high-contrast TM grating, at a practical order count.",
+    "practical_order_count_inferred": 25,
+    "_note": "The paper does not state Table 1's truncation. 25 retained x-orders (its M=12) reproduces the quoted Ikarus-laurent value to 1e-4, so that is the count recorded here; torcwa is quoted at the same 16.3% and the paper's own test asserts it matches Ikarus laurent at matched M, but it was not re-run here.",
+    "rows": {
+      "FMMax (NORMAL)": {
+        "factorization": "faithful",
+        "R_published": 0.1,
+        "R_measured": null,
+        "_note": "not re-run here; FMMax is not a dependency of this benchmark"
+      },
+      "Ikarus (default)": {
+        "factorization": "faithful",
+        "R_published": 0.1,
+        "R_measured": 0.1001
+      },
+      "Ikarus (laurent)": {
+        "factorization": "direct rule",
+        "R_published": 0.163,
+        "R_measured": 0.1631
+      },
+      "torcwa": {
+        "factorization": "direct rule",
+        "R_published": 0.163,
+        "R_measured": null,
+        "_note": "not re-run here; torcwa needs a GPU torch stack"
+      },
+      "grcwa": {
+        "factorization": "direct rule",
+        "R_published": 0.175,
+        "R_measured": 0.1747,
+        "_note": "measured through the paper's OWN grcwa harness -- see grcwa_row_audit"
+      }
+    }
+  },
+  "published_claims": {
+    "faithful_true_value": {
+      "claim": "the converged reflectance is 10.0% (FMMax, high truncation)",
+      "verdict": "confirmed",
+      "evidence": "Ikarus normal-vector reaches 0.1002 and this fork's Pol reaches 0.1001"
+    },
+    "faithful_converges_by_M10": {
+      "claim": "the faithful methods reach the true value by M ~ 10",
+      "verdict": "confirmed for Ikarus",
+      "evidence": "Ikarus NV is at 0.1003 by q = 15 (M = 7) and flat thereafter; on the 2D curved case it needs more (0.9265 at q=11 -> 0.9431 at q=21)"
+    },
+    "direct_rule_is_O_1_over_M": {
+      "claim": "the direct rule crawls in from above and is still a quarter too high at M = 30",
+      "verdict": "confirmed",
+      "evidence": "fork Laurent: 0.1631 (q=25), 0.1367 (q=41), 0.1143 (q=101), 0.1071 (q=201) -- monotone from above, still 7% high at 201 orders"
+    },
+    "energy_balance_is_not_convergence": {
+      "claim": "R+T = 1 to machine precision throughout that wrong convergence",
+      "verdict": "confirmed",
+      "evidence": "every Laurent point above has |R+T-1| < 5e-6"
+    },
+    "grcwa_is_a_direct_rule_solver": {
+      "claim": "grcwa uses the direct rule and so misses the faithful value by 60-75%",
+      "verdict": "true of upstream grcwa, NOT of this fork",
+      "evidence": "upstream is Laurent-only (its Pol did not converge for TM; see tests/test_pol_correctness.py). This fork's FIXED Pol converges to 0.1001 on D1, i.e. onto the faithful value, and on the curved 2D case D2 at q=21 it gives 0.9430 against Ikarus's normal-vector 0.9431 -- not its Li 0.9058."
+    },
+    "normal_vector_beats_li_on_curved_boundary": {
+      "claim": "on a curved 2D boundary the normal-vector method beats even Li's separable inverse rule; FMMax's NORMAL lands in 0.92 < R < 0.96",
+      "verdict": "confirmed",
+      "evidence": "D2 at q=21 (441 orders): Ikarus NV 0.9431 (inside the window), Ikarus Li 0.9058 -- 3.7 points behind. This fork's Pol is at 0.9430, i.e. on top of NV to 1e-4, because it builds its tangent field from the rendered eps grid rather than separably. Laurent sits at 0.9609 and is still drifting."
+    }
+  },
+  "grcwa_row_audit": {
+    "finding": "Table 1's grcwa value is the Laurent rule at ~23 x-orders, not at 400.",
+    "cause": "The paper's harness (ikarus/tests/validation/grcwa_reference.py: grating_RT) drives this 1D grating through a SQUARE 2D lattice, L1=[1,0] and L2=[0,1], with a 2D circular truncation. A y-invariant layer couples only to Gy=0, so of a nominal nG=400 (385 actually retained) just 23 orders lie on Gy=0 and do any work.",
+    "measurements": {
+      "paper_harness_nG_requested": 400,
+      "paper_harness_nG_retained": 385,
+      "paper_harness_x_orders_at_Gy0": 23,
+      "paper_harness_R": 0.1747,
+      "fork_native_1D_at_q23_R": 0.1752,
+      "fork_native_1D_at_q385_R": 0.103686
+    },
+    "conclusion": "The physics claim stands -- Laurent really is O(1/M) and really is ~75% high at that truncation. Only the framing overstates it: 'still badly off even at 400 orders' is off at 23 effective orders. Given a native 1D truncation of 385 orders the same code gives 0.1037."
+  },
+  "performance": {
+    "note": "Two different questions, with opposite answers. Per solve at a matched order count, from benchmark/results.csv (nG=121, min of 3, one machine). Time-to-accuracy on D1, from benchmark/conv_results.csv -- the number that actually matters.",
+    "per_solve_at_nG121_ms": {
+      "fork": [
+        148,
+        190
+      ],
+      "ikarus": [
+        260,
+        1030
+      ]
+    },
+    "time_to_1e-3_on_D1": {
+      "ikarus[Li]": {
+        "nG": 17,
+        "ms": 7.0
+      },
+      "ikarus[NV]": {
+        "nG": 17,
+        "ms": 12.8
+      },
+      "fork[Pol]": {
+        "nG": 169,
+        "ms": 436.9
+      },
+      "fork[Laurent]": {
+        "nG": null,
+        "ms": null,
+        "_note": "never reaches 1e-3; best 2.04e-3 at nG=625"
+      },
+      "ikarus[Laurent]": {
+        "nG": null,
+        "ms": null,
+        "_note": "same, as it is the same rule"
+      }
+    },
+    "best_error_at_nG625_on_D1": {
+      "fork[Laurent]": 0.00204,
+      "ikarus[Laurent]": 0.00204,
+      "fork[Pol]": 1.79e-07,
+      "ikarus[Li]": 5.35e-11,
+      "ikarus[NV]": 0.0,
+      "_note": "ikarus[NV] is the reference column here, so its own error is 0 by construction"
+    },
+    "comment": "Ikarus's NumPy core costs 2-5x grcwa per solve, and gives it back roughly 35-fold: it is inside 1e-3 of the faithful answer in 7-13 ms at 17 orders, where this fork's Pol needs 169 orders and 437 ms, and where the direct rule never arrives at all. Per-solve speed is the wrong axis to compare these on."
+  }
+}
