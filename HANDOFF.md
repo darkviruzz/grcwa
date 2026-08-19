@@ -74,11 +74,86 @@ Baustelle für den Fork benannt, aber nicht angegangen.
 
 ## claude/rcwa-game-new-player-a3lpbu (GPT-5.6-Sol)
 
-**Ziel:** Den Abbruch des gestuften Konvergenzlaufs beheben: Ikarus erkannte bei den abgeleiteten hohen eindimensionalen Harmoniken ein zu grobes gemeinsames FFT-Raster. Der zugehörige Fix ist `fc12bcd` (`fix(benchmark): enforce FFT grid resolution for convergence sweeps`).
+**Ziel:** Den Abbruch des gestuften Konvergenzlaufs beheben: Ikarus
+erkannte bei den abgeleiteten hohen eindimensionalen Harmoniken ein zu
+grobes gemeinsames FFT-Raster. Der zugehörige Fix ist `fc12bcd`
+(`fix(benchmark): enforce FFT grid resolution for convergence sweeps`).
 
-**Was hat funktioniert:** Die Ursache war die fehlende Abtastung aller Fourier-Differenzordnungen, nicht ein beschädigter Cache. Das gemeinsame eindimensionale Geometrieraster wurde für den vollständigen Lauf ausreichend vergrößert und eine frühe Prüfung für beide aktiven Achsen vor Worker- und Solverstart ergänzt. Das Festhalten derselben Maske und Rasterisierung für grcwa und Ikarus bleibt die richtige Grundlage für einen fairen Solververgleich. Nach der physikalisch relevanten Rasteränderung sorgen neue Cache-Fingerprints korrekt für eine Neuberechnung.
+**Was hat funktioniert:**
+Die Ursache war die fehlende Abtastung aller Fourier-Differenzordnungen,
+nicht ein beschädigter Cache. Das gemeinsame eindimensionale Geometrieraster
+wurde für den vollständigen Lauf ausreichend vergrößert und eine frühe
+Prüfung für beide aktiven Achsen vor Worker- und Solverstart ergänzt. Das
+Festhalten derselben Maske und Rasterisierung für grcwa und Ikarus bleibt
+die richtige Grundlage für einen fairen Solververgleich. Nach der
+physikalisch relevanten Rasteränderung sorgen neue Cache-Fingerprints
+korrekt für eine Neuberechnung.
 
-**Was war fehlerhaft / nicht weiter verfolgen:** Ein unveränderter Neustart hätte denselben Fehler wiederholt. Die Ikarus-Prüfung darf nicht umgangen und nur Ikarus darf nicht dynamisch hochskaliert werden; sonst vergleichen die Solver unterschiedliche Raster, während grcwa hohe Ordnungen unter Umständen still aliasiert. Ebenso dürfen alte eindimensionale Physikpunkte nach der Rasteränderung nicht in die neue Konvergenzkurve übernommen werden. Spätere Energieerhaltungswarnungen der Ikarus-Normalvektormethode bei schwierigen zweidimensionalen Strukturen waren niedrigordentliche numerische Instabilität, nicht derselbe Rasterfehler und kein Prozessabbruch.
+**Was war fehlerhaft / nicht weiter verfolgen:**
+Ein unveränderter Neustart hätte denselben Fehler wiederholt. Die Ikarus-
+Prüfung darf nicht umgangen und nur Ikarus darf nicht dynamisch
+hochskaliert werden; sonst vergleichen die Solver unterschiedliche Raster,
+während grcwa hohe Ordnungen unter Umständen still aliasiert. Ebenso dürfen
+alte eindimensionale Physikpunkte nach der Rasteränderung nicht in die neue
+Konvergenzkurve übernommen werden. Spätere Energieerhaltungswarnungen der
+Ikarus-Normalvektormethode bei schwierigen zweidimensionalen Strukturen
+waren niedrigordentliche numerische Instabilität, nicht derselbe
+Rasterfehler und kein Prozessabbruch.
 
-**Wo wir stehen geblieben sind:** Der Fix war getestet und der Nachtlauf mit neuen Cache-Fingerprints neu gestartet; zuletzt lief er weiter, während die Ikarus-Energiewarnungen eingeordnet wurden. Unmittelbar als Nächstes wäre zu bestätigen gewesen, dass der Lauf vollständig beendet ist, und anschließend den neu erzeugten Ergebnissatz zu prüfen. Grundsätzlich sollte das gemeinsame Raster samt Vorabprüfung als Invariante beibehalten werden; getrennt davon kann später entschieden werden, ob endliche, aber energieverletzende Niedrigordnungspunkte als sichtbare Konvergenzausreißer bleiben oder einen eigenen Qualitätsstatus erhalten.
+**Wo wir stehen geblieben sind:** Der Fix war getestet und der Nachtlauf
+mit neuen Cache-Fingerprints neu gestartet; zuletzt lief er weiter,
+während die Ikarus-Energiewarnungen eingeordnet wurden. Unmittelbar als
+Nächstes wäre zu bestätigen gewesen, dass der Lauf vollständig beendet ist,
+und anschließend den neu erzeugten Ergebnissatz zu prüfen. Grundsätzlich
+sollte das gemeinsame Raster samt Vorabprüfung als Invariante beibehalten
+werden; getrennt davon kann später entschieden werden, ob endliche, aber
+energieverletzende Niedrigordnungspunkte als sichtbare Konvergenzausreißer
+bleiben oder einen eigenen Qualitätsstatus erhalten.
 
+
+
+## claude/rcwa-game-new-player-a3lpbu (GPT-5.6-Sol)
+
+**Ziel:** Den RCWA-Konvergenzbenchmark auf Konvergenzgeschwindigkeit,
+belastbare Laufzeitabschätzung und den Vergleich von fork, Ikarus und Moose
+ausrichten. Dazu sollten Wiederholungsaufwand reduziert, lange Läufe
+fortsetzbar, wachsende Zwischenstände plotbar und Referenzen sinnvoll
+priorisiert werden. Der zentrale Ergebnis-Commit dieses Chats ist `dccf7ae`.
+
+**Was hat funktioniert:** Ein atomarer Punkt-Cache mit getrennten
+Identitäten für Physik und maschinenabhängige Zeiten erlaubt Fortsetzen
+und Erweitern ohne erneute bekannte Lösungen. Der ergebnisliefernde Solve
+wird mitgemessen; nur schnelle Punkte werden wiederholt und über das
+Minimum bewertet. Rohzeiten bleiben erhalten, während gruppierte monotone
+Kurven Laufzeiten schätzen. Kumulative dichte Ordnungsgitter aktualisieren
+die Konvergenzplots stufenweise; für eindimensionale Fälle bewahrt die
+Vereinigung aus direkter Ordnung und deren Quadrat sowohl dichte kleine
+als auch vergleichbare hohe Gesamtordnungen. Moose ist bevorzugte Referenz,
+sonst Ikarus NV; unvollständige Sweeps werden vor Konvergenzaussagen
+abgewiesen. Enge Rohwertplots funktionieren mit natürlichem Clipping,
+ohne außerhalb liegende Punkte zu entfernen.
+
+**Was war fehlerhaft / nicht weiter verfolgen:** Der separate Single-
+Order-Lauf war redundant. Ein ungemessener erster Ergebnis-Solve plus
+zusätzliche Timing-Läufe verschwendete Arbeit; ebenso war der Median als
+Wert für Wiederholungen nicht gewünscht. Punkte außerhalb enger Plotfenster
+auszublenden erzeugte irreführende Linien, und ein relatives Prozentfenster
+war die falsche Interpretation; richtig ist ein absoluter Rohwertausschnitt
+ohne Datenfilterung. Ein Quick-Zwischenstand mit nur einer Ordnung ließ das
+Plotraster ohne Zeilen scheitern. Die eindimensionale Liste lediglich an
+die per-Achse-Liste zu spiegeln kappte ihre Gesamtordnung zu früh; die
+abgeleitete Vereinigung mit den Quadraten behebt das. Gepufferte Worker-
+Ausgabe ließ lange Läufe scheinbar hängen, während still herausgefilterte
+Fehler unvollständige Sweeps fälschlich erfolgreich erscheinen ließen. Auch
+ein fehlgeschlagenes Timing-Refresh darf bereits gecachte Physik nicht
+verwerfen.
+
+**Wo wir stehen geblieben sind:** Der Umbau war implementiert, mit
+fokussierten Tests und kalten sowie vollständig gecachten Quick-Durchläufen
+geprüft und in `dccf7ae` festgehalten; der eigentliche lange Stufenlauf
+wurde bewusst nicht gestartet. Unmittelbar als Nächstes wäre dieser
+Langlauf zu beobachten und anschließend die fortgeschriebenen Konvergenz-
+und Cache-Artefakte auszuwerten. Die übergeordnete Richtung bleibt:
+schwierige Strukturen nach erreichbarer Genauigkeit und geschätzter Zeit
+bis zur Konvergenz bewerten, Moose als unabhängige Referenz nutzen und
+andernfalls Ikarus NV heranziehen.
