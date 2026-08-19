@@ -41,13 +41,18 @@ back to the fork's own Pol rule otherwise.
 import argparse
 import json
 import os
+import sys
 from fractions import Fraction
 
 import numpy as np
 
-import structures as ST
-
 HERE = os.path.dirname(os.path.abspath(__file__))
+# Run directly from anywhere: the battery lives here, the fork one level up.
+for _p in (HERE, os.path.dirname(HERE)):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+import structures as ST                                            # noqa: E402
 
 #: Relative error in a linear feature size above which the mask is called unfit
 #: to be compared against a code that draws its own geometry.  0.1 % is already
@@ -259,11 +264,11 @@ def solve_compare(names, q):
             print("   %-14s %12.6f %12.6f %+12.6f"
                   % (label, r_mask, r_exact, r_exact - r_mask))
         if moose_q is not None:
-            print("   %-14s %12s %12.6f   (Moose at the same order)"
-                  % ("moose", "-", moose_q))
+            print("   moose, which builds the nominal geometry itself, at the "
+                  "same order: %.6f" % moose_q)
         elif moose_ref is not None:
-            print("   %-14s %12s %12.6f   (Moose, highest order it ran)"
-                  % ("moose", "-", moose_ref))
+            print("   moose, which builds the nominal geometry itself, at the "
+                  "highest order it ran: %.6f" % moose_ref)
         print("")
 
 
