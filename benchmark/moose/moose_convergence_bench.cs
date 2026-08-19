@@ -172,13 +172,13 @@ public class MooseScript
     // =======================================================================
 
     // Where CSV / JSON / log end up.  Empty -> <temp>/moose_bench.
-    static string OUTPUT_DIR   = "";
+    static string OUTPUT_DIR   = "C:\\Users\\mwalther\\PycharmProjects\\grcwa\\benchmark\\moose";
 
     // Truncation sweep.  These are Moose MAX ORDERS m (retained: 2m+1 per
     // axis).  The defaults are exactly the keys already present in
     // benchmark/moose_reference.json, so new runs line up with the old ones.
-    static readonly int[] SWEEP_1D = { 1, 3, 5, 10, 20, 50, 100, 200, 500 };
-    static readonly int[] SWEEP_2D = { 1, 2, 3, 4, 5, 7, 10, 15, 20, 30 };
+    //static readonly int[] SWEEP_1D = { 1, 3, 5, 10, 20, 50, 100, 200, 500, 1000 };
+    //static readonly int[] SWEEP_2D = { 1, 2, 3, 4, 5, 7, 10, 15, 20, 30, 35, 40, 45, 50 };
 
     // To land on exactly the points the Python sweep uses, swap the two lines
     // above for these.  benchmark/run_overnight.bat sets
@@ -190,15 +190,14 @@ public class MooseScript
     // Moose takes the max order m with q = 2m+1, so m = (q-1)/2 for 2D and
     // m = (nG-1)/2 for 1D:
     //
-    // static readonly int[] SWEEP_2D = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-    //     12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,
-    //     29, 30 };
-    // static readonly int[] SWEEP_1D = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-    //     12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,
-    //     29, 30, 40, 60, 84, 112, 144, 180, 220, 264, 312, 364, 420, 480,
-    //     544, 612, 684, 760, 840, 924, 1012, 1104, 1200, 1300, 1404, 1512,
-    //     1624, 1740, 1860 };
-    //
+    static readonly int[] SWEEP_2D = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+        12, 13, 14, 15, 16, 17, 20, 25, 30, 35 };
+    static readonly int[] SWEEP_1D = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+        12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,
+        29, 30, 40, 60, 84, 112, 144, 180, 220, 264, 312, 364, 420, 480,
+        544, 612, 684, 760, 840, 924, 1012, 1104, 1200, 1300, 1404, 1512,
+        1624, 1740, 1860 };
+    
     // Both top out at nG = 3721.  Note what that means for 1D: m = 1860 keeps
     // 3721 orders in ONE axis, so the eigenproblem is about 7400 x 7400 -- the
     // same size as 2D at (30,30), and hours plus many GB per point.  The 1D
@@ -215,7 +214,7 @@ public class MooseScript
     // larger orders of THAT case are skipped (the rest of the battery keeps
     // running).  0 = no limit.  2D at m = 30 means 61*61 = 3721 orders, i.e. a
     // ~7400 x 7400 eigenproblem -- that one is hours, not minutes.
-    static double MAX_SECONDS_PER_SOLVE = 1800.0;
+    static double MAX_SECONDS_PER_SOLVE = 600.0;
 
     // FFT sampling of the unit cell (2D only, see header).
     //   0 = fixed refinement factor FFT_REFINEMENT
@@ -256,7 +255,7 @@ public class MooseScript
     // MEMORY SCALES WITH THIS.  Each concurrent solve holds its own matrices;
     // 2D at m = 30 is several GB on its own, so N of those at once will not
     // fit. PARALLEL_NG_LIMIT below is the guard for that.
-    static int    PARALLEL_TASKS  = 1;
+    static int    PARALLEL_TASKS  = 10;
 
     // A run whose nG exceeds this is given the whole machine: only one such
     // run at a time, though cheap runs may still go alongside it.  0 disables

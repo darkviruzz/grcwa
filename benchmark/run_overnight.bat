@@ -3,7 +3,7 @@ setlocal EnableExtensions EnableDelayedExpansion
 
 cd /d "%~dp0.."
 
-set "PYTHON_EXE=C:\Users\mwalther\Documents\Software\python\grcwa\Scripts\python.exe"
+set "PYTHON_EXE=C:\ProgramData\anaconda3\envs\grcwa_mwa\python.exe"
 if not exist "%PYTHON_EXE%" (
     echo ERROR: configured grcwa interpreter not found:
     echo        %PYTHON_EXE%
