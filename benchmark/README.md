@@ -123,9 +123,9 @@ sweep. Ikarus, Li's rule, nothing varied but the rasterization
 
 | case | geometry | `w_eff` | R (q=31) | R (q=41) | Moose, same order |
 |---|---|---|---|---|---|
-| `C1_Si_pillars` | mask 256² | 0.597656 | 0.389961 | | 0.398436 (q=31) |
+| `C1_Si_pillars` | mask 256² | 0.597656 | 0.389961 | 0.390105 | 0.398436 / 0.398174 |
 | | one pixel wider | 0.601562 | 0.401687 | | |
-| | nominal | 0.600000 | 0.396804 | | |
+| | nominal | 0.600000 | 0.396804 | 0.396956 | |
 | `C1b_Si_pillars_diffract` | mask 256² | 0.402344 | 0.146998 | 0.145824 | 0.154774 (q=41) |
 | | nominal | 0.400000 | 0.157185 | 0.156324 | |
 | `C2_Au_holes` | mask 256² | 0.496094 | 0.672335 | 0.666899 | 0.648546 (q=41) |
