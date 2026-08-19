@@ -6,11 +6,15 @@ holds both: outside +/-1e-4 it is logarithmic, so you read the transient and the
 SIGN of the approach; inside the band it turns linear, so the endgame is legible
 in the same panel.
 
-Two variants of the same figure, chosen by the x axis:
-  * ``orders`` -- total retained orders.  Moose is overlaid in black wherever it
-    has a sweep for the case, which makes this the cross-code comparison.
-  * ``time``   -- wall time of the solve.  Moose carries no timings, so the
-    external reference cannot appear here; the codes still can.
+Two variants of the same figure, chosen by the x axis: total retained orders,
+and wall time of the solve.  Moose is overlaid in black on both, from
+``moose_reference.json`` and the per-point ``t_solve_s`` in
+``moose_timing.json``.
+
+Where a case is judged against Moose, its own curve is a SELF-convergence
+curve -- it reaches the reference by construction -- and says how fast Moose
+settles, not how accurate it is.  On D1 and D2, which are judged against
+Ikarus's normal-vector value, it is a genuine third-code accuracy curve.
 """
 import os
 
@@ -34,8 +38,30 @@ LT = 1e-4              # symlog threshold: the tolerance the sweep is judged on
 BAND = "#e6f4ec"
 
 
+def _ref_note(case, mention_moose=True):
+    """Short lines naming the reference a panel is measured against."""
+    R, kind, prov = D.ref_of(case)
+    src = {"external_moose": "Moose", "analytic_exact": "analytic (Airy)"}.get(
+        kind, (D.CASES[case].get("ref") or {}).get("from") or kind)
+    head = "ref = %s %.6g" % (src, R)
+    if prov:
+        head += "  ·  provisional"
+    lines = [head]
+    if mention_moose and kind == "external_moose":
+        lines.append("black curve is Moose itself → self-convergence")
+    return lines
+
+
+def _header(ax, case, fs=10.5):
+    lines = _ref_note(case)
+    ax.set_title(case, fontsize=fs, fontweight="bold", color=INK, loc="left",
+                 pad=7 + 10.0 * len(lines))
+    ax.text(0, 1.015, "\n".join(lines), transform=ax.transAxes, fontsize=7.6,
+            color=MUTED, va="bottom", ha="left", linespacing=1.4)
+
+
 def panel(ax, case, xaxis):
-    Rref, _rt, prov = D.ref_of(case)
+    Rref, rtype, prov = D.ref_of(case)
     has_moose = False
     for col in D.COLUMNS:
         nG, R, err, sgn, traw, test = D.series(case, col)
@@ -46,10 +72,12 @@ def panel(ax, case, xaxis):
                 marker=st["marker"], ms=3.4, lw=1.7, mec="none", zorder=5)
     if xaxis == "orders":
         mx, mR, _ = D.moose_series(case)
-        if mx is not None:
-            has_moose = True
-            ax.plot(mx, mR - Rref, color=D.MOOSE_C, ls="-", marker="D", ms=5.0,
-                    lw=2.4, mfc="white", mew=1.4, zorder=7)
+    else:
+        mx, mR = D.moose_timed(case)
+    if mx is not None and len(mx):
+        has_moose = True
+        ax.plot(mx, mR - Rref, color=D.MOOSE_C, ls="-", marker="D", ms=5.0,
+                lw=2.4, mfc="white", mew=1.4, zorder=7)
     ax.set_xscale("log")
     ax.set_yscale("symlog", linthresh=LT, linscale=.85)
     ax.axhspan(-LT, LT, color=BAND, zorder=1)
@@ -73,20 +101,18 @@ def figure(xaxis):
     cases = D.ORDER
     ncol = 3
     nrow = -(-len(cases) // ncol)
-    fig, axes = plt.subplots(nrow, ncol, figsize=(17.5, 3.35 * nrow))
-    fig.subplots_adjust(left=.055, right=.985, top=.885, bottom=.085,
-                        hspace=.52, wspace=.20)
+    fig, axes = plt.subplots(nrow, ncol, figsize=(17.5, 3.55 * nrow))
+    fig.subplots_adjust(left=.055, right=.985, top=.878, bottom=.085,
+                        hspace=.60, wspace=.20)
     for ax in axes.flat:
         ax.axis("off")
     any_moose = False
     for i, case in enumerate(cases):
         ax = axes.flat[i]
         ax.axis("on")
-        prov, hm = panel(ax, case, xaxis)
+        _prov, hm = panel(ax, case, xaxis)
         any_moose |= hm
-        tag = "   (provisional ref)" if prov else ""
-        ax.set_title(case + tag, fontsize=10.5, fontweight="bold", color=INK,
-                     loc="left", pad=6)
+        _header(ax, case)
         if i % ncol == 0:
             ax.set_ylabel("R − R_ref   (symlog)", fontsize=8.8, color=MUTED)
         if i >= len(cases) - ncol:
@@ -100,7 +126,7 @@ def figure(xaxis):
     if any_moose:
         handles.append(Line2D([], [], color=D.MOOSE_C, marker="D", ms=6, lw=2.4,
                               mfc="white", mew=1.4,
-                              label="Moose (independent reference code)"))
+                              label="Moose (independent code)"))
     handles.append(Line2D([], [], color=BAND, lw=9, label="±1e-4 band (linear zone)"))
     fig.legend(handles=handles, loc="lower center", ncol=7, frameon=False,
                fontsize=9.6, bbox_to_anchor=(.5, .010))
@@ -114,7 +140,8 @@ def figure(xaxis):
         head = "Deviation from the reference vs wall time (symlog)"
         sub = ("the same axis on the cost variable: how much of the deviation is still there "
                "per millisecond spent\n"
-               "— Moose is absent here on purpose, the external reference carries no timings")
+               "— Moose from its own per-point t_solve, so the independent code is on the "
+               "cost axis too")
     fig.suptitle(head, fontsize=17, fontweight="bold", color=INK, y=.972)
     fig.text(.5, .922, sub, ha="center", fontsize=10.3, color=MUTED, linespacing=1.5)
     name = "conv_deviation_%s.png" % xaxis

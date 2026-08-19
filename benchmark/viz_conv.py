@@ -20,6 +20,11 @@ with open(JSON) as _f:
     J = json.load(_f)
 with open(os.path.join(HERE, "moose_reference.json")) as _f:
     MOOSE = json.load(_f)
+_TIMING_PATH = os.path.join(HERE, "moose_timing.json")
+MOOSE_TIMING = {}
+if os.path.exists(_TIMING_PATH):
+    with open(_TIMING_PATH) as _f:
+        MOOSE_TIMING = json.load(_f).get("cases", {})
 
 COLUMNS = J["columns"]
 CASES = J["cases"]
@@ -44,8 +49,33 @@ def label(col):
 
 # ---- per-case reference -----------------------------------------------------
 def ref_of(case):
+    """(R_ref, type, provisional) for a case.
+
+    A run bakes its reference into conv_results.json, but moose_reference.json
+    keeps improving independently of the sweep.  When a case is already judged
+    against Moose, the CURRENT Moose value wins, so the figures do not keep
+    quoting a reference the reference file has since replaced.  Which case is
+    judged against what stays the run's decision -- this only refreshes the
+    number, never the choice.
+    """
     r = CASES[case].get("ref") or {}
-    return r.get("R"), r.get("type", "?"), bool(r.get("ref_provisional"))
+    R, kind = r.get("R"), r.get("type", "?")
+    prov = bool(r.get("ref_provisional"))
+    if kind == "external_moose":
+        live = MOOSE.get("cases", {}).get(case, {})
+        if live.get("ref") is not None:
+            R = live["ref"]
+            prov = prov or bool(live.get("ref_provisional"))
+    return R, kind, prov
+
+
+def ref_is_stale(case, rtol=1e-6):
+    """True when the baked reference and the current Moose value disagree."""
+    baked = (CASES[case].get("ref") or {}).get("R")
+    live, kind, _ = ref_of(case)
+    if kind != "external_moose" or baked is None or live is None:
+        return False
+    return abs(live - baked) > rtol * max(1.0, abs(baked))
 
 def series(case, col):
     """(nG, R, |err|, signed err, time_ms, time_est_ms) sorted by nG."""
@@ -60,15 +90,22 @@ def series(case, col):
     return nG, R, np.abs(sgn), sgn, t, te
 
 def _mkey(k):
-    """Moose sweep key -> total retained orders (matches plot_moose.parse_total)."""
+    """Moose sweep key -> total retained orders.
+
+    The keys are Moose's MAXIMUM order m, not an order count: it retains 2m+1
+    harmonics per axis, so a 1D key "m" is 2m+1 orders and a 2D key "(mx,my)"
+    is (2mx+1)(2my+1).  Same convention as plot_moose.parse_total; verified
+    against the nG that moose_timing.json records per key.
+    """
     k = k.strip()
     if k.startswith("("):
         a, b = k.strip("()").split(",")
-        return int(a) * int(b)
-    return int(k)
+        return (2 * int(a) + 1) * (2 * int(b) + 1)
+    return 2 * int(k) + 1
 
 
 def moose_series(case):
+    """(nG, R, ref) for the external Moose sweep, or (None, None, None)."""
     m = MOOSE["cases"].get(case)
     if not m or "sweep" not in m:
         return None, None, None
@@ -76,6 +113,32 @@ def moose_series(case):
     return (np.array([p[0] for p in pairs], float),
             np.array([p[1] for p in pairs], float),
             m.get("ref"))
+
+
+def moose_timed(case):
+    """(time_ms, R) for the Moose points that carry a wall time.
+
+    moose_timing.json records t_solve_s per (case, max order); only the keys it
+    covers can appear on a cost axis, which is usually fewer than the sweep.
+    """
+    m = MOOSE["cases"].get(case)
+    timing = MOOSE_TIMING.get(case)
+    if not m or not timing:
+        return None, None
+    pairs = []
+    for key, R in m["sweep"].items():
+        entry = timing.get(key)
+        if not entry:
+            continue
+        t = entry.get("t_solve_s")
+        if t is None or t <= 0:
+            continue
+        pairs.append((t * 1e3, R))
+    if not pairs:
+        return None, None
+    pairs.sort()
+    return (np.array([p[0] for p in pairs], float),
+            np.array([p[1] for p in pairs], float))
 
 def pareto(t, e):
     """Running-minimum error against increasing cost -> the honest cost curve."""

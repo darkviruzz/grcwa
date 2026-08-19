@@ -34,6 +34,28 @@ TOL = [(1e-2, "1%"), (1e-3, "1e-3"), (1e-4, "1e-4")]
 FLOOR = 1e-12
 
 
+def _ref_note(case, mention_moose=False):
+    """Short lines naming the reference a panel is measured against."""
+    R, kind, prov = D.ref_of(case)
+    src = {"external_moose": "Moose", "analytic_exact": "analytic (Airy)"}.get(
+        kind, (D.CASES[case].get("ref") or {}).get("from") or kind)
+    head = "ref = %s %.6g" % (src, R)
+    if prov:
+        head += "  ·  provisional"
+    lines = [head]
+    if mention_moose and kind == "external_moose":
+        lines.append("black curve is Moose itself → self-convergence")
+    return lines
+
+
+def _header(ax, case, fs=10.5):
+    lines = _ref_note(case)
+    ax.set_title(case, fontsize=fs, fontweight="bold", color=INK, loc="left",
+                 pad=7 + 10.0 * len(lines))
+    ax.text(0, 1.015, "\n".join(lines), transform=ax.transAxes, fontsize=7.6,
+            color=MUTED, va="bottom", ha="left", linespacing=1.4)
+
+
 def panel(ax, case):
     xmin, xmax = np.inf, 0.0
     for col in D.COLUMNS:
@@ -80,18 +102,16 @@ def panel(ax, case):
 def figure(fname="conv_cost_staircase.png", ncol=3, dpi=112):
     cases = D.ORDER
     nrow = -(-len(cases) // ncol)
-    fig, axes = plt.subplots(nrow, ncol, figsize=(17.5, 3.4 * nrow))
-    fig.subplots_adjust(left=.055, right=.955, top=.885, bottom=.085,
-                        hspace=.50, wspace=.30)
+    fig, axes = plt.subplots(nrow, ncol, figsize=(17.5, 3.6 * nrow))
+    fig.subplots_adjust(left=.055, right=.955, top=.878, bottom=.085,
+                        hspace=.58, wspace=.30)
     for ax in np.atleast_1d(axes).flat:
         ax.axis("off")
     for i, case in enumerate(cases):
         ax = np.atleast_1d(axes).flat[i]
         ax.axis("on")
         panel(ax, case)
-        _R, _t, prov = D.ref_of(case)
-        ax.set_title(case + ("   (provisional ref)" if prov else ""), fontsize=10.5,
-                     fontweight="bold", color=INK, loc="left", pad=6)
+        _header(ax, case)
         if i >= len(cases) - ncol:
             ax.set_xlabel("wall time of the solve [ms]", fontsize=8.6, color=MUTED)
         if i % ncol == 0:

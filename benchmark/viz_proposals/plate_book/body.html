@@ -6,13 +6,14 @@
       adopted into <code>benchmark/</code> as normal plotters, three parked. Everything is
       rendered from the real repository data — geometry out of <code>structures.py</code>,
       numbers out of <code>night_run_2</code> — so no figure can drift from what it claims
-      to draw.</p>
+      to draw. Rebuilt on the extended sweep (q ≤ 51, 2601 orders) and the scripted Moose
+      run.</p>
     <div class="side">
       <div class="rule-row">
         <span><b>13</b> structures</span>
         <span><b>5</b> code+rule columns</span>
-        <span><b>1&nbsp;345</b> measured solves</span>
-        <span><b>1 … 961</b> retained orders</span>
+        <span><b>2&nbsp;210</b> measured solves</span>
+        <span><b>1 … 2601</b> retained orders</span>
         <span><b>λ = 1</b>, lengths in µm</span>
       </div>
       <p style="margin:0;color:var(--ink-2);font-size:.93rem">
@@ -143,9 +144,11 @@
           which is why the raw figure needs a <code>_tight</code> twin. A symlog axis holds
           both: outside ±1e-4 it is logarithmic and you read the transient and the
           <em>sign</em> of the approach; inside the band it goes linear and the endgame is
-          legible in the same panel. Two variants — against retained orders, with Moose
-          overlaid in black, and against wall time, where the external reference cannot appear
-          because it carries no timings. The summary bar strip from the first draft is gone.</p>
+          legible in the same panel. Two variants — against retained orders and against wall
+          time — and Moose is now on <em>both</em>, since the scripted run records a
+          <code>t_solve</code> per point. Where a case is judged against Moose its black curve
+          is self-convergence, which the panel says; on D1 and D2 it is a genuine third-code
+          accuracy curve.</p>
         <p style="margin-top:.5em"><code>benchmark/plot_deviation.py</code> →
           <code>conv_deviation_orders.png</code>, <code>conv_deviation_time.png</code></p>
       </div>
@@ -158,6 +161,7 @@
       <div class="spec good"><div class="k">Reads</div><div class="v">One figure replaces two, and the sign is back — Laurent visibly crawls in from above rather than just “being wrong”.</div></div>
       <div class="spec cost"><div class="k">Costs</div><div class="v">A symlog axis needs its threshold explained once. After that it is the axis this data always wanted.</div></div>
       <div class="spec"><div class="k">Where</div><div class="v">Alongside the Moose comparison; the legacy <code>moose_compare_raw</code> and <code>_tight</code> are still generated until you say otherwise.</div></div>
+      <div class="spec cost"><div class="k">Watch</div><div class="v">On group C and D2 the new Moose values sit ~1e-2 away from where the faithful rules converge. That is the data, not the axis.</div></div>
     </div>
   </article>
 
@@ -198,7 +202,7 @@
     <div class="eyebrow">Part X · one-off</div>
     <h2>The explorer</h2>
     <p class="lede">The same night-run data with the axis as a control — switch what y means
-      and what x means and watch the same curves re-tell the story. 1&nbsp;345 solves are
+      and what x means and watch the same curves re-tell the story. 2&nbsp;210 solves are
       embedded in this page. By decision this stays a review tool: no HTML export is wired
       into the shipped plotters.</p>
   </div>
@@ -253,6 +257,12 @@
       <li><b>S1 needs its rework.</b> The code is intact and runs; the open item is making the
         dimensions readable at sheet scale — probably a dimension table beside each panel
         rather than arrows inside it.</li>
+      <li><b>The baked references are older than the Moose file.</b> <code>conv_results.json</code>
+        stores the reference each case was judged against at run time, and
+        <code>moose_reference.json</code> has moved since — B2, B3, C1 and C1b by up to 8e-4,
+        which is well above the 1e-4 tolerance. These figures re-read the live Moose value for
+        any case already judged against Moose; <code>plot_conv.py</code> still uses the baked
+        one, so the two sets disagree on those four until the sweep is re-run.</li>
     </ul>
   </div>
 </section>
