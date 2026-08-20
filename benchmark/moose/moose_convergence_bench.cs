@@ -58,20 +58,16 @@
 //   than in grcwa, which is irrelevant at normal incidence (a lateral shift of
 //   the whole grating cannot change the diffraction efficiencies).
 //
-// CIRCULAR ATOM (case D2).  The third argument of Atom(posX, posY, r, mat) is
-//   the RADIUS, relative to the period -- the help is right about this and the
-//   shipped unit test is misleading.  unit_tests_structures.cs
-//   (TestAtom.TestCircular) asserts for Atom(0.2, 0.3, 0.2, mat):
-//       GetStartX() == 0.1, GetStopX() == 0.3, GetWidthX() == 0.2
-//   i.e. start = pos - arg/2, which reads like a diameter -- but those getters
-//   describe a bounding box that does NOT agree with what the solver
-//   rasterizes.  Passing 0.60 for D2's radius 0.30 produced a circle of radius
-//   0.60*period, which overfills the unit cell (95% Si, only the corners left
-//   as air) and collapsed R from 0.95 to 0.027.  Cross-checked against grcwa:
-//   an overfilled r=0.60 circle gives R ~ 0.024 and converges toward Moose's
-//   0.0267, while every other reading (diameter 0.6, square, uniform film) is
-//   off by orders of magnitude.  So the radius goes in unscaled.
-//   CIRCLE_ARG_IS_RADIUS = false restores the old, wrong reading.
+// CIRCULAR ATOM (case D2) -- HISTORICAL, no longer applicable.  D2 used to be
+//   built from an Atom(posX, posY, r, mat), whose third argument turned out to
+//   be the RADIUS relative to the period, not the diameter the shipped unit
+//   test (TestAtom.TestCircular) misleadingly suggested -- passing the wrong
+//   one overfilled the unit cell and collapsed R from 0.95 to 0.027, caught by
+//   cross-checking against grcwa.  D2 (like every other 2D case) is now built
+//   from an explicit CaModel grid instead (see CAMODEL GEOMETRY below), which
+//   sidesteps Atom's constructor semantics entirely -- this note is kept only
+//   because the debugging story is worth not repeating with the next Atom
+//   argument that turns out to mean something other than its name suggests.
 //
 // EFFICIENCIES ARE IN PERCENT.  GetEfficiencyForGivenOrder and GetAbsorption
 //   return percent, not fractions -- undocumented, and R + T + A = 100 is how
@@ -89,30 +85,55 @@
 //   the CSV, and a row where none of them conserves energy is marked "energy"
 //   rather than "ok" so it cannot be merged as if it were sound.
 //
-// FFT REFINEMENT.  Rcwa's rRefinementFactorEpsFT multiplies the *order count*,
-//   so the absolute sampling of the unit cell grows with m and the permittivity
-//   is resolved differently at every point of a convergence sweep.  grcwa
-//   rasterizes on a fixed 256x256 grid instead, and FFT_MODE = 1 was written to
-//   reproduce that by choosing the refinement per run.
+// CAMODEL GEOMETRY.  Every 2D layer (C1, C1b, C2, D2) is now built from an
+//   explicit CaModel -- Layer(double thickness, CaModel epsilonDistribution)
+//   -- instead of an Atom.  The mask is rendered at NX_2D = 260 (see below),
+//   cell-centred, "<=" -- bit for bit the same rule benchmark/structures.py's
+//   layer_mask() uses by default and moose_raster_probe.cs's CellInside
+//   verified against it: KEEP THE THREE IN STEP if any of them changes.
 //
-//   THAT DOES NOT WORK, and the numbers below say so.  Moose clamps the
-//   refinement to [30, 100]: the RCWA dialog refuses anything outside that, and
-//   passing 13 from this script gives a result bit-identical to passing 30
-//   (C1_Si_pillars at m = 10, nominal geometry: 0.398784 either way, while 50
-//   gives 0.397764 and 100 gives 0.397322 -- so the value does matter and 13
-//   was silently raised).  Since ceil(256/q) is 13 at q = 21 and 5 at q = 61,
-//   EVERY 2D point of a sweep runs at refinement 30, and the absolute grid grows
-//   with the order after all: 30*21 = 630 samples at q = 21, 30*61 = 1830 at
-//   q = 61.  FFT_MODE = 1 and FFT_MODE = 0 with FFT_REFINEMENT = 30 are the same
-//   run on this build.
+//   This closes what was the WHOLE 2D disagreement with grcwa/Ikarus:
+//   moose_raster_probe.cs found Moose's own Atom rasterizer is one cell too
+//   wide per axis on EVERY grid, aligned or not (a fencepost bug, not a
+//   rounding one -- see RASTERIZATION.md Sec.9); CaModel sidesteps it
+//   entirely by handing Moose the exact pixels instead of asking it to
+//   rasterize the parameters itself.  On the rect cases (C1/C1b/C2) that mask
+//   is EXACT -- NX_2D = 260 is a multiple of 20, which is exactly divisible
+//   enough for C1 (w=0.6), C1b (w=0.4) and C2 (w=0.5) all at once, so channel
+//   1 (shape error) is zero for those three. D2 (a circle) has no exact grid
+//   at any resolution -- pi is irrational -- so it keeps a small residual
+//   from that alone, same as the python side.
 //
-//   It is not a geometry error -- 0.6 * 30 * q is an integer for every q, so the
-//   pillar is rendered exactly -- but it does leave a residual that shrinks like
-//   1/refinement.  Extrapolating the three points above gives R -> ~0.39688,
-//   against 0.396804 (q = 31) and 0.396956 (q = 41) from grcwa and Ikarus on the
-//   same nominal geometry.  So refinement 30 costs ~0.0018 on C1, and the
-//   remaining Moose-to-python difference after the geometry is fixed is this,
-//   not physics.
+// FFT REFINEMENT -- what is left after the geometry fix, and it is NOT what
+//   this script used to think it was.  rRefinementFactorEpsFT still resamples
+//   an EXPLICIT CaModel grid (P1 confirmed this directly: 8.5e-5 to 4.5e-4
+//   between refinement 40 and 100 on an exact mask), through a mechanism that
+//   is NOT simple shape/pixel-count resampling -- the old "grcwa uses a fixed
+//   256x256 grid, so target that" reasoning (FFT_MODE = 1 below, now removed)
+//   was wrong on its own terms even before CaModel existed: Moose clamps
+//   refinement to [30, 100], the old target-256 formula always clamped to 30
+//   regardless of q, and a follow-up self-test (moose_camodel_selftest.cs)
+//   found the SAME (case, order, refinement) reproducibly gives a different
+//   R on two different machines/builds at refinement 40 but identical R at
+//   refinement 100 -- so 100, the maximum Moose accepts, is both the least
+//   refinement-dependent point measured and the only one available higher.
+//
+//   FFT_REFINEMENT_2D below is fixed at 100 for every 2D point, full stop --
+//   there is nothing left to "target" once the geometry is exact.  A real,
+//   currently unexplained residual remains even there (~4.5e-4 measured on
+//   C1 at m = 10 against ikarus[li], cross-machine-verified) -- see
+//   RASTERIZATION.md Sec.9 for the full account and what is still open.  1D
+//   cases are unaffected by any of this: Layer(thickness, hi, dutyCycle, lo)
+//   takes the fill fraction directly, no discretized grid and no refinement
+//   dependence has ever been observed there (5-6 digit agreement with
+//   grcwa/Ikarus since before this investigation started).
+//
+// RESUME WARNING.  Every 2D row this script wrote before this CaModel switch
+//   used the Atom path and its +1-cell shape error -- those rows are WRONG,
+//   not just old.  RESUME's dedup key is (case, m) alone, so resuming an old
+//   CSV will SILENTLY KEEP the stale Atom-based 2D rows instead of
+//   recomputing them.  Start a fresh OUTPUT_DIR (or delete the old CSV) the
+//   first time you run this version -- do not resume across the switch.
 // ---------------------------------------------------------------------------
 
 using System;
@@ -234,17 +255,12 @@ public class MooseScript
     // ~7400 x 7400 eigenproblem -- that one is hours, not minutes.
     static double MAX_SECONDS_PER_SOLVE = 600.0;
 
-    // FFT sampling of the unit cell (2D only, see the header note, which now
-    // carries the measurement).
-    //   0 = fixed refinement factor FFT_REFINEMENT
-    //   1 = pick the refinement per run so the absolute grid stays about
-    //       FFT_TARGET_SAMPLES -- the intent was to match grcwa's fixed
-    //       NX_2D = 256, but Moose's own clamp defeats it: ceil(256/q) is
-    //       always below the floor of 30, so every 2D point lands on 30 and
-    //       mode 1 is identical to mode 0 with FFT_REFINEMENT = 30.
-    static int    FFT_MODE            = 1;
-    const  int    FFT_REFINEMENT      = 5;
-    const  int    FFT_TARGET_SAMPLES  = 256;
+    // FFT refinement for 2D points, see "FFT REFINEMENT" in the header.  Fixed
+    // at Moose's own maximum -- there is nothing left to "target" once the
+    // CaModel geometry is exact; a real, currently unexplained residual
+    // remains at 100 regardless (RASTERIZATION.md Sec.9).  1D/0D points do not
+    // use this at all (see RefinementFor).
+    const  int    FFT_REFINEMENT_2D   = 100;
     // Moose's real range, measured in the RCWA dialog: it accepts nothing below
     // 30 or above 100.  These used to say 2 and 200, which let this script hand
     // over values Moose silently replaced -- the CSV then recorded a refinement
@@ -252,11 +268,10 @@ public class MooseScript
     const  int    FFT_REFINEMENT_MIN  = 30;
     const  int    FFT_REFINEMENT_MAX  = 100;
 
-    // See the header note on the circular atom constructor: Moose's solver
-    // reads the third argument of Atom(x, y, r, mat) as a RADIUS relative to
-    // the period.  Set false only to reproduce the old (wrong) diameter
-    // reading.
-    static bool   CIRCLE_ARG_IS_RADIUS = true;
+    // The 2D CaModel grid, see "CAMODEL GEOMETRY" in the header.  Must match
+    // benchmark/structures.py's NX_2D exactly -- that is the whole point of
+    // building an explicit grid instead of an Atom.
+    const  int    NX_2D = 260;
 
     // Show a side view of every structure before solving (visual check that
     // the geometry really is what you meant).  Costs a few clicks, saves hours.
@@ -449,6 +464,35 @@ public class MooseScript
     // =======================================================================
     //  geometry
     // =======================================================================
+    // Cell-centre test for the CaModel mask: is sample (i,j) of an n x n grid
+    // inside c's inclusion?  BIT-FOR-BIT the rule benchmark/structures.py's
+    // layer_mask() uses by default (rect: cell centres, "<="; circle: cell
+    // centres, distance test) and moose_raster_probe.cs's CellInside already
+    // verified matches it -- keep all three in step if this changes.
+    static bool CellInside(BenchCase c, int n, int i, int j)
+    {
+        double x = (i + 0.5) / n - 0.5;
+        double y = (j + 0.5) / n - 0.5;
+        if (c.Shape == "circle")
+            return x * x + y * y <= c.Radius * c.Radius + 1.0e-12;
+        double wx = c.Ax / c.Period, wy = c.Ay / c.Period;
+        return Math.Abs(x) <= wx / 2.0 + 1.0e-12 && Math.Abs(y) <= wy / 2.0 + 1.0e-12;
+    }
+
+    // The explicit permittivity grid for c's patterned layer, at n x n --
+    // Hi() is the inclusion (pillar, or the hole's own material for C2),
+    // Lo() the background, matching structures.py's pillar/bg convention.
+    static CaModel BuildMask(BenchCase c, int n)
+    {
+        Complex hi = c.Hi().GetEpsilon(WAVELENGTH);
+        Complex lo = c.Lo().GetEpsilon(WAVELENGTH);
+        CaModel model = new CaModel(n, n);
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                model.SetValue(i, j, CellInside(c, n, i, j) ? hi : lo);
+        return model;
+    }
+
     static GratingStructure BuildGrating(BenchCase c)
     {
         Materials superstrate = new Materials(SUPER_N, 0.0);
@@ -466,29 +510,20 @@ public class MooseScript
         else if (c.Dim == 1)
         {
             // Layer(thickness, barMaterial, dutyCycle, trenchMaterial):
-            // dutyCycle is the remaining fraction of barMaterial == ff.
+            // dutyCycle is the remaining fraction of barMaterial == ff.  Takes
+            // the fill fraction directly -- no discretized grid, see the
+            // header note on FFT REFINEMENT.
             Layer layer = new Layer(c.Depth, c.Hi(), c.Ff, c.Lo());
             grating.AddLayerOnBottom(layer);
         }
         else
         {
-            // background layer carrying one centred atom
-            Atom[] atoms = new Atom[1];
-            if (c.Shape == "circle")
-            {
-                // see header: the third argument is the radius, relative to
-                // the period, exactly as structures.py defines it
-                double arg = CIRCLE_ARG_IS_RADIUS ? c.Radius : 2.0 * c.Radius;
-                atoms[0] = new Atom(0.5, 0.5, arg, c.Hi());
-            }
-            else
-            {
-                // Atom widths/positions are relative to the period (0..1)
-                atoms[0] = new Atom(0.5, 0.5,
-                                    c.Ax / c.Period, c.Ay / c.Period, c.Hi());
-            }
-            Layer layer = new Layer(c.Depth, c.Lo(), 1, atoms);
-            layer.Declare2D();          // force the 2D treatment of this layer
+            // Explicit CaModel grid -- see "CAMODEL GEOMETRY" in the header.
+            // Replaces the old Atom-based construction, which rasterized one
+            // cell too wide per axis on every grid tested, aligned or not.
+            CaModel mask = BuildMask(c, NX_2D);
+            Layer layer = new Layer(c.Depth, mask);
+            try { layer.Declare2D(); } catch (Exception) { }
             grating.AddLayerOnBottom(layer);
         }
         return grating;
@@ -566,9 +601,11 @@ public class MooseScript
 
     static int RefinementFor(BenchCase c, int m)
     {
-        if (c.Dim != 2 || FFT_MODE == 0) return Clamp(FFT_REFINEMENT);
-        int q = 2 * m + 1;
-        return Clamp((int)Math.Ceiling((double)FFT_TARGET_SAMPLES / (double)q));
+        // 1D/0D: the duty-cycle Layer constructor takes the fill fraction
+        // directly, no discretized grid -- refinement has never been observed
+        // to matter there.  2D: fixed at the maximum, see FFT_REFINEMENT_2D.
+        if (c.Dim != 2) return Clamp(FFT_REFINEMENT_MIN);
+        return Clamp(FFT_REFINEMENT_2D);
     }
 
     // Process.WorkingSet64 comes back as 0 on some Mono builds (it did on the
@@ -1133,23 +1170,19 @@ public class MooseScript
                   + " deg, conical " + F(CONICAL, 2) + " deg");
         Io.output(" sweep 1D (m) : " + Join(SWEEP_1D));
         Io.output(" sweep 2D (m) : " + Join(SWEEP_2D));
-        // Say what the run will actually do, not what the mode was meant to do:
-        // Moose's floor of FFT_REFINEMENT_MIN swallows ceil(256/q) for every
-        // q > 8, so mode 1 degenerates into a fixed refinement there and the
-        // absolute grid grows with the order after all.
-        Io.output(" fft mode     : " + (FFT_MODE == 1
-                  ? "target ~" + FFT_TARGET_SAMPLES.ToString(INV) + " samples"
-                  : "fixed " + FFT_REFINEMENT.ToString(INV))
-                  + ",  Moose accepts [" + FFT_REFINEMENT_MIN.ToString(INV) + ", "
-                  + FFT_REFINEMENT_MAX.ToString(INV) + "]"
-                  + (FFT_MODE == 1
-                     ? "  ->  refinement " + Clamp((int)Math.Ceiling(
-                           (double)FFT_TARGET_SAMPLES / 21.0)).ToString(INV)
-                       + " at q = 21, "
-                       + Clamp((int)Math.Ceiling(
-                           (double)FFT_TARGET_SAMPLES / 61.0)).ToString(INV)
-                       + " at q = 61 (absolute grid grows with q)"
-                     : ""));
+        Io.output(" 2D geometry  : explicit CaModel, " + NX_2D.ToString(INV) + "x"
+                  + NX_2D.ToString(INV) + " cell-centred (exact for C1/C1b/C2; "
+                  + "D2's circle has no exact grid)");
+        Io.output(" fft refinement: " + FFT_REFINEMENT_2D.ToString(INV)
+                  + " for every 2D point (Moose's own max; a real residual "
+                  + "remains there through a mechanism not yet identified, "
+                  + "see RASTERIZATION.md Sec.9), " + FFT_REFINEMENT_MIN.ToString(INV)
+                  + " for 1D/0D (no discretized grid, refinement does not apply)");
+        if (RESUME)
+            Io.output(" !! RESUME=true: a CSV from before the CaModel switch has WRONG "
+                      + "2D rows (Atom's +1-cell shape error) that RESUME will silently "
+                      + "keep -- start a fresh OUTPUT_DIR if this is the first run since "
+                      + "the switch.");
         Io.output(" cpu cores    : " + Environment.ProcessorCount.ToString(INV)
                   + ",  parallel solves: " + WorkerCount().ToString(INV)
                   + (WorkerCount() > 1 ? "  (per-solve times are noisier)" : "")

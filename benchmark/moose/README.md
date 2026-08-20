@@ -44,10 +44,10 @@ The resolved path is printed in the header of the console output.
 | `PARALLEL_SELFTEST` | prove parallel == sequential on your build, then stop |
 | `ONLY_CASES`, `SKIP_CASES` | comma separated case names *or* group letters (`"B"`, `"C1_Si_pillars,C2_Au_holes"`) |
 | `MAX_SECONDS_PER_SOLVE` | after a solve exceeds this, the higher orders **of that case** are skipped; the rest of the battery keeps going. `0` = no limit |
-| `FFT_MODE` | `1` = keep the absolute unit-cell sampling at `FFT_TARGET_SAMPLES` (what grcwa does), `0` = fixed `FFT_REFINEMENT` |
+| `FFT_REFINEMENT_2D` | fixed refinement for every 2D `CaModel` solve, `100` = Moose's own cap (see the FFT refinement note below) |
+| `NX_2D` | resolution of the `CaModel` mask every 2D case is rasterized onto; must match `structures.NX_2D` exactly |
 | `RESUME` | skip `(case, order)` pairs already in the CSV |
 | `SHOW_STRUCTURES`, `DRY_RUN` | visual check of the geometry, see above |
-| `CIRCLE_ARG_IS_RADIUS` | see the circular-atom note below |
 
 The sweep runs **cheap orders first, across all cases**, before it moves to the
 next order. Aborting half way therefore leaves a complete low-order picture of
@@ -171,15 +171,30 @@ mature RCWA implementation should do:
 | `C2_Au_holes` | 0.67136 | 0.69010 | 0.67233 | 0.67995 | 0.80877 |
 | `D2_ikarus_cylinder_TE` | 0.90485 | 0.94258 | 0.91802 | 0.94214 | 0.95585 |
 
-Do not read those last two rows as converged: `C1b` and `D2` are still rising at
-`(10,10)` (`nG = 441`), the highest order that run reached. Comparing Moose
-against grcwa with Laurent's rule at low order is not a fair yardstick either —
-that column is the slowest to converge on exactly these cases.
+**This table predates the `CaModel` switch and is stale.** It was produced by
+the old `Atom`-based construction, which `moose_raster_probe.cs` later showed
+rasterizes every 2D case one cell too wide per axis — precisely the bug the
+`CaModel` rewrite exists to remove (see `CAMODEL GEOMETRY` in the script
+header and `RASTERIZATION.md` Sec. 9). Keep it only as a record of where the
+Atom path used to land; do not compare new `CaModel`-based numbers against it
+as if it were a target. A fresh table belongs here once the CaModel sweep has
+actually been run — nobody has run it yet as of this rewrite, only dry-run
+compile-checked it against the stub API.
 
-The small offsets against the manual entries (`C1_Si_pillars`: `0.39871`
-against `0.39748`) are the FFT-refinement difference described below: the manual
-runs used Moose's default refinement, this script holds the absolute unit-cell
-grid constant across the sweep.
+Do not read those last two rows as converged even on their own terms: `C1b`
+and `D2` are still rising at `(10,10)` (`nG = 441`), the highest order that
+old run reached. Comparing Moose against grcwa with Laurent's rule at low
+order is not a fair yardstick either — that column is the slowest to converge
+on exactly these cases.
+
+The small offsets this table showed against the manual UI entries
+(`C1_Si_pillars`: `0.39871` against `0.39748`) were, on that old Atom-based
+path, attributed to a difference in FFT-refinement handling between the
+manual runs (Moose's own default) and the script (which tried to hold an
+absolute unit-cell grid constant). That specific explanation no longer applies
+now that 2D geometry comes from an explicit `CaModel` mask instead of `Atom`
+parameters — see the FFT refinement note below for the current picture,
+including the residual that remains even with an exact mask.
 
 ## Checking a script without Moose
 
@@ -234,10 +249,11 @@ made of the `hi` material. The bar sits at a different position inside the cell
 than in grcwa, which cannot matter at normal incidence: shifting the whole
 grating sideways does not change diffraction efficiencies.
 
-**Circular atom (case `D2`).** The third argument of
-`Atom(posX, posY, r, material)` is the **radius**, relative to the period. The
-help says so; the shipped unit test misleads. `unit_tests_structures.cs`
-(`TestAtom.TestCircular`) asserts for `Atom(0.2, 0.3, 0.2, mat)`:
+**Circular atom (case `D2`) — historical, no longer applicable.** `D2` used to
+be built from `Atom(posX, posY, r, material)`, whose third argument turned out
+to be the **radius** relative to the period, not the diameter the shipped unit
+test misleadingly suggested. `unit_tests_structures.cs` (`TestAtom.TestCircular`)
+asserts for `Atom(0.2, 0.3, 0.2, mat)`:
 
 ```
 GetStartX() == 0.1     GetStopX() == 0.3     GetWidthX() == 0.2
@@ -251,13 +267,21 @@ silicon, only the corners left as air) and collapsed `R` from `0.95` to
 `0.027`. Cross-checked against grcwa, an overfilled `r = 0.60` circle gives
 `R ~ 0.024` converging toward Moose's `0.0267`, while every other reading
 (diameter `0.6`, square, uniform film) is off by orders of magnitude. So the
-radius goes in unscaled. `CIRCLE_ARG_IS_RADIUS = false` restores the old, wrong
-reading.
+radius goes in unscaled.
 
-Note that this is invisible in the `SHOW_STRUCTURES` dry run:
-`ConvertToCaModel` draws a **side view**, and a side view cannot tell a pillar
-of the right diameter from one of the wrong diameter once it spans most of the
-cell. Judge 2D geometry by the numbers, not the picture.
+That whole ambiguity is now moot: `D2`, like every other 2D case, is built
+from an explicit `CaModel` grid (see the FFT refinement note below and the
+`CAMODEL GEOMETRY` header comment in the script) rather than an `Atom`, which
+sidesteps `Atom`'s constructor semantics entirely. This note is kept only
+because the debugging story is worth not repeating with the next `Atom`
+argument that turns out to mean something other than its name suggests — it
+no longer describes anything `moose_convergence_bench.cs` does.
+
+Note that judging geometry from the `SHOW_STRUCTURES` dry run's side view has
+the same limits it always did: `ConvertToCaModel` draws a **side view**, and a
+side view cannot tell a pillar of the right diameter from one of the wrong
+diameter once it spans most of the cell. Judge 2D geometry by the numbers, not
+the picture.
 
 **Efficiencies come back in percent.** `GetEfficiencyForGivenOrder` and
 `GetAbsorption` return percent, not fractions — undocumented, and
@@ -277,31 +301,47 @@ reading that conserves energy is kept; all three are written to the CSV, and a
 row where none of them conserves energy gets status `energy` instead of `ok`, so
 it can never be merged as if it were sound.
 
-**FFT refinement.** `Rcwa`'s `rRefinementFactorEpsFT` multiplies the *order
-count*, so the absolute sampling of the unit cell grows with `m` and the
-permittivity is resolved differently at every point of a convergence sweep.
-grcwa rasterizes on a fixed `256 x 256` grid instead, and `FFT_MODE = 1` was
-written to reproduce that by choosing the refinement per run.
+**FFT refinement — superseded by the CaModel switch, read the current story
+below.** The paragraphs originally here described `FFT_MODE`, an attempt to
+target grcwa's fixed `256 x 256` sampling by choosing `rRefinementFactorEpsFT`
+per run, and the discovery that it never worked because Moose clamps
+refinement to **[30, 100]** and the target formula always landed under the
+floor — so every 2D point in the old, Atom-based sweep silently ran at
+refinement 30 regardless of what `FFT_MODE` requested. `FFT_MODE`,
+`FFT_TARGET_SAMPLES` and the old `FFT_REFINEMENT` constant are gone from the
+script; see `moose/README.md`'s git history or `RASTERIZATION.md` Sec. 9 if
+that old reasoning is needed for context.
 
-**It does not work, and the sweep on record never did what that says.** Moose
-clamps the refinement to **[30, 100]**: the RCWA dialog refuses anything outside
-that range, and the API substitutes silently — passing `13` returns a result
-bit-identical to passing `30`, while `50` and `100` return different numbers, so
-the value does matter and the `13` was raised. `ceil(256/q)` is 13 at `q = 21`
-and 5 at `q = 61`, both under the floor, so **every 2D point ran at refinement
-30** and the absolute grid grew with the order after all (630 samples at
-`q = 21`, 1830 at `q = 61`). `FFT_MODE = 1` and `FFT_MODE = 0` with
-`FFT_REFINEMENT = 30` are the same run on this build. The constants now carry
-Moose's real range so the `fft_refinement` column records what was used rather
-than what was requested.
+**What replaced it.** Every 2D layer is now built from an explicit `CaModel`
+mask at `NX_2D = 260` (see `structures.py` and the `CAMODEL GEOMETRY` header
+comment in the script) instead of an `Atom`, which closes the actual 2D
+disagreement with grcwa/Ikarus: `moose_raster_probe.cs` found Moose's own
+`Atom` rasterizer is one cell too wide per axis on *every* grid, aligned or
+not — a fencepost bug, not a rounding one. `NX_2D = 260` is a multiple of 20,
+which is exactly divisible enough for `C1` (w=0.6), `C1b` (w=0.4) and `C2`
+(w=0.5) all at once, so the mask has zero shape error on all three rect cases;
+`D2` (a circle) has no exact grid at any resolution, so it keeps a small
+residual from that alone, same as the python side.
 
-That costs accuracy, though not geometry — `0.6 * 30 * q` is an integer for
-every `q`, so the pillar is rendered exactly. On `C1` at `m = 10` with the
-nominal geometry, refinement `30 → 0.398784`, `50 → 0.397764`, `100 → 0.397322`,
-extrapolating as `1/refinement` to `0.39688` against grcwa's and Ikarus's
-`0.396804` / `0.396956` on the same rectangle. Refinement 30 is worth ~0.0018 on
-that case by itself, and it is what is left of the Moose-to-python difference
-once the geometry is matched.
+`rRefinementFactorEpsFT` still resamples this *explicit* grid, through a
+mechanism that is not simple shape/pixel-count resampling — `moose_raster_probe.cs`'s
+P1 measured 8.5e-5 to 4.5e-4 difference between refinement 40 and 100 on an
+otherwise-exact mask. `FFT_REFINEMENT_2D` is therefore fixed at `100` — Moose's
+own cap — for every 2D point, full stop; there is nothing left to "target"
+once the geometry itself is exact. A follow-up determinism check
+(`moose_camodel_selftest.cs`) found the *same* `(case, order, refinement)`
+reproducibly gives a different `R` on two different machines/builds at
+refinement 40, but identical `R` at refinement 100 — another reason 100 is the
+refinement to standardize on, not just the most accurate one measured. A real,
+currently unexplained residual remains even there (~4.5e-4 measured on `C1` at
+`m = 10` against `ikarus[li]`, cross-machine-verified) — see
+`RASTERIZATION.md` Sec. 9 for the full account, including a retracted earlier
+claim of 7e-7 agreement, and what is still open.
+
+1D cases are unaffected by any of this: `Layer(thickness, hi, dutyCycle, lo)`
+takes the fill fraction directly, with no discretized grid and no refinement
+dependence ever observed there (5-6 digit agreement with grcwa/Ikarus since
+before this investigation started).
 
 **Group A 0D cases.** `A1_slab_air` / `A1b_slab_glass` are plain film stacks
 with no lateral structure. They still need *a* period, which is set to `0.5 µm`:
