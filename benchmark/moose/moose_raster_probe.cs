@@ -101,6 +101,33 @@
 // Runtime: P1 is ~60 solves at nG = 441, P2 is 24 solves at nG = 441...961,
 // P3 does not solve at all.  Minutes, not hours, on a pool.
 // ---------------------------------------------------------------------------
+//
+// P4  ADDED AFTER THE FIRST RUN.  P2 (the atom-path refinement fit) came back
+//     inconclusive: R(refinement) is NON-MONOTONE in three of four cases, which
+//     no single power law can produce.  P3 explains why -- Moose's Atom
+//     rasterizer is one cell too wide on EVERY grid tested, aligned or not (see
+//     RASTERIZATION.md Sec.9: e.g. N=840 renders 505 cells where the exact
+//     width is 504, on every one of the 8 combinations checked, no exception).
+//     P2 was therefore fitting a 1/N shape error and a 1/N^2 sampling error at
+//     once.
+//
+//     P4 reruns the refinement sweep on the MASK path (P1's CaModel
+//     construction, already confirmed exact and grid-resolution-independent),
+//     in two variants:
+//       "fixed"    the mask is rendered once per case at a FIXED resolution
+//                  (c.CaRes[0]) and only the SOLVE's refinement changes -- a
+//                  clean test of whether refinement resamples an explicit grid
+//                  that never changes size.
+//       "matched"  the mask is rendered AT N = refinement * (2m+1), i.e. the
+//                  solve's own internal grid size -- so there is nothing left
+//                  to resample.  If R is flat across refinement here, Moose's
+//                  refinement dependence is entirely a resampling artifact of a
+//                  MISMATCHED grid size, not a property of the solve itself --
+//                  which would mean the CaModel path has NO remaining grid
+//                  dependence at all, for axis-aligned geometry.
+//
+//     Runtime: up to 48 more solves, similar order of magnitude to P1+P2.
+// ---------------------------------------------------------------------------
 
 using System;
 using System.IO;
@@ -182,6 +209,7 @@ public class MooseScript
     static bool RUN_CAMODEL    = true;    // P1
     static bool RUN_REFINEMENT = true;    // P2
     static bool RUN_ALIGNMENT  = true;    // P3  (renders only, no solving)
+    static bool RUN_MASK_REFINEMENT = true;  // P4  (added after the first run)
 
     // Max orders m for the solving probes (q = 2m+1 retained per axis).
     // m = 10 -> q = 21 -> nG = 441 is what the python tables in
@@ -1050,6 +1078,44 @@ public class MooseScript
         // ---- P3 -------------------------------------------------------------
         if (RUN_ALIGNMENT) Alignment(cases, csv, dir);
 
+        // ---- P4 -------------------------------------------------------------
+        if (RUN_MASK_REFINEMENT)
+        {
+            Io.output("");
+            Io.output("=================================================================");
+            Io.output(" P4 -- refinement sweep on the MASK path (exact geometry)");
+            Io.output("      'fixed'   = mask rendered once at ca_res, refinement varies");
+            Io.output("      'matched' = mask rendered AT refinement*(2m+1) -- nothing to");
+            Io.output("                  resample, if this is flat the grid dependence is");
+            Io.output("                  purely a mismatched-resolution artifact");
+            Io.output("=================================================================");
+            for (int k = 0; k < ORDERS.Length; k++)
+                for (int i = 0; i < cases.Count; i++)
+                {
+                    ProbeCase c = cases[i];
+                    if (c.Name == "AN_aniso_control" || c.Shape == "circle") continue;
+                    int m = ORDERS[k];
+                    int res0 = c.CaRes[0];
+                    for (int j = 0; j < REFINEMENTS.Length; j++)
+                    {
+                        int refi = REFINEMENTS[j];
+                        Enqueue(c, m, refi, "mask-refinement", "mask-eps", res0,
+                                c.WNom, c.HNom, "fixed");
+                        int matched = refi * (2 * m + 1);
+                        if (matched > RENDER_MAX_N)
+                        {
+                            Io.output(" " + c.Name + " m=" + m.ToString(INV) + " fft="
+                                     + refi.ToString(INV) + " matched N=" + matched.ToString(INV)
+                                     + " skipped (over RENDER_MAX_N)");
+                            continue;
+                        }
+                        Enqueue(c, m, refi, "mask-refinement", "mask-eps", matched,
+                                c.WNom, c.HNom, "matched");
+                    }
+                }
+            RunQueue();
+        }
+
         // ---- verdicts -------------------------------------------------------
         if (RUN_CAMODEL)
         {
@@ -1190,6 +1256,76 @@ public class MooseScript
                         + Pad(ok1 ? F(a1, 9) : "-", 14) + Pad(ok1 ? E(e1) : "-", 11)
                         + verdict);
                 }
+        }
+
+        if (RUN_MASK_REFINEMENT)
+        {
+            Io.output("");
+            Io.output("=================================================================");
+            Io.output(" P4 VERDICT -- same fit, MASK path, exact geometry");
+            Io.output(" 'fixed': one CaModel per case, only the solve's refinement varies.");
+            Io.output(" 'matched': the CaModel is rebuilt at N = refinement*(2m+1) every");
+            Io.output(" time, so there is nothing left for refinement to resample -- flat");
+            Io.output(" here (spread ~ 0) would mean the CaModel path has no remaining grid");
+            Io.output(" dependence at all on axis-aligned geometry.");
+            Io.output("=================================================================");
+            string[] tags = new string[] { "fixed", "matched" };
+            for (int ti = 0; ti < tags.Length; ti++)
+            {
+                Io.output("");
+                Io.output(" -- " + tags[ti] + " --");
+                Io.output(" " + Pad("case", 26) + Pad("m", 5) + Pad("R_inf(p=2)", 14)
+                          + Pad("resid", 11) + Pad("R_inf(p=1)", 14) + Pad("resid", 11)
+                          + "verdict");
+                for (int k = 0; k < ORDERS.Length; k++)
+                    for (int i = 0; i < cases.Count; i++)
+                    {
+                        ProbeCase c = cases[i];
+                        if (c.Name == "AN_aniso_control" || c.Shape == "circle") continue;
+                        int m = ORDERS[k];
+                        List<double> rs = new List<double>();
+                        List<double> Rs = new List<double>();
+                        for (int j = 0; j < REFINEMENTS.Length; j++)
+                        {
+                            int refi = REFINEMENTS[j];
+                            int res = (tags[ti] == "fixed") ? c.CaRes[0] : refi * (2 * m + 1);
+                            ProbeResult r = Find(c.Name, "mask-eps", tags[ti], res, m, refi);
+                            if (r == null || r.Status == "failed") continue;
+                            rs.Add((double)refi); Rs.Add(r.R);
+                        }
+                        double a2, b2, e2, a1, b1, e1;
+                        bool ok2 = FitPower(rs, Rs, 2.0, out a2, out b2, out e2);
+                        bool ok1 = FitPower(rs, Rs, 1.0, out a1, out b1, out e1);
+                        double spread = 0.0;
+                        for (int j = 0; j < Rs.Count; j++)
+                            for (int L = 0; L < Rs.Count; L++)
+                                if (Math.Abs(Rs[j] - Rs[L]) > spread)
+                                    spread = Math.Abs(Rs[j] - Rs[L]);
+                        string verdict;
+                        if (rs.Count < 3)
+                            verdict = "too few points (" + rs.Count.ToString(INV) + ")";
+                        else if (spread < 1.0e-9)
+                            verdict = "FLAT -- no remaining grid dependence, spread "
+                                    + E(spread);
+                        else if (!ok2 || !ok1)
+                            verdict = "fit failed, spread " + E(spread);
+                        else if (e2 < e1)
+                        {
+                            double gain = e1 / Math.Max(e2, 1.0e-15);
+                            verdict = "p = 2 fits better (by "
+                                    + (gain > 1000.0 ? ">1000" : F(gain, 1)) + "x), spread "
+                                    + E(spread);
+                        }
+                        else if (e1 < e2)
+                            verdict = "p = 1 fits better, spread " + E(spread);
+                        else
+                            verdict = "tie -- inconclusive, spread " + E(spread);
+                        Io.output(" " + Pad(c.Name, 26) + Pad(m.ToString(INV), 5)
+                            + Pad(ok2 ? F(a2, 9) : "-", 14) + Pad(ok2 ? E(e2) : "-", 11)
+                            + Pad(ok1 ? F(a1, 9) : "-", 14) + Pad(ok1 ? E(e1) : "-", 11)
+                            + verdict);
+                    }
+            }
         }
 
         if (csv != null) { try { csv.Close(); } catch (Exception) { } }

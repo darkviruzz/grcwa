@@ -411,6 +411,7 @@ switchable at the top of the file:
 | **P1 — `RUN_CAMODEL`** | does `Layer(double thickness, CaModel epsilonDistribution)` let Moose be handed an explicit permittivity grid? | all three suites solve the **same pixel image**; the geometry drops out of the cross-code comparison entirely, circle included |
 | **P2 — `RUN_REFINEMENT`** | is the refinement residual `1/r²` (the sampling channel) or `1/r`? | a trustworthy `R(∞)`: the two models differ by 3e-4 on `C1`, well above the study's tolerance |
 | **P3 — `RUN_ALIGNMENT`** | is the rectangle rendered exactly on the grid a solve actually uses, `refinement × (2m+1)`? | refinement values at which channel 1 is exactly zero, at every order |
+| **P4 — `RUN_MASK_REFINEMENT`** | added after the first run, see below | whether the CaModel path has *any* remaining refinement dependence at all |
 
 **P1 is the one that matters most, and the one that might simply fail.** The
 `Layer(double, CaModel)` overload is transcribed from `moose.qch` into
@@ -459,6 +460,34 @@ values therefore carry a shape error that `C1`'s do not. P3 does not solve
 anything and takes seconds. It also prints the distinct permittivity values it
 finds, which identifies the value convention (`eps` or `n + ik`) and the sign of
 the loss straight off the rendered grid.
+
+### What the first run found, and P4
+
+The first run answered P1 **yes** — `Layer(double, CaModel)` works, takes `eps`,
+uses the grid it is given, and is free of index-convention bugs. With the same
+pixel image in both codes, Moose and `ikarus[li]` agree to **7×10⁻⁷** on `C1`
+and `C2` — the cross-solver target, reached, on a 2D structure. It also settled
+what Moose's factorization *is*: Li's separable rule, not a normal-vector
+method (Moose sits 7×10⁻⁷ from Li and 2.6×10⁻² from NV on `C2`).
+
+P3 refuted the reasoning that had been used to defend the old refinement fit:
+Moose's rectangle rasterizer is **one cell too wide per axis on every grid
+tested, aligned or not** — `N = 840` renders 505 cells where the exact width is
+504, on all 8 (case, order) combinations checked, no exception. So the old P2
+fit (the Atom path) was mixing a `1/N` shape error with the `1/N²` sampling
+error, came out non-monotone in three of four cases, and its "clean" three-point
+fit on the numbers already on record was fortuitous, not the exact-geometry
+limit.
+
+**P4** reruns the refinement sweep on the MASK path instead — where P1 already
+showed the geometry is exact and resolution-independent — in two variants:
+`fixed` (one CaModel per case, only the refinement varies) and `matched` (the
+CaModel is rebuilt at `N = refinement · (2m+1)` every time, so there is nothing
+left to resample). If `matched` comes back flat, the CaModel path has *no*
+remaining grid dependence at all on axis-aligned geometry, and the study's
+cross-solver contract can just be "hand every suite the same pixel image" with
+no refinement caveat attached. See `RASTERIZATION.md` Sec. 9 for the full
+write-up and the numbers the first run returned.
 
 Output is `moose_raster_probe_<stamp>.csv` plus a log, one row per solve and one
 per rendered grid, and three verdict blocks on the console. On a pool it is

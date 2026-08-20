@@ -559,7 +559,49 @@ plus, possibly, a third effect: an internal FFT grid rounded to a transform-
 friendly size rather than exactly `r·(2m+1)` would wobble like this. Untested.
 
 **P2 has to be re-run on the mask path**, where the shape is exact at every
-refinement and only the sampling channel is left. That is the follow-up: 40 / 60
-/ 80 / 100 on the CaModel path, plus the one experiment that could remove the
-term altogether — handing Moose a mask *at* `N = refinement × (2m+1)`, so there
-is nothing left to resample.
+refinement and only the sampling channel is left. `moose/moose_raster_probe.cs`
+now has this as **P4**: `fixed` (one CaModel per case, only the refinement
+varies) and `matched` (the CaModel rebuilt at `N = refinement × (2m+1)` every
+time, so there is nothing left to resample). A flat `matched` result would mean
+the CaModel path has no remaining grid dependence at all on axis-aligned
+geometry, closing the last open channel-2 question. Not yet run.
+
+### An independent check: the +1-cell bug is specific to the 2D Atom path
+
+A manual UI cross-check (period 0.5, atom-width fraction 0.6, thickness 0.4,
+refinement 30, m = 15, TE) corroborates P3 from a completely different angle.
+`N = 30·(2·15+1) = 930` and `0.6 · 930 = 558` exactly — an aligned grid, so
+there is no rounding ambiguity to begin with.
+
+For the **1D** lamellar grating at this geometry, python at exactly 558/930
+cells gives `T = 64.91491 %`, `R = 35.08494 %`, against the UI's
+`T = 64.91510 %`, `R = 35.0849 %` — agreement to 4 significant figures, with
+**no** +1-cell offset. So whatever internal grid Moose's 1D duty-cycle
+construction uses, it is *not* the +1-cell-wide construction P3 found on the 2D
+Atom path — consistent with the battery's long-standing finding that all 1D
+cases already match Moose to five or six digits.
+
+A second, independent piece of evidence from the same manual check: nudging the
+width from 0.6 to 0.6001 (a 5×10⁻⁵ µm perturbation) moved the UI's `R` by
++0.045 percentage points. The *true* continuum response to that nudge is
+essentially zero — solving the same nudge with the exact (sinc-corrected, no
+grid at all) quadrature gives `R = 35.08489 %` at both 0.6000 and 0.6001,
+identical to 5 digits — while a full one-cell jump on the 930-grid used above
+is +0.462 points, about 10× the observed step. Both facts together (a real jump
+where the continuum predicts none, but roughly a tenth of the 930-grid's own
+pixel size) are consistent with Moose's 1D path being pixelated on some *other*,
+finer internal grid (~10× the 930 estimate) that is unrelated to the
+`refinement × (2m+1)` rule governing the 2D Atom renderer — not with the 1D path
+being exact/analytic, and not with it sharing the 2D path's specific +1-cell
+defect.
+
+A companion **2D** manual reading at the same nominal parameters (`orders
+15,15`, `fft-fac 30`) was inconclusive for a different reason: the reported
+triple did not resolve into a `(T, R)` pair that sums to 1 for this lossless
+stack, and none of the factorization rules this repo can construct (Laurent,
+Pol, Li, NV) land anywhere near the reported R at any order tried. Rather than
+force a reading, this is flagged as open — resolve via the validated
+`moose_raster_probe.cs`/CaModel path (which the P1 table above already checked
+digit-for-digit) rather than by hand-typing into the RCWA dialog, where the
+UI shows only 6 digits and the exact column meaning for a 2D case is easy to
+misread.
