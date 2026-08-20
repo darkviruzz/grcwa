@@ -48,15 +48,26 @@ class MaskFidelityTests(unittest.TestCase):
         self.assertEqual(bad, KNOWN_UNFAITHFUL)
 
     def test_rect_masks_lose_a_pixel_where_documented(self):
-        """The exact pixel counts the README quotes, so they cannot go stale."""
+        """The exact pixel counts the README quotes, on the LEGACY grid this
+        pins for the historical record -- see structures.py's module
+        docstring. The CURRENT default (legacy=False, the module's default
+        since the rasterization fix) renders these exactly instead; that is
+        covered by test_current_default_renders_rects_exactly below."""
         expected = {"C1_Si_pillars": (153, 256),
                     "C1b_Si_pillars_diffract": (103, 256),
                     "C2_Au_holes": (127, 256)}
         for name, (px, n) in expected.items():
-            mask, _ = ST.layer_mask(ST.STRUCT[name])
+            mask, _ = ST.layer_mask(ST.STRUCT[name], legacy=True)
             self.assertEqual(mask.shape, (n, n))
             row = mask[:, n // 2]
             self.assertEqual(int(row.sum()), px, name)
+
+    def test_current_default_renders_rects_exactly(self):
+        """The fix: structures.layer_mask's current default has zero shape
+        error on every axis-aligned rectangle in the battery."""
+        for name in ("C1_Si_pillars", "C1b_Si_pillars_diffract", "C2_Au_holes"):
+            f = fidelity(ST.STRUCT[name], legacy=False)
+            self.assertLess(abs(f["rel"]), 1e-12, name)
 
     def test_circle_mask_is_within_tolerance(self):
         """The circle branch already samples cell centres, so D2 is fine."""

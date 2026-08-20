@@ -1,37 +1,51 @@
-"""How faithfully does the shared mask of :mod:`structures` represent the
-battery's nominal geometry -- and how much of the answer depends on that?
+"""How faithfully did the shared mask of :mod:`structures` represent the
+battery's nominal geometry, before it was fixed -- and how much did the
+answer depend on that?
+
+FIXED, see ``structures.layer_mask``'s current default and
+``RASTERIZATION.md``.  This module now documents the HISTORY: every function
+here defaults to ``legacy=True`` and reproduces the pre-fix numbers exactly,
+on purpose, so the record of what was wrong -- and by how much -- does not
+silently disappear under the reader. Call anything here with ``legacy=False``
+(or ``report(legacy=False)``) to see the current, corrected numbers instead.
+For new work, prefer ``benchmark/rasterization_study.py``, which measures the
+current default and the sampling-channel fix on top of it.
 
 Why this exists
 ---------------
 ``structures.layer_mask`` rasterizes every patterned layer once and hands the
 same integer mask to grcwa and to Ikarus.  That makes the two python columns
-immune to *each other's* pixel-grid artifacts, but it does not make either of
+immune to *each other's* pixel-grid artifacts, but it did not make either of
 them faithful to the structure the battery is nominally defined by -- and any
 code that draws its own geometry from the parameters (Moose, S4, a lab
 measurement) solves the nominal structure, not the mask.
 
-On the 1D cases this is a non-issue: ``NX_1D = 8192`` with ``ff = 0.5`` fills
-exactly 4096 cells, so the mask *is* the nominal grating and Moose agrees with
-the python columns to five or six digits.
+On the 1D cases this was a non-issue: ``NX_1D_LEGACY = 8192`` with
+``ff = 0.5`` fills exactly 4096 cells, so the mask *is* the nominal grating
+and Moose agrees with the python columns to five or six digits.
 
-On the 2D cases it is the whole story.  ``NX_2D = 256`` cannot represent the
-square pillars exactly -- ``0.6 * 256 = 153.6`` and ``0.4 * 256 = 102.4`` are
-not integers -- and the rect branch samples on the left cell edge with a strict
-``<``, which additionally drops a pixel on each side when an edge lands exactly
-on a sample (C2).  The pillars therefore come out between 0.4 % and 0.8 % away
-from their nominal size, and R turns out to be about ten times more sensitive to
-that than to the truncation order at the top of the sweep:
+On the 2D cases it was the whole story.  ``NX_2D_LEGACY = 256`` could not
+represent the square pillars exactly -- ``0.6 * 256 = 153.6`` and
+``0.4 * 256 = 102.4`` are not integers -- and the rect branch sampled on the
+left cell edge with a strict ``<``, which additionally dropped a pixel on
+each side when an edge landed exactly on a sample (C2).  The pillars
+therefore came out between 0.4 % and 0.8 % away from their nominal size, and
+R turned out to be about ten times more sensitive to that than to the
+truncation order at the top of the sweep:
 
     C1_Si_pillars      one pixel of the 256 grid is worth ~0.012 in R
     C1b_..._diffract   the +0.59 % mask error is worth ~0.010 in R
 
-which is larger than the entire disagreement with the external Moose reference.
-Run this module with ``--solve`` to reproduce that statement from scratch.
+which was larger than the entire disagreement with the external Moose
+reference.  Run this module with ``--solve`` to reproduce that statement from
+scratch (still on the legacy mask, by design -- that is the point being
+measured); the current default renders every rect case exactly, at 0.000 %.
 
 Usage
 -----
-    python benchmark/geometry_fidelity.py              # the fidelity table
-    python benchmark/geometry_fidelity.py --solve      # + R(mask) vs R(exact)
+    python benchmark/geometry_fidelity.py              # the legacy fidelity table
+    python benchmark/geometry_fidelity.py --current    # + the current (fixed) table
+    python benchmark/geometry_fidelity.py --solve      # + R(legacy mask) vs R(exact)
     python benchmark/geometry_fidelity.py --solve --q 41 --case C1_Si_pillars
 
 The fidelity table needs nothing but numpy.  ``--solve`` uses Ikarus when it is
@@ -68,8 +82,16 @@ def _rect_width(mask):
     return float(row.sum()) / nx
 
 
-def fidelity(s):
+def fidelity(s, legacy=True):
     """Nominal vs rasterized feature size of one structure.
+
+    ``legacy=True`` (the default) reproduces the ORIGINAL, pre-fix rasterization
+    this module was written to characterize (``structures.NX_1D_LEGACY``,
+    ``NX_2D_LEGACY``, left-edge rect sampling) -- this module's whole purpose is
+    documenting that historical mismatch, so its default output must not change
+    just because ``structures.layer_mask`` got a better default. Pass
+    ``legacy=False`` to measure the CURRENT (fixed) rasterization instead --
+    see ``report(legacy=False)`` for the fixed side by side with this one.
 
     Returns a dict with ``kind`` ('fill', 'width' or 'area'), the nominal and
     rasterized value, and the relative error of the *linear* feature (a width,
@@ -80,14 +102,15 @@ def fidelity(s):
         return dict(name=s["name"], dim=0, kind="none", nominal=None,
                     got=None, rel=0.0, grid=None, detail="uniform layer")
 
-    mask, _ = ST.layer_mask(s)
+    mask, _ = ST.layer_mask(s, legacy=legacy)
     if dim == 1:
+        nx = ST.NX_1D_LEGACY if legacy else ST.NX_1D
         nominal = s["ff"]
         got = float(mask.mean())
         return dict(name=s["name"], dim=1, kind="fill", nominal=nominal,
-                    got=got, rel=got / nominal - 1.0, grid=ST.NX_1D,
+                    got=got, rel=got / nominal - 1.0, grid=nx,
                     detail="%d of %d cells (exact would be %.1f)"
-                           % (int(mask.sum()), ST.NX_1D, nominal * ST.NX_1D))
+                           % (int(mask.sum()), nx, nominal * nx))
 
     n = mask.shape[0]
     if s.get("shape", "rect") == "circle":
@@ -141,10 +164,17 @@ def exact_mask(s, n=None):
     return inside.astype(int)
 
 
-def report(structures=None):
-    """Print the fidelity table; return the rows."""
+def report(structures=None, legacy=True):
+    """Print the fidelity table; return the rows.
+
+    ``legacy=True`` (default) is this module's original subject: the pre-fix
+    mask. Call ``report(legacy=False)`` to see the same table for the current,
+    corrected default in ``structures.layer_mask`` -- on this battery every
+    rect and 1D case comes back at 0.000 % there; only the circle (D2) still
+    has a nonzero, unavoidable entry.
+    """
     structures = ST.STRUCTURES if structures is None else structures
-    rows = [fidelity(s) for s in structures]
+    rows = [fidelity(s, legacy=legacy) for s in structures]
     print("%-26s %3s %10s %12s %12s %10s  %s"
           % ("case", "dim", "kind", "nominal", "rasterized", "rel.err", "detail"))
     for r in rows:
@@ -157,13 +187,16 @@ def report(structures=None):
               % (r["name"], r["dim"], r["kind"], r["nominal"], r["got"],
                  100 * r["rel"], r["detail"], flag))
     bad = [r for r in rows if r["kind"] != "none" and abs(r["rel"]) > FEATURE_TOL]
-    print("\n%d of %d patterned layers are off by more than %.2f%%"
+    print("\n%d of %d patterned layers are off by more than %.2f%%  (%s grid)"
           % (len(bad), len([r for r in rows if r["kind"] != "none"]),
-             100 * FEATURE_TOL))
+             100 * FEATURE_TOL, "legacy" if legacy else "current"))
     if bad:
         print("  " + ", ".join(r["name"] for r in bad))
-        print("  -> these cannot be compared against a code that builds the")
-        print("     geometry from the parameters instead of from this mask.")
+        if legacy:
+            print("  -> these cannot be compared against a code that builds the")
+            print("     geometry from the parameters instead of from this mask.")
+            print("     structures.layer_mask's CURRENT default fixes all of the")
+            print("     rect cases -- run report(legacy=False) to see it.")
     return rows
 
 
@@ -235,25 +268,28 @@ def _moose_ref(name, q):
 
 
 def solve_compare(names, q):
-    """Solve every named 2D case twice -- shared mask vs exact geometry."""
+    """Solve every named 2D case twice -- the LEGACY shared mask vs exact
+    geometry. This reproduces the historical measurement (mask 256 vs exact)
+    that established the fix; it is not the current default any more -- see
+    ``rasterization_study.py``'s ``grid``/``coeffs`` subcommands for that."""
     solvers = _solvers()
-    print("\nR from the shared mask against R from the nominal geometry, q = %d"
-          % q)
+    print("\nR from the legacy shared mask against R from the nominal geometry, "
+          "q = %d" % q)
     print("(the gap between the two columns is what a code drawing its own\n"
-          " geometry -- Moose -- sees as a disagreement)\n")
+          " geometry -- Moose -- used to see as a disagreement, before the fix)\n")
     for name in names:
         s = ST.STRUCT[name]
         if s["dim"] != 2:
             print("%s: not a 2D case, skipped" % name)
             continue
-        f = fidelity(s)
-        shared, _ = ST.layer_mask(s)
+        f = fidelity(s, legacy=True)
+        shared, _ = ST.layer_mask(s, legacy=True)
         n_exact = exact_grid(s)
         ex = exact_mask(s, n_exact)
         moose_q, moose_ref = _moose_ref(name, q)
         print("%s   nominal %.6f, mask %.6f (%+.3f%%), exact grid %d"
               % (name, f["nominal"], f["got"], 100 * f["rel"], n_exact))
-        print("   %-14s %12s %12s %12s" % ("rule", "mask 256", "exact", "delta"))
+        print("   %-14s %12s %12s %12s" % ("rule", "legacy mask", "exact", "delta"))
         for label, fn in solvers:
             try:
                 r_mask = fn(s, shared, q)
@@ -274,15 +310,21 @@ def solve_compare(names, q):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--current", action="store_true",
+                    help="also print the fidelity table for the CURRENT "
+                         "(fixed) default, alongside the legacy one")
     ap.add_argument("--solve", action="store_true",
-                    help="also solve mask vs exact geometry (slow)")
+                    help="also solve mask vs exact geometry (slow, legacy mask)")
     ap.add_argument("--q", type=int, default=31,
                     help="per-axis retained orders for --solve (odd; default 31)")
     ap.add_argument("--case", action="append", default=None,
                     help="restrict --solve to this case (repeatable)")
     args = ap.parse_args()
 
-    report()
+    report(legacy=True)
+    if args.current:
+        print("\n--- current default (structures.layer_mask, legacy=False) ---\n")
+        report(legacy=False)
     if args.solve:
         names = args.case or [s["name"] for s in ST.STRUCTURES if s["dim"] == 2]
         solve_compare(names, args.q)

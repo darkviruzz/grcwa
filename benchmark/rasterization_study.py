@@ -141,22 +141,9 @@ def eps_of(s, N, rule):
     return ST.eps(s["bg"]) * (1 - f) + ST.eps(s["pillar"]) * f
 
 
-def exact_N(s, at_least=256):
-    """Smallest N >= at_least on which every boundary of ``s`` is a cell edge.
-
-    A centred rectangle of relative width ``w`` needs ``w*N`` and ``(1-w)/2*N``
-    integral, i.e. ``N`` a multiple of the denominators of both.  A circle has
-    no such N and this returns None.
-    """
-    from fractions import Fraction
-    if s.get("shape", "rect") == "circle":
-        return None
-    dens = []
-    for k in ("ax", "ay"):
-        w = Fraction(s[k] / s["period"]).limit_denominator(10 ** 6)
-        dens += [w.denominator, (Fraction(1) - w).denominator * 2]
-    step = np.lcm.reduce(np.array(dens, dtype=np.int64))
-    return int(step * int(np.ceil(at_least / step)))
+# exact_N, shape_transform and analytic_coeffs now live in structures.py --
+# this module imports them (below) rather than keeping a second copy, per
+# RASTERIZATION.md's own warning to "keep the two in step".
 
 
 # ===========================================================================
@@ -195,37 +182,11 @@ def pixel_exact(on=True):
 
 
 # ===========================================================================
-#  analytic Fourier coefficients -- the geometry oracle
+#  analytic Fourier coefficients -- the geometry oracle (structures.py)
 # ===========================================================================
-def shape_transform(s, G):
-    """S(G) = int_cell chi(x) exp(-2 pi i G.x) dx for the inclusion of ``s``.
-
-    Rectangle: ``w_x w_y sinc(m w_x) sinc(n w_y)``.
-    Circle:    ``pi r^2 . 2 J1(2 pi |G| r) / (2 pi |G| r)``.
-    Both times ``exp(-i pi (m+n))`` for the shape being centred in the cell.
-    No grid, no truncation, no rasterization enters.
-    """
-    m, n = G[:, 0].astype(float), G[:, 1].astype(float)
-    if s.get("shape", "rect") == "circle":
-        from scipy.special import j1
-        r = s["radius"]
-        x = 2 * np.pi * np.hypot(m, n) * r
-        S = np.where(x == 0, np.pi * r * r,
-                     np.pi * r * r * 2 * j1(np.where(x == 0, 1., x))
-                     / np.where(x == 0, 1., x))
-    else:
-        w, h = s["ax"] / s["period"], s["ay"] / s["period"]
-        S = w * h * np.sinc(m * w) * np.sinc(n * h)
-    return S * np.exp(-1j * np.pi * (m + n))
-
-
-def analytic_coeffs(s, G, inverse=False):
-    """Exact eps (or 1/eps) Fourier coefficients of ``s`` on integer G."""
-    e_in, e_bg = ST.eps(s["pillar"]), ST.eps(s["bg"])
-    if inverse:
-        e_in, e_bg = 1 / e_in, 1 / e_bg
-    z = ((G[:, 0] == 0) & (G[:, 1] == 0)).astype(float)
-    return (e_in - e_bg) * shape_transform(s, G) + e_bg * z
+exact_N = ST.exact_N
+shape_transform = ST.shape_transform
+analytic_coeffs = ST.analytic_coeffs
 
 
 def _toeplitz(s, G, inverse=False):
@@ -410,7 +371,7 @@ def cmd_pol(args):
     """The tangent-field rules against the eps grid they are built from."""
     for name in args.case or ["C1_Si_pillars"]:
         s = ST.STRUCT[name]
-        base = exact_N(s) or 256
+        base = exact_N(s) or ST.NX_2D
         grids = [base * k for k in (1, 2, 4, 8)][:args.n_grids]
         print("\n%s, exact geometry, q = %d -- Pol's blur is specified in PIXELS"
               % (name, args.q))

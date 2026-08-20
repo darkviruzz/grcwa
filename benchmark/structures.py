@@ -9,15 +9,44 @@ and consumed by *both* backends -- grcwa (a flattened eps vector, this module's
 benchmark/ikarus_suite.py). Neither backend rasterizes on its own, so a
 disagreement *between those two* can never be a pixel-grid artifact.
 
-It can be one against any third code, though, and on the 2D cases it is: at
-NX_2D = 256 the rect branch renders the pillars 0.4-0.8 % off their nominal
-width (0.6*256 = 153.6 is not an integer, and see the sampling note in
-:func:`layer_mask`), which moves R by about 0.01 -- an order of magnitude more
-than the truncation error at the top of the sweep, and the whole of the 2D
-disagreement with the external Moose reference. benchmark/geometry_fidelity.py
-measures it; "The mask is not the structure" in benchmark/README.md is the
-write-up. Fixing it invalidates every recorded 2D value, so the mask is left as
-it is until that re-run is wanted.
+Rasterization: two error channels, and this module now closes the first one
+------------------------------------------------------------------------------
+Turning a nominal shape into permittivity Fourier coefficients has two
+independent error sources (the full derivation and the measurements behind
+every number in this docstring are in ``benchmark/RASTERIZATION.md``):
+
+  1. **shape** -- the pixel image is not the nominal shape. ``O(1/N)`` when a
+     boundary falls between two samples, and *exactly zero* when every
+     boundary falls on a cell edge.
+  2. **sampling** -- the plain FFT every suite (grcwa, Ikarus, Moose) uses
+     overstates every coefficient relative to the exact Fourier integral of
+     the pixel image, by a factor that is ``O(1/N^2)`` and never vanishes on
+     any finite grid, but is removable exactly (see
+     ``rasterization_study.pixel_exact``) and does not depend on this module.
+
+Until this rewrite, ``layer_mask`` used ``NX_2D = 256`` with **left-edge,
+strict "<"** sampling on the rectangle branch, which does not represent this
+battery's own pillar widths exactly (0.6 * 256 = 153.6 is not an integer) --
+channel 1 alone cost ~0.4-0.8 % on the linear feature size and ~0.01 in R, an
+order of magnitude more than the truncation error at the top of a sweep, and
+was the entire 2D disagreement with an external Moose reference that builds
+its geometry from the parameters instead of this mask.
+
+``layer_mask`` now defaults to **cell-centre sampling** (matching the circle
+branch, which was already exact) on a per-case grid chosen so every
+axis-parallel boundary in the battery lands on a cell edge: ``NX_2D = 260``
+(a multiple of 20, satisfying C1's width 0.6, C1b's 0.4 and C2's 0.5 all at
+once) and ``NX_1D = 10240`` (a multiple of 20, so B3's ``ff = 0.8`` -- which
+``NX_1D = 8192`` could not represent exactly -- is now exact too). Channel 1
+is now exactly zero on every rectangle and 1D case in the battery; only the
+circle (D2) has no exact grid at any resolution, because pi is irrational.
+
+The pre-fix mask stays reachable for anyone who needs the old, published
+numbers bit-for-bit: pass ``legacy=True`` to :func:`layer_mask`,
+:func:`mask_eps` or :func:`solve`. This changes results for every 2D
+structure and B3 -- any cache keyed only by ``(structure, order, rule)``
+needs the rasterization mode in its key too, or it will silently mix pre- and
+post-fix values.
 
 Order-counting convention
 -------------------------
@@ -34,17 +63,28 @@ total retained-order axis (q for 1D-per-axis, q**2 for 2D and 1D-total).
 
 Materials are given as (n,k); eps = (n+ik)**2 (exp(-i w t): lossy -> Im(eps)>0).
 """
+from fractions import Fraction
+
 import numpy as np
 
 FREQ = 1.0                       # lambda = 1 micron
 QABS = 1e7                       # tiny loss regularizes Rayleigh anomalies
 FREQC = FREQ * (1 + 1j / 2 / QABS)
-# The overnight sweep derives 1D total orders from the 2D q values and reaches
-# q = 61**2 = 3721.  Convolution matrices need every difference order, so the
-# real-space grid must contain at least 2*q-1 = 7441 samples.  Use the next
-# power of two for efficient FFTs.
-NX_1D = 8192
-NX_2D = 256
+
+# Current (exact-geometry) grids -- see the module docstring.  Both are
+# multiples of 20: NX_2D = 260 represents C1 (w=0.6), C1b (w=0.4) and C2
+# (w=0.5) exactly at once; NX_1D = 10240 represents ff=0.5 and B3's ff=0.8
+# exactly, and stays well above the ~7441 samples the overnight sweep's
+# highest 1D order (q = 61**2 = 3721) needs (2*q - 1); get_conv upsamples
+# by an integer factor beyond that, which preserves exactness (a cell-centred
+# exact mask stays exact under nearest-neighbour integer upsampling).
+NX_1D = 10240
+NX_2D = 260
+
+# The pre-fix grids, for bit-for-bit reproduction of every number recorded
+# before this rewrite: ``layer_mask(s, legacy=True)`` and friends use these.
+NX_1D_LEGACY = 8192
+NX_2D_LEGACY = 256
 
 # materials at lambda = 1 um  (n, k)
 AIR = (1.0, 0.0)
@@ -117,7 +157,28 @@ STRUCTURES = [
 STRUCT = {s["name"]: s for s in STRUCTURES}
 
 
-def layer_mask(s):
+def exact_N(s, at_least=None):
+    """Smallest grid ``N >= at_least`` on which every boundary of ``s`` is a
+    cell edge, at cell-centre sampling -- ``None`` if no such grid exists
+    (only true for a circle, since pi is irrational).
+
+    A centred rectangle of relative width ``w`` is exact on ``N`` cells iff
+    ``w*N`` and ``(1-w)*N/2`` are both integers, i.e. ``N`` a multiple of
+    ``w``'s denominator and of twice ``(1-w)``'s. ``NX_2D`` is chosen so this
+    already holds for every rect case in the battery at ``N = NX_2D`` itself.
+    """
+    at_least = NX_2D if at_least is None else at_least
+    if s.get("shape", "rect") == "circle":
+        return None
+    dens = []
+    for k in ("ax", "ay"):
+        w = Fraction(s[k] / s["period"]).limit_denominator(10 ** 6)
+        dens += [w.denominator, (Fraction(1) - w).denominator * 2]
+    step = int(np.lcm.reduce(np.array(dens, dtype=np.int64)))
+    return step * int(np.ceil(at_least / step))
+
+
+def layer_mask(s, N=None, legacy=False):
     """Rasterize the patterned layer of ``s`` ONCE, for every backend.
 
     Returns ``(mask, nk_pair)``: an integer ``(nx, ny)`` array whose value
@@ -128,46 +189,99 @@ def layer_mask(s):
     topology plus a material list, so both codes see the *same pixels* and a
     disagreement can only come from the physics, never from the grid.
 
+    ``N`` overrides the default grid (``NX_1D``/``NX_2D``, or their legacy
+    values); an explicit ``N`` on the rect/circle branch does not have to be
+    exact -- pass ``exact_N(s)`` for that. ``legacy=True`` reproduces the
+    pre-fix rasterization (left-edge rect sampling, ``NX_2D_LEGACY = 256`` /
+    ``NX_1D_LEGACY = 8192``) bit-for-bit; see the module docstring.
+
     Raises ValueError for dim == 0 (uniform layers have no pattern).
     """
     dim = s["dim"]
     if dim == 0:
         raise ValueError(f"{s['name']}: 0D structure has no patterned layer")
     if dim == 1:
-        # left-edge sampling: xs < ff fills exactly the first ff*NX_1D cells.
-        xs = np.linspace(0, 1, NX_1D, endpoint=False)
+        n = N if N is not None else (NX_1D_LEGACY if legacy else NX_1D)
+        # Left-edge sampling: xs < ff fills exactly the first ff*n cells.
+        # Unlike the 2D rect branch, this has only ONE boundary (at x = ff,
+        # the pattern starts flush at x = 0), so it is exact whenever ff*n is
+        # an integer regardless of edge- vs centre-sampling -- no separate
+        # "centre" rule is needed here, only a big-enough, well-divisible n.
+        xs = np.linspace(0, 1, n, endpoint=False)
         return (xs < s["ff"]).astype(int)[:, None], [s["lo"], s["hi"]]
 
     Lam = s["period"]
+    n = N if N is not None else (NX_2D_LEGACY if legacy else NX_2D)
     if s.get("shape", "rect") == "circle":
         # Cell-centred sampling, so a centred circle stays exactly symmetric
-        # under the lattice's C4v; it also reproduces the rasterization of
-        # ikarus.shapes.circle pixel for pixel, which is the point of group D.
-        # (The rectangular cases below keep their historical left-edge grid so
-        # their published reference values stay bit-comparable.)
-        c = (np.arange(NX_2D) + 0.5) / NX_2D
+        # under the lattice's C4v. No grid renders a circle exactly (pi is
+        # irrational); this is the closest a binary raster gets.
+        c = (np.arange(n) + 0.5) / n
         X, Y = np.meshgrid(c, c, indexing="ij")
-        inside = (X - 0.5) ** 2 + (Y - 0.5) ** 2 <= s["radius"] ** 2
-    else:
-        # Left-edge sampling with a strict "<", kept so the published rect
-        # values stay bit-comparable.  It is NOT faithful: 0.6*256 = 153.6 and
-        # 0.4*256 = 102.4 are not integers, so C1 comes out 153/256 (-0.39 %)
-        # and C1b 103/256 (+0.59 %); on C2 the edge lands exactly on a sample
-        # and the strict "<" drops a pixel on each side (127 instead of 128,
-        # -0.78 %).  Cell centres with "<=" and an NX_2D divisible by 5 (260
-        # works for all three) would render every rectangle exactly -- at the
-        # price of recomputing every 2D number on record.
-        x = np.linspace(0, 1, NX_2D, endpoint=False)
+        inside = (X - 0.5) ** 2 + (Y - 0.5) ** 2 <= s["radius"] ** 2 + 1e-12
+    elif legacy:
+        # Left-edge sampling with a strict "<": kept ONLY for bit-for-bit
+        # reproduction of pre-fix numbers. Not faithful -- see the module
+        # docstring -- and re-breaks exactness even on an N where the
+        # cell-centre rule below would be exact.
+        x = np.linspace(0, 1, n, endpoint=False)
         X, Y = np.meshgrid(x, x, indexing="ij")
         inside = (np.abs(X - 0.5) < s["ax"] / (2 * Lam)) & \
                  (np.abs(Y - 0.5) < s["ay"] / (2 * Lam))
+    else:
+        # Cell centres, closed ("<="): exact whenever ax/Lam * n and
+        # ay/Lam * n are integers, which they are for every rect case in the
+        # battery at n = NX_2D (see exact_N). Matches ikarus.shapes.rectangle
+        # and moose_raster_probe.cs's CellInside -- keep the three in step.
+        c = (np.arange(n) + 0.5) / n
+        X, Y = np.meshgrid(c, c, indexing="ij")
+        inside = (np.abs(X - 0.5) <= s["ax"] / (2 * Lam) + 1e-12) & \
+                 (np.abs(Y - 0.5) <= s["ay"] / (2 * Lam) + 1e-12)
     return inside.astype(int), [s["bg"], s["pillar"]]
 
 
-def mask_eps(s):
+def mask_eps(s, N=None, legacy=False):
     """:func:`layer_mask` with the materials already turned into permittivity."""
-    mask, nk_pair = layer_mask(s)
+    mask, nk_pair = layer_mask(s, N=N, legacy=legacy)
     return np.array([eps(nk) for nk in nk_pair], dtype=complex)[mask]
+
+
+def shape_transform(s, G):
+    """Analytic Fourier transform ``S(G)`` of the inclusion of ``s`` at
+    integer orders ``G`` (shape ``(n, 2)``) -- no grid, no rasterization, no
+    truncation. The oracle a rasterized mask is measured against.
+
+    Rectangle of relative size ``(w, h)``: ``S(G) = w h sinc(m w) sinc(n h)``.
+    Circle of relative radius ``r``: ``S(G) = pi r^2 . 2 J1(x) / x`` with
+    ``x = 2 pi |G| r``. Both times ``exp(-i pi (m+n))`` for a shape centred
+    in the cell.
+    """
+    m, n = G[:, 0].astype(float), G[:, 1].astype(float)
+    if s.get("shape", "rect") == "circle":
+        from scipy.special import j1
+        r = s["radius"]
+        x = 2 * np.pi * np.hypot(m, n) * r
+        S = np.where(x == 0, np.pi * r * r,
+                     np.pi * r * r * 2 * j1(np.where(x == 0, 1., x))
+                     / np.where(x == 0, 1., x))
+    else:
+        w, h = s["ax"] / s["period"], s["ay"] / s["period"]
+        S = w * h * np.sinc(m * w) * np.sinc(n * h)
+    return S * np.exp(-1j * np.pi * (m + n))
+
+
+def analytic_coeffs(s, G, inverse=False):
+    """Exact eps (or 1/eps, ``inverse=True``) Fourier coefficients of the 2D
+    patterned layer of ``s`` on integer orders ``G``: no grid, no rasterization,
+    no truncation. Used as the geometry-error-free reference column in
+    ``rasterization_study.py`` and the L0 coefficient test in
+    ``RASTERIZATION.md``.
+    """
+    e_in, e_bg = eps(s["pillar"]), eps(s["bg"])
+    if inverse:
+        e_in, e_bg = 1 / e_in, 1 / e_bg
+    z = ((G[:, 0] == 0) & (G[:, 1] == 0)).astype(float)
+    return (e_in - e_bg) * shape_transform(s, G) + e_bg * z
 
 
 def supports_native_dim(grcwa):
@@ -197,14 +311,19 @@ def _obj(grcwa, nG, L1, L2, fmm):
         return grcwa.obj(nG, L1, L2, FREQC, 0., 0., verbose=0)
 
 
-def solve(grcwa, s, q, fmm, native):
+def solve(grcwa, s, q, fmm, native, legacy=False):
     """Solve structure ``s`` at per-axis order count ``q`` with factorization
     ``fmm`` (None=Laurent, 'pol'=Pol). ``native`` is supports_native_dim(grcwa).
+    ``legacy=True`` reproduces the pre-fix rasterization -- see the module
+    docstring; every 2D and B3 value on record before this rewrite needs it to
+    reproduce.
 
     Returns (R, T, nG_actual, mode) or (None, None, None, reason).
     1D uses nG=q; 2D uses a (q,q) square block (nG=q**2, parallelogramic).
     """
     dim = s["dim"]
+    nx_1d = NX_1D_LEGACY if legacy else NX_1D
+    nx_2d = NX_2D_LEGACY if legacy else NX_2D
     if dim == 0:
         if not native:
             return None, None, None, "no-native-0D"
@@ -217,13 +336,13 @@ def solve(grcwa, s, q, fmm, native):
         o.Init_Setup()
         eps_flat, gmethod = None, 0
     elif dim == 1:
-        prof = mask_eps(s)[:, 0]                 # shared rasterization (Nx,1)->(Nx,)
+        prof = mask_eps(s, legacy=legacy)[:, 0]  # shared rasterization (Nx,1)->(Nx,)
         if native:
             o = _obj(grcwa, q, [s["period"], 0], None, fmm)
             if o is None:
                 return None, None, None, "no-pol"
             o.Add_LayerUniform(1.0, eps(AIR))
-            o.Add_LayerGrid(s["d"], NX_1D)
+            o.Add_LayerGrid(s["d"], nx_1d)
             o.Add_LayerUniform(1.0, eps(s["sub"]))
             mode = "native"
         else:
@@ -231,19 +350,19 @@ def solve(grcwa, s, q, fmm, native):
             if o is None:
                 return None, None, None, "no-pol"
             o.Add_LayerUniform(1.0, eps(AIR))
-            o.Add_LayerGrid(s["d"], NX_1D, 1)
+            o.Add_LayerGrid(s["d"], nx_1d, 1)
             o.Add_LayerUniform(1.0, eps(s["sub"]))
             mode = "degenerate-2D"
         o.Init_Setup(Gmethod=1)
         eps_flat = prof
     else:  # dim == 2: q x q square block via parallelogramic truncation
         Lam = s["period"]
-        eg = mask_eps(s)                         # shared rasterization (Nx,Ny)
+        eg = mask_eps(s, legacy=legacy)          # shared rasterization (Nx,Ny)
         o = _obj(grcwa, q * q, [Lam, 0], [0, Lam], fmm)
         if o is None:
             return None, None, None, "no-pol"
         o.Add_LayerUniform(1.0, eps(AIR))
-        o.Add_LayerGrid(s["d"], NX_2D, NX_2D)
+        o.Add_LayerGrid(s["d"], nx_2d, nx_2d)
         o.Add_LayerUniform(1.0, eps(s["sub"]))
         try:
             o.Init_Setup(Gmethod=1)      # parallelogramic -> q x q block
