@@ -144,11 +144,18 @@ matched grid, the one-line `sinc` **is** the analytic method.
   | `a + b/r²` | **0.397181** | **5.2e-06** |
 
   A two-point Richardson with `p = 2` from 30 and 100 predicts the measured
-  point at 50 to 8e-6. That exponent is exactly channel 2 — Moose's own eps
-  sampling — on a geometry that carries no channel-1 error (`0.6·30·q` is an
-  integer for every q, so the pillar is rendered exactly). The earlier
-  `1/refinement` extrapolation in `benchmark/README.md` is therefore 3e-4 too
-  low and should be replaced.
+  point at 50 to 8e-6.
+
+  > **Corrected by the probe — see §9.** The reasoning that went with this fit
+  > was wrong. It said the exponent had to be channel 2 alone, because
+  > `0.6·30·q` is an integer and the pillar is therefore rendered exactly.
+  > `moose_raster_probe.cs` shows it is **not**: Moose's rectangle rasterizer is
+  > one cell too wide per axis on *every* grid, aligned or not. The refinement
+  > sequence is therefore a mixture of a `1/N` shape error and a `1/N²` sampling
+  > error, it is **non-monotone** over 40/60/80/100 in three of four cases, and
+  > no single power fits it. The clean three-point `p = 2` fit was fortuitous,
+  > and its `R(∞) = 0.397181` is the limit of a contaminated sequence, not the
+  > exact-geometry answer (which is 0.39626, measured directly in §9).
 * Untested but decisive if it works: `Layer(double thickness, CaModel
   epsilonDistribution)` — a constructor that takes an explicit permittivity
   grid. See §6.
@@ -160,7 +167,7 @@ matched grid, the one-line `sinc` **is** the analytic method.
 | geometry source | external mask | external mask (pinned) or own cell-centred primitives | its own, from the nominal parameters |
 | rasterization | binary, left edge (rect/1D), cell centre (circle) | binary, cell centre | binary, outward rounding |
 | grid control | complete | N and values yes, transform no | refinement ∈ [30,100] only, and it is tied to the order |
-| channel 1 | whatever the mask has | same mask | exact for aligned widths, `O(1/N)` otherwise |
+| channel 1 | whatever the mask has | same mask | **+1 cell per axis, always** (§9); alignment does not help |
 | channel 2 | removable **exactly** (`sinc`, one line) | `1/N²`, extrapolate | `1/refinement²`, extrapolate |
 | 1/eps input | from the same grid | from the same grid | internal |
 | tangent field | from the grid, blur in **pixels** | from the grid, blur = period/12 | unknown |
@@ -304,12 +311,13 @@ multiple of 20**, and `NX_2D = 260` satisfies all three (verified: width and
 area exact to 1e-16 at 260, 520 and 1040).
 
 On the Moose side the grid is `refinement × (2m+1)` and `2m+1` is always odd, so
-the same condition reads *refinement* a multiple of 20: **40, 60, 80, 100**.
-Note what that says about the points already on record: refinement 30 and 50 are
-fine for `C1` and `C1b` but **not** for `C2` (`0.25 · 30 · q` is a half-integer
-for odd q), so `C2`'s recorded Moose values carry a shape error that `C1`'s do
-not. The family {40, 60, 80, 100} renders all three rect cases exactly at every
-order *and* gives four points for the `1/r²` Richardson of channel 2.
+the same condition would read *refinement* a multiple of 20: 40, 60, 80, 100.
+
+> **Moot on Moose's Atom path — see §9.** The probe shows Moose renders the
+> rectangle one cell too wide whatever the alignment, so no refinement makes its
+> own rasterizer exact. The condition still governs the *python* grid, and it
+> still governs any grid handed to Moose explicitly — which, per §9, is now
+> possible.
 
 It does nothing for a circle, and by itself it still leaves channel 2. It
 applies to 1D as well: `NX_1D = 8192` must become 10240 for `B3`.
@@ -354,14 +362,14 @@ worth having — but as an *oracle*, not as the common denominator:
   FFT), and Moose cannot at all. So analytic coefficients give a
   **geometry-error-free reference column**, not cross-solver agreement.
 
-**(e) The candidate nobody proposed, and the highest-value unknown.** Moose's
+**(e) The candidate nobody proposed — and it works, see §9.** Moose's
 `Layer(double thickness, CaModel epsilonDistribution)` takes an explicit
 complex permittivity grid. If Moose consumes it as given, then all three suites
 can be handed the *same pixel image*, the geometry drops out of the
 cross-solver comparison completely (including for the circle), and the
 pixel-image-to-nominal-shape gap becomes one common quantity measured once
-instead of three different quantities that never cancel. That is one probe away
-from being known.
+instead of three different quantities that never cancel. **The probe says yes**,
+and on the same pixel image Moose and Ikarus's Li rule agree to 7e-7. §9.
 
 ---
 
@@ -459,3 +467,99 @@ python benchmark/rasterization_study.py pol    --case C1_Si_pillars --q 21
 python benchmark/rasterization_study.py fill1d --case B3_Au_slits_TM --q 201
 python benchmark/rasterization_study.py circle --q 21
 ```
+
+---
+
+## 9. What the Moose probe returned
+
+`moose/moose_raster_probe.cs`, run on the real build (24 cores, 33 min).
+Every solve came back `ok` with `R + T + A − 1` at 1e-16.
+
+### P1: yes — and it changes the plan
+
+**`Layer(double thickness, CaModel epsilonDistribution)` exists, compiles and
+works.** Moose can be handed an explicit permittivity grid.
+
+* **The values are `eps`, not `n + ik`.** The index variants are wildly wrong
+  (`C1` 0.0366 against 0.398), and P3's dumped levels read `1.000000 |
+  12.250000` for air/Si and `-48.910000 + 4.200000i | 1.000000` for gold —
+  epsilon, with `+i` loss, the battery's own convention.
+* **The grid is really used.** ±4 % on the width moves R by 4e-2 … 1e-1; the
+  `eps` grid and the `n + ik` grid differ by 3.6e-1.
+* **No transpose, no shift.** The `AN_aniso_control` (0.6 × 0.4, TE) is the row
+  that could see it: Moose returns 0.893828 where python gives **0.893785** for
+  that orientation and **0.656883** for the transposed one. The index
+  convention is `(i, j) → (x, y)`.
+* **Two mask resolutions that mean the same rectangle give bit-identical R.**
+  `C1` returns 0.39625689979541406 from a 260² grid and from a 520² grid, to
+  every digit; likewise `C1b` and `C2`. With the geometry exact, the mask
+  resolution drops out completely.
+* **The refinement still resamples an explicit grid**, by 8.5e-5 … 4.5e-4
+  between `fft = 40` and `fft = 100`. That is the one term left in the budget.
+
+### And with the same pixel image, Moose is Ikarus's Li rule
+
+Python solved bit-for-bit the same masks (verified cell by cell, not assumed),
+q = 21:
+
+| case | Moose, mask, fft = 40 | `ikarus[li]` | Δ | `ikarus[NV]` | Δ |
+|---|---:|---:|---:|---:|---:|
+| `C1_Si_pillars` | 0.396256900 | 0.396256166 | **+7.3e-07** | 0.399130762 | −2.9e-03 |
+| `C1b_Si_pillars_diffract` | 0.159508882 | 0.159528879 | −2.0e-05 | 0.162126121 | −2.6e-03 |
+| `C2_Au_holes` | 0.672547367 | 0.672548085 | **−7.2e-07** | 0.646252195 | +2.6e-02 |
+| `D2_ikarus_cylinder_TE` | 0.905398790 | 0.905812281 | −4.1e-04 | 0.943083334 | −3.8e-02 |
+| `AN_aniso_control` | 0.893827841 | 0.893784640 | +4.3e-05 | 0.893513221 | +3.1e-04 |
+
+Two things follow, and both are new.
+
+**The cross-solver target is reached on the aligned 2D cases.** 7e-7 between two
+independently written codes on a 2D structure — below the 1e-6 the study was
+aiming at — the moment they are handed the same pixel image. Geometry was the
+whole disagreement; nothing else had to change.
+
+**Moose's factorization is Li's separable inverse rule**, or something
+numerically indistinguishable from it on these five shapes. It is not a
+normal-vector method: on `C2` it sits 2.6e-2 from NV and 7e-7 from Li, on the
+curved `D2` 3.8e-2 from NV and 4e-4 from Li. That reclassifies what Moose is
+*for* in this study — it is a second implementation of Li, not an independent
+arbiter between Li and the normal-vector rule, and it inherits Li's slow
+convergence on curved boundaries. The `D2` values that "were still climbing" are
+Li climbing.
+
+### P3: Moose's rasterizer is one cell too wide, always
+
+Not "rounds outward" — a deterministic off-by-one, at every refinement and
+order, on every rectangle:
+
+| case | m | fft | N | cells | exact `w·N` |
+|---|---:|---:|---:|---:|---:|
+| `C1` | 10 | 40 | 840 | 505 | 504 |
+| `C1` | 15 | 100 | 3100 | 1861 | 1860 |
+| `C1b` | 10 | 40 | 840 | 337 | 336 |
+| `C2` | 10 | 40 | 840 | 421 | 420 |
+
+and the round-trip fill fractions make it an exact square: 157², 313², 105²,
+131² where 156², 312², 104², 130² are exact. The circle is rasterized by a
+different rule again — 18513 cells at 256² against the cell-centred 18544.
+
+The Atom-path gap this predicts has the right sign in every case and the right
+size to within a factor 0.2–1.1 (`C1` at fft = 100: predicted +1.39e-03 from
+`dR/dw = +2.91` measured *in Moose*, observed +1.52e-03). The renderer is a
+diagnostic, not the solver's grid, so that is as close as this can get from
+outside — the mechanism is settled, the exact coefficient is not.
+
+### P2: inconclusive, and the reason is P3
+
+The refinement fits are poor (residuals 1e-4 … 3e-4, thirty to sixty times the
+old three-point fit) and the `p = 1` / `p = 2` verdict flips between m = 10 and
+m = 15. The sequences are **non-monotone** in three of four cases (`C1` at
+m = 10: 0.398145, 0.397476, 0.397591, 0.397322), which no single power law can
+produce. Two error channels with different exponents are being fitted at once —
+plus, possibly, a third effect: an internal FFT grid rounded to a transform-
+friendly size rather than exactly `r·(2m+1)` would wobble like this. Untested.
+
+**P2 has to be re-run on the mask path**, where the shape is exact at every
+refinement and only the sampling channel is left. That is the follow-up: 40 / 60
+/ 80 / 100 on the CaModel path, plus the one experiment that could remove the
+term altogether — handing Moose a mask *at* `N = refinement × (2m+1)`, so there
+is nothing left to resample.
