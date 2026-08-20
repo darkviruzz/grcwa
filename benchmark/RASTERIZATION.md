@@ -472,8 +472,96 @@ python benchmark/rasterization_study.py circle --q 21
 
 ## 9. What the Moose probe returned
 
-`moose/moose_raster_probe.cs`, run on the real build (24 cores, 33 min).
-Every solve came back `ok` with `R + T + A − 1` at 1e-16.
+### A reproducibility problem, found on the second run — read this first
+
+A second `moose_raster_probe.cs` run, different machine (different install
+path, 64 cores vs 24, `PARALLEL_TASKS = 6` both times), same nominal
+parameters, gives **different R at `fft = 40`** from the first run — and
+**identical R at `fft = 100`**, on both the Atom and the mask-eps paths:
+
+| path | fft | run 1 | run 2 | diff |
+|---|---:|---:|---:|---:|
+| atom | 40 | 0.398145379 | 0.396607924 | −1.5e-03 |
+| atom | 100 | 0.397322457 | 0.397322457 | −7.8e-11 |
+| mask | 40 | 0.396256900 | 0.396607924 | +3.5e-04 |
+| mask | 100 | 0.395804217 | 0.395804217 | +1.3e-10 |
+
+This is not noise — it is a specific, structured pattern, and it points at a
+specific cause. `fft = 40` solves take ~25–30 s; `fft = 100` solves take
+~180 s. Under `PARALLEL_TASKS = 6`, many `fft = 40` jobs are genuinely running
+at once (a long queue of short jobs on shared worker threads); `fft = 100`
+jobs, 6–7× slower, have far fewer instances overlapping at any moment. If
+`GratingStructure`/`Layer`/`CaModel`/`Rcwa` construction — not just
+`Calc()` — holds any shared or thread-affine state, concurrent *construction*
+is exactly where it would surface, and it would surface **more** at `fft = 40`
+(much more overlap) than at `fft = 100` (much less) — which is exactly what
+was observed. `moose_convergence_bench.cs` already has a `PARALLEL_SELFTEST`
+for the **Atom** construction path and found it safe; the newer
+`Layer(double, CaModel)` path (which P1 and P4 both depend on entirely) has
+never been tested that way.
+
+**This has to be resolved before §9's numbers — including the 7×10⁻⁷ headline
+agreement with `ikarus[li]` — can be trusted as reported.** That agreement was
+measured at `fft = 40`, exactly the refinement where the two runs disagree; it
+is not yet known which run (if either) is the trustworthy one, or whether both
+are corrupted by the same race in different ways.
+
+`moose/moose_camodel_selftest.cs` is the targeted test: the same
+(case, order, refinement) solved `N_REPEAT` times sequentially and again
+`N_REPEAT` times at the same parallelism (`PARALLEL_TASKS = 6`) the two runs
+above used, at both `fft = 40` (suspect) and `fft = 100` (control), reporting
+the spread in each mode. Three readings are possible:
+
+* sequential flat, parallel flat → the run1/run2 difference is a real
+  machine/build difference, not a bug in how this repo drives Moose — compare
+  Moose version/build strings between the two machines next.
+* sequential flat, parallel not → a confirmed race condition in the CaModel
+  construction path. Every P1/P4 number collected with `PARALLEL_TASKS > 1`
+  needs a rerun at `PARALLEL_TASKS = 1` before it is trustworthy, and the
+  probes' default should drop to 1 until this is root-caused.
+* sequential not flat → Moose itself is non-deterministic on this build even
+  single-threaded — a larger, separate finding.
+
+Not yet run. Until it is, treat §9's specific numeric agreement as suspended,
+not retracted — the *qualitative* finding that Moose is Li (not NV), that
+CaModel is a working construction, and the 2D bisection in §3 (done by hand,
+single-threaded, no concurrency involved at all) all stand independently of
+this question.
+
+### A related correction: P4 did not test what it meant to
+
+P4 was designed to separate "refinement resamples a mismatched grid" (fixable
+by matching the grid to the refinement) from any other cause. It could not,
+because of a design oversight: `CA_RES = 260` and every `matched` resolution
+(`refinement · (2m+1)` for `refinement` a multiple of 20) are **all** divisible
+by 5 — so every grid P4 built was already an *exact* representation of
+`w = 0.6`/`0.5`/`0.4`, on both the `fixed` and `matched` paths, at every
+refinement tested. `fixed` and `matched` therefore came back identical by
+construction (confirmed in the returned data: bit-identical to 1e-13 at every
+row) — not because refinement stopped mattering, but because the experiment
+never created a mismatched grid to compare against.
+
+What P4 *did* show, cleanly: **R still depends on refinement (spread
+3×10⁻⁴–1.6×10⁻³ across 40→100) even when the input grid is geometrically exact
+and resolution-independent.** That means refinement is not (purely) a
+shape/pixel-count correction — that channel was already closed by handing in
+an exact `CaModel` — so whatever refinement is still doing operates through a
+different mechanism (an internal FFT/quadrature fidelity setting, most likely)
+that this repo has not yet identified. The `p = 1` vs `p = 2` fits in the P4
+verdict are correspondingly not decisive (they split roughly evenly between
+`m = 10` and `m = 15`), which is consistent with fitting the wrong model to
+whatever this effect actually is.
+
+The next mask-refinement run should deliberately include a **mismatched**
+resolution (e.g. `CA_RES = 257`, not divisible by 5) at a couple of
+refinements, to isolate the shape-resampling question P4 was meant to answer
+from whatever this other, still-unidentified effect is.
+
+### The first run's numbers, as originally reported
+
+The rest of this section is the first `moose_raster_probe.cs` run, on the real
+build (24 cores, 33 min). Every solve came back `ok` with `R + T + A − 1` at
+1e-16. Read alongside the caveat above, not instead of it.
 
 ### P1: yes — and it changes the plan
 
@@ -595,13 +683,49 @@ finer internal grid (~10× the 930 estimate) that is unrelated to the
 being exact/analytic, and not with it sharing the 2D path's specific +1-cell
 defect.
 
-A companion **2D** manual reading at the same nominal parameters (`orders
-15,15`, `fft-fac 30`) was inconclusive for a different reason: the reported
-triple did not resolve into a `(T, R)` pair that sums to 1 for this lossless
-stack, and none of the factorization rules this repo can construct (Laurent,
-Pol, Li, NV) land anywhere near the reported R at any order tried. Rather than
-force a reading, this is flagged as open — resolve via the validated
-`moose_raster_probe.cs`/CaModel path (which the P1 table above already checked
-digit-for-digit) rather than by hand-typing into the RCWA dialog, where the
-UI shows only 6 digits and the exact column meaning for a 2D case is easy to
-misread.
+The follow-up 2D manual reading (same parameters, corrected structure) resolved
+that: `(T, R) = (60.1564 %, 39.8436 %)` at `w = 0.6`, summing to 1 as it must,
+and in the right ballpark of what this repo's own Atom-path measurements give
+at nearby `m`/refinement (39.66–39.80 % over the tested range — see the
+reproducibility caveat at the top of §9 for why that range itself is now in
+question).
+
+That reading came with a **width bisection** — `R`, `T` sampled at `w` from
+0.599 to 0.601 in steps of 0.0002 — and it is a clean, independent, hand-run
+(so concurrency-free — unaffected by the §9 caveat above) confirmation of 2D
+pixelation in its own right:
+
+| w | R (%) | T (%) |
+|---:|---:|---:|
+| 0.599 – 0.5994 | 60.4807 | 39.5193 |
+| 0.5996 – 0.6004 | **60.1564** | **39.8436** |
+| 0.6006 – 0.601 | 59.8201 | 40.1799 |
+
+Three **flat plateaus**, not a smooth curve — R is exactly constant across each
+sampled range and jumps by exactly the same amount (ΔR = 0.3243 points) at each
+boundary. That is the direct, first-hand signature of an integer pixel count
+held fixed across a span of continuous input widths — no inference needed, this
+*is* what pixelation looks like when bisected finely enough.
+
+The plateau containing `w = 0.6` spans at least `[0.5996, 0.6004]` (0.0008
+wide) and at most `(0.5994, 0.6006)` (0.0012 wide) — call it `w_step ≈ 0.001`,
+i.e. **≈ 0.5 nm** absolute at this 0.5 µm period (the user's own on-the-spot
+estimate — "sieht nach 1 nm Auflösung aus" — landed within a factor of ~2 of
+this bound). That implies an internal grid `N_implied ≈ 1/w_step`, bounded
+between 833 and 1250 — comfortably containing `N = refinement·(2m+1) = 930` at
+the user's actual settings (`refinement = 30`, `m = 15`), the same formula P3
+established from the C# side. The jump size is consistent too: this repo's own
+±4 %-width probe rows (P1, `C1_Si_pillars`, m = 10) give a local sensitivity of
+`dR/dw ≈ +2.9` near `w = 0.6`, which predicts `ΔR ≈ 2.9 × 0.001 ≈ 0.29` points
+for one pixel step — against the observed 0.3243, agreement to ~10 % (using a
+slope measured at different `m`/refinement than the bisection, so this is a
+consistency check, not a precision match).
+
+The fine 1D bisection (`w` from 0.6 to 0.600001 in steps of 1e-6, `T` creeping
+0.6491**51** → 0.6491**46** monotonically) does **not** show the same clean
+plateau structure — either the 1D path's internal grid is far finer than 1D's
+established `NX_1D`-scale story would suggest, or (more likely) the UI's 4–5
+displayed digits are too coarse to resolve an actual plateau at this step size.
+Unlike the 2D bisection, this one cannot be read as a clean confirmation either
+way; a coarser bisection (steps of ~1e-4, over a window a few 1e-3 wide, the
+way the 2D one was done) would be needed to see actual plateau edges in 1D.

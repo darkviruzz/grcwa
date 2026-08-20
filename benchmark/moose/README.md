@@ -461,6 +461,24 @@ anything and takes seconds. It also prints the distinct permittivity values it
 finds, which identifies the value convention (`eps` or `n + ik`) and the sign of
 the loss straight off the rendered grid.
 
+### A reproducibility problem, found on the second run
+
+A second run, different machine, same nominal parameters, gave a **different**
+R at `fft = 40` from the first run, but an **identical** R at `fft = 100`, on
+both the Atom and mask-eps paths — a specific pattern (fast `fft = 40` jobs
+overlap heavily under `PARALLEL_TASKS = 6`, slow `fft = 100` jobs barely
+overlap) consistent with a race condition in the `Layer(double, CaModel)`
+construction path, which has never been concurrency-tested the way
+`moose_convergence_bench.cs`'s `PARALLEL_SELFTEST` tested the Atom path.
+
+**`moose_camodel_selftest.cs`** is the targeted check: the same case/order/
+refinement solved `N_REPEAT` times sequentially and again at
+`PARALLEL_TASKS = 6`, at both `fft = 40` (suspect) and `fft = 100` (control).
+Run this **before** trusting any P1/P4 numbers collected with
+`PARALLEL_TASKS > 1` — see `RASTERIZATION.md` §9 for the full write-up,
+including why this puts the earlier 7×10⁻⁷ Moose/`ikarus[li]` agreement on
+hold until it is resolved.
+
 ### What the first run found, and P4
 
 The first run answered P1 **yes** — `Layer(double, CaModel)` works, takes `eps`,
