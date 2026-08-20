@@ -474,10 +474,13 @@ construction path, which has never been concurrency-tested the way
 **`moose_camodel_selftest.cs`** is the targeted check: the same case/order/
 refinement solved `N_REPEAT` times sequentially and again at
 `PARALLEL_TASKS = 6`, at both `fft = 40` (suspect) and `fft = 100` (control).
-Run this **before** trusting any P1/P4 numbers collected with
-`PARALLEL_TASKS > 1` — see `RASTERIZATION.md` §9 for the full write-up,
-including why this puts the earlier 7×10⁻⁷ Moose/`ikarus[li]` agreement on
-hold until it is resolved.
+
+**Run twice on run 1's machine: zero spread every time, sequential and
+parallel alike.** No race condition — ruled out. The open question narrowed to
+whether run 2's machine is a genuinely different, but internally stable, Moose
+build/install. Run the self-test there too, and compare Moose version/build
+info between the two machines, before trusting run 2's numbers over run 1's —
+see `RASTERIZATION.md` §9 for the full write-up.
 
 ### What the first run found, and P4
 

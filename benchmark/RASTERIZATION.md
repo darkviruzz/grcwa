@@ -510,23 +510,33 @@ are corrupted by the same race in different ways.
 (case, order, refinement) solved `N_REPEAT` times sequentially and again
 `N_REPEAT` times at the same parallelism (`PARALLEL_TASKS = 6`) the two runs
 above used, at both `fft = 40` (suspect) and `fft = 100` (control), reporting
-the spread in each mode. Three readings are possible:
+the spread in each mode.
 
-* sequential flat, parallel flat → the run1/run2 difference is a real
-  machine/build difference, not a bug in how this repo drives Moose — compare
-  Moose version/build strings between the two machines next.
-* sequential flat, parallel not → a confirmed race condition in the CaModel
-  construction path. Every P1/P4 number collected with `PARALLEL_TASKS > 1`
-  needs a rerun at `PARALLEL_TASKS = 1` before it is trustworthy, and the
-  probes' default should drop to 1 until this is root-caused.
-* sequential not flat → Moose itself is non-deterministic on this build even
-  single-threaded — a larger, separate finding.
+**Run twice, on the same 24-core machine as run 1 (the self-test log's own
+header says `cores = 24`). Both times: zero spread, sequential and parallel
+alike, at both refinements** — `fft = 40` gives `0.396256900` in all 16
+repeats (8 sequential + 8 parallel) on each invocation, `fft = 100` gives
+`0.395804217` the same way. **No race condition** — that reading is ruled out
+cleanly. And the number it reproduces is run 1's, not run 2's: on this
+machine, `0.396256900` at `fft = 40` is simply the stable, correct answer.
 
-Not yet run. Until it is, treat §9's specific numeric agreement as suspended,
-not retracted — the *qualitative* finding that Moose is Li (not NV), that
-CaModel is a working construction, and the 2D bisection in §3 (done by hand,
-single-threaded, no concurrency involved at all) all stand independently of
-this question.
+That narrows the open question to the remaining reading: **a genuine
+machine/build difference between run 1's and run 2's Moose installs.** It is
+not yet known whether run 2's machine is *also* internally stable (just
+stable at a *different* number) or something else — the self-test has only
+been run on run 1's machine so far. Next step: run
+`moose_camodel_selftest.cs` on run 2's machine too, and compare Moose's
+version/build info between the two installs (`Help`/`About`, or the `.exe`'s
+file properties) — if run 2's machine is *also* stable, this is a genuine,
+reproducible cross-build numeric difference at low refinement (plausible: a
+rasterization/anti-aliasing implementation detail that only matters on a
+coarse internal grid and washes out by `fft = 100`, where both installs
+already agree). The qualitative findings — Moose is Li not NV, `CaModel` is a
+working construction, the §3 bisection (done by hand, no concurrency
+involved) — stood independently of this question the whole time; what was
+genuinely open was only whether run 1's or run 2's *number* was the
+trustworthy one, and run 1's is now confirmed stable and reproducible on its
+own machine.
 
 ### A related correction: P4 did not test what it meant to
 
