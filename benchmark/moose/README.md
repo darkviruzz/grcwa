@@ -475,21 +475,26 @@ construction path, which has never been concurrency-tested the way
 refinement solved `N_REPEAT` times sequentially and again at
 `PARALLEL_TASKS = 6`, at both `fft = 40` (suspect) and `fft = 100` (control).
 
-**Run twice on run 1's machine: zero spread every time, sequential and
-parallel alike.** No race condition — ruled out. The open question narrowed to
-whether run 2's machine is a genuinely different, but internally stable, Moose
-build/install. Run the self-test there too, and compare Moose version/build
-info between the two machines, before trusting run 2's numbers over run 1's —
-see `RASTERIZATION.md` §9 for the full write-up.
+**Run on both machines: zero spread every time, sequential and parallel
+alike, on both.** No race condition — ruled out on both sides. But the two
+machines are stable at *different* numbers at `fft = 40` (0.396256900 vs
+0.396607924, a real 3.5×10⁻⁴ difference) and agree exactly at `fft = 100`
+(0.395804217, both). **This retracts the 7×10⁻⁷ headline below** — it was
+machine 1's `fft = 40` number specifically, the exact point the two builds
+disagree — and replaces it with the machine-verified `fft = 100` comparison:
+4.5×10⁻⁴ from `ikarus[li]`, not 7×10⁻⁷. See `RASTERIZATION.md` §9 for the
+full correction and what still stands.
 
 ### What the first run found, and P4
 
 The first run answered P1 **yes** — `Layer(double, CaModel)` works, takes `eps`,
-uses the grid it is given, and is free of index-convention bugs. With the same
-pixel image in both codes, Moose and `ikarus[li]` agree to **7×10⁻⁷** on `C1`
-and `C2` — the cross-solver target, reached, on a 2D structure. It also settled
-what Moose's factorization *is*: Li's separable rule, not a normal-vector
-method (Moose sits 7×10⁻⁷ from Li and 2.6×10⁻² from NV on `C2`).
+uses the grid it is given, and is free of index-convention bugs (all still
+true, unaffected by the correction above). Its **7×10⁻⁷** Moose/`ikarus[li]`
+agreement on `C1` and `C2` did **not** survive the cross-machine check (see
+above) and is retracted; the trustworthy, machine-verified gap on `C1` is
+4.5×10⁻⁴. What does survive: Moose sits **near** Li, not near NV — even the
+corrected gap is three orders of magnitude smaller than NV's 2.9×10⁻³ on the
+same case.
 
 P3 refuted the reasoning that had been used to defend the old refinement fit:
 Moose's rectangle rasterizer is **one cell too wide per axis on every grid

@@ -106,10 +106,13 @@ so this residual is Bug B in isolation):
 | Pol | 0.792535 | 0.792669 | 0.792915 | 0.793305 |
 
 still visibly climbing toward the faithful value (~0.79330, `Li`/`NV`/Moose all
-agree there — see `RASTERIZATION.md` §9) at N = 32000, on the *simplest
-possible* case (a straight 1D interface) — because a straight grating has
-exactly two, exactly-antiparallel edges, which is the worst case for this bug,
-not an edge case of it.
+agree there — from `benchmark/README.md`'s original 1D sweep, a different code
+path from the CaModel work in `RASTERIZATION.md` §9 and not yet cross-machine
+verified either, so treat this anchor value as provisional too, not as an
+exception to that section's caveat) at N = 32000, on the *simplest possible*
+case (a straight 1D interface) — because a straight grating has exactly two,
+exactly-antiparallel edges, which is the worst case for this bug, not an edge
+case of it.
 
 **The fix — double-angle (orientation) encoding, not raw-vector blurring.**
 Two vectors pointing in opposite directions (`θ` and `θ + 180°`) represent the

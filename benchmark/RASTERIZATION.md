@@ -362,14 +362,18 @@ worth having — but as an *oracle*, not as the common denominator:
   FFT), and Moose cannot at all. So analytic coefficients give a
   **geometry-error-free reference column**, not cross-solver agreement.
 
-**(e) The candidate nobody proposed — and it works, see §9.** Moose's
+**(e) The candidate nobody proposed — the plumbing works, see §9.** Moose's
 `Layer(double thickness, CaModel epsilonDistribution)` takes an explicit
 complex permittivity grid. If Moose consumes it as given, then all three suites
 can be handed the *same pixel image*, the geometry drops out of the
 cross-solver comparison completely (including for the circle), and the
 pixel-image-to-nominal-shape gap becomes one common quantity measured once
-instead of three different quantities that never cancel. **The probe says yes**,
-and on the same pixel image Moose and Ikarus's Li rule agree to 7e-7. §9.
+instead of three different quantities that never cancel. **The probe says the
+construction works** — correctly indexed, resolution-independent, no
+transpose — but an early "agrees with Ikarus's Li rule to 7e-7" reading of it
+did not survive a cross-machine check and has been retracted; see §9 for the
+corrected, machine-verified comparison (a real residual, ~4.5e-4 at `m = 10`,
+of unknown origin).
 
 ---
 
@@ -520,23 +524,52 @@ repeats (8 sequential + 8 parallel) on each invocation, `fft = 100` gives
 cleanly. And the number it reproduces is run 1's, not run 2's: on this
 machine, `0.396256900` at `fft = 40` is simply the stable, correct answer.
 
-That narrows the open question to the remaining reading: **a genuine
-machine/build difference between run 1's and run 2's Moose installs.** It is
-not yet known whether run 2's machine is *also* internally stable (just
-stable at a *different* number) or something else — the self-test has only
-been run on run 1's machine so far. Next step: run
-`moose_camodel_selftest.cs` on run 2's machine too, and compare Moose's
-version/build info between the two installs (`Help`/`About`, or the `.exe`'s
-file properties) — if run 2's machine is *also* stable, this is a genuine,
-reproducible cross-build numeric difference at low refinement (plausible: a
-rasterization/anti-aliasing implementation detail that only matters on a
-coarse internal grid and washes out by `fft = 100`, where both installs
-already agree). The qualitative findings — Moose is Li not NV, `CaModel` is a
-working construction, the §3 bisection (done by hand, no concurrency
-involved) — stood independently of this question the whole time; what was
-genuinely open was only whether run 1's or run 2's *number* was the
-trustworthy one, and run 1's is now confirmed stable and reproducible on its
-own machine.
+**Run on run 2's machine as well (64 cores): also zero spread, sequential and
+parallel alike, both refinements** — confirming this machine is just as
+internally deterministic as run 1's. But at `fft = 40` it is stable at a
+*different* number, `0.396607924`, not run 1's `0.396256900` — a real,
+reproducible, machine/build-specific difference of 3.5×10⁻⁴, not flakiness on
+either side. At `fft = 100` the two machines agree exactly (`0.395804217`,
+diff `0.0`).
+
+**This means the 7×10⁻⁷ agreement with `ikarus[li]` reported earlier has to be
+retracted, not just suspended.** It was measured at `fft = 40` on run 1's
+machine specifically — exactly the point where the two builds disagree by
+3.5×10⁻⁴, six orders of magnitude bigger than the "agreement" itself. The only
+value both machines actually agree on is the `fft = 100` one, and *that* value
+sits **4.5×10⁻⁴** from `ikarus[li]` (`0.395804217` vs `0.396256166`) — the
+honest, cross-machine-verified number, and worse than what was originally
+reported by a factor of ~600. The earlier 7×10⁻⁷ was very likely a
+coincidental cancellation between one build's low-refinement error and
+Ikarus's own `q = 21` truncation error, not a real confirmation of anything.
+
+| | Moose | vs `ikarus[li]` (0.396256166) |
+|---|---:|---:|
+| machine 1, `fft = 40` (the retracted headline) | 0.396256900 | +7.3e-07 |
+| machine 2, `fft = 40` | 0.396607924 | +3.5e-04 |
+| **both machines, `fft = 100` (trustworthy)** | **0.395804217** | **−4.5e-04** |
+
+What still stands, independent of this correction: no race condition (now
+confirmed on *both* machines); `CaModel` is a working, correctly-indexed
+construction (P1's other checks — value convention, transpose control, grid
+independence — did not depend on which refinement was used); the relative
+classification "Moose sits near Li, not near NV" almost certainly still holds
+(NV was off by 2–4 % on these cases, two orders of magnitude worse than even
+the corrected 4.5e-4); and the §3 width bisection (hand-run, no concurrency,
+unaffected by any of this) still directly confirms 2D pixelation with the
+right pixel-step magnitude.
+
+What does **not** stand: the claim that geometry was "the whole
+disagreement" and that handing Moose the same pixel image closes the
+cross-solver gap to 1e-6. It gets much closer than the uncorrected geometry
+did, but a real, currently unexplained residual (~4.5e-4, at `m = 10`) remains
+even on the exact mask. `refinement` is the leading suspect (§9's P4 already
+showed it moves R by a similar order of magnitude on an exact grid, through a
+mechanism that is not simple shape resampling and is not yet identified) —
+the natural next step is pushing refinement higher than 100 on one machine
+(cross-machine verification is no longer needed for this, since both machines
+are now confirmed internally deterministic) to see whether the gap to `li`
+keeps closing in a well-behaved way, or plateaus somewhere above 4.5e-4.
 
 ### A related correction: P4 did not test what it meant to
 
@@ -595,34 +628,44 @@ works.** Moose can be handed an explicit permittivity grid.
 * **The refinement still resamples an explicit grid**, by 8.5e-5 … 4.5e-4
   between `fft = 40` and `fft = 100`. That is the one term left in the budget.
 
-### And with the same pixel image, Moose is Ikarus's Li rule
+### And with the same pixel image, Moose is close to Ikarus's Li rule — how close is now corrected
 
 Python solved bit-for-bit the same masks (verified cell by cell, not assumed),
-q = 21:
+q = 21, all at **`fft = 40` on machine 1** — the specific (machine, refinement)
+combination the reproducibility check below found is *not* representative:
 
-| case | Moose, mask, fft = 40 | `ikarus[li]` | Δ | `ikarus[NV]` | Δ |
+| case | Moose, mask, fft = 40 (machine 1) | `ikarus[li]` | Δ | `ikarus[NV]` | Δ |
 |---|---:|---:|---:|---:|---:|
-| `C1_Si_pillars` | 0.396256900 | 0.396256166 | **+7.3e-07** | 0.399130762 | −2.9e-03 |
+| `C1_Si_pillars` | 0.396256900 | 0.396256166 | +7.3e-07 | 0.399130762 | −2.9e-03 |
 | `C1b_Si_pillars_diffract` | 0.159508882 | 0.159528879 | −2.0e-05 | 0.162126121 | −2.6e-03 |
-| `C2_Au_holes` | 0.672547367 | 0.672548085 | **−7.2e-07** | 0.646252195 | +2.6e-02 |
+| `C2_Au_holes` | 0.672547367 | 0.672548085 | −7.2e-07 | 0.646252195 | +2.6e-02 |
 | `D2_ikarus_cylinder_TE` | 0.905398790 | 0.905812281 | −4.1e-04 | 0.943083334 | −3.8e-02 |
 | `AN_aniso_control` | 0.893827841 | 0.893784640 | +4.3e-05 | 0.893513221 | +3.1e-04 |
 
-Two things follow, and both are new.
+**Only `C1`'s number in this table has since been cross-machine-verified, and
+it did not survive: machine 2 gives 0.396607924 at the same `fft = 40`, +3.5e-4
+from `ikarus[li]`, not +7.3e-7.** The two machines *do* agree, exactly, at
+`fft = 100` — but that value (0.395804217) is itself −4.5e-4 from `ikarus[li]`,
+not closer. `C1b`, `D2` and `AN`'s near-perfect `fft = 40` agreements above have
+**not** been cross-machine-checked at all; treat them with the same suspicion
+until they are, not as confirmed. `C2`'s −7.2e-7 is the same kind of number as
+`C1`'s +7.3e-7 (same machine, same refinement) and is presumptively equally
+fragile, though it has not been individually re-checked either.
 
-**The cross-solver target is reached on the aligned 2D cases.** 7e-7 between two
-independently written codes on a 2D structure — below the 1e-6 the study was
-aiming at — the moment they are handed the same pixel image. Geometry was the
-whole disagreement; nothing else had to change.
-
-**Moose's factorization is Li's separable inverse rule**, or something
-numerically indistinguishable from it on these five shapes. It is not a
-normal-vector method: on `C2` it sits 2.6e-2 from NV and 7e-7 from Li, on the
-curved `D2` 3.8e-2 from NV and 4e-4 from Li. That reclassifies what Moose is
-*for* in this study — it is a second implementation of Li, not an independent
-arbiter between Li and the normal-vector rule, and it inherits Li's slow
-convergence on curved boundaries. The `D2` values that "were still climbing" are
-Li climbing.
+What survives this correction: **Moose sits near Li, not near NV**, by a
+margin large enough that the correction doesn't threaten it — even the
+corrected, machine-verified `C1` gap (4.5e-4) is three orders of magnitude
+smaller than NV's gap on the same case (2.9e-3), and on `C2`/`D2` the Li/NV
+gaps differ by one to two orders of magnitude, room enough that a similar-sized
+correction on those cases would not flip the conclusion. What does **not**
+survive: the *size* of the agreement, and with it the claim that geometry was
+already the whole disagreement. A real residual — currently ~4.5e-4 on `C1` at
+`m = 10`, machine-independent, mechanism unidentified (§9 top: not simple
+shape resampling, since it appears even on an exact grid) — remains. The `D2`
+values that were "still climbing" toward Li are presumptively still Li
+climbing, since NV is still two orders of magnitude further off regardless of
+which machine's number is used — but that specific comparison, like `C1b`'s
+and `AN`'s, awaits its own cross-machine check.
 
 ### P3: Moose's rasterizer is one cell too wide, always
 
