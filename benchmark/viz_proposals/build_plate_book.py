@@ -69,16 +69,16 @@ def _meta_text(meta):
 
 
 def build():
-    with open(os.path.join(TPL, "head.html")) as f:
+    with open(os.path.join(TPL, "head.html"), encoding="utf-8") as f:
         head = f.read()
-    with open(os.path.join(TPL, "body.html")) as f:
+    with open(os.path.join(TPL, "body.html"), encoding="utf-8") as f:
         body = f.read()
-    with open(os.path.join(TPL, "app.html")) as f:
+    with open(os.path.join(TPL, "app.html"), encoding="utf-8") as f:
         app = f.read()
     payload = os.path.join(FIGS, "conv_web.json")
     if not os.path.exists(payload):
         raise SystemExit("missing %s\n(run export_web.py first)" % payload)
-    with open(payload) as f:
+    with open(payload, encoding="utf-8") as f:
         data = f.read()
     meta = _meta_text(json.loads(data).get("meta", {}))
     missing = sorted(set(re.findall(r"\{\{META:([A-Z_]+)\}\}", body)) - set(meta))
