@@ -1,0 +1,280 @@
+<header class="top">
+  <div class="wrap mast">
+    <div class="eyebrow">grcwa · benchmark · built {{META:BUILT}}</div>
+    <h1>Plate book</h1>
+    <p class="deck">The benchmark battery as one sheet: every structure drawn, and every
+      convergence sweep plotted against the reference it is judged on. Everything is
+      rendered from the repository's own data — geometry straight out of
+      <code>structures.py</code>, numbers out of the convergence run and the Moose
+      reference — so no figure can drift from what it claims to draw. Rebuild it with
+      <code>python benchmark/make_plate_book.py</code>.</p>
+    <div class="side">
+      <div class="rule-row">
+        <span><b>{{META:STRUCTURES}}</b> structures</span>
+        <span><b>{{META:COLUMNS}}</b> code+rule columns</span>
+        <span><b>{{META:SOLVES}}</b> measured solves</span>
+        <span><b>{{META:ORDERS}}</b> retained orders</span>
+        <span><b>λ = 1</b>, lengths in µm</span>
+      </div>
+      <p style="margin:0;color:var(--ink-2);font-size:.93rem">
+        Run: <span class="mono">{{META:STATE}}</span>, q ≤ {{META:QMAX}}, judged at
+        |ΔR| ≤ {{META:TOL}}. Click any figure to inspect it full size.</p>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<!-- ============================ PART A ============================ -->
+<section id="structures">
+  <div class="sec-head">
+    <div class="eyebrow">Part A</div>
+    <h2>Drawing the structures</h2>
+    <p class="lede">One style for all thirteen, plus the atlas as an opener. The decisive
+      change from the first round: <b>air is absent rather than grey</b>. The gaps between
+      ridges and pillars are open space, a perforated film is cut through to its substrate,
+      and a free-standing case gets a dashed phantom half space instead of a solid block —
+      so what you see filled is exactly what is material.</p>
+  </div>
+
+  <article class="plate">
+    <div class="plate-head">
+      <div class="plate-id">S2<small>structures</small></div>
+      <div>
+        <h3>Every structure as a solid isometric unit cell</h3>
+        <p>Ridges, pillars and cylinders are real prisms with shaded faces and depth-sorted
+          overlap, not a textured block. A hole array is drawn as a pit you look into: far
+          walls in shadow, substrate at the bottom. <b>E</b> is drawn along the axis the
+          polarization actually selects, so TE-along-the-grooves versus TM-across-them reads
+          as geometry rather than as a letter you have to decode.</p>
+        <p style="margin-top:.5em"><code>benchmark/plot_structures.py</code> →
+          <code>struct_iso.png</code></p>
+      </div>
+    </div>
+    <div class="frame"><img src="{{IMG:struct_iso.png}}" alt="All 13 benchmark structures as solid isometric unit cells"></div>
+    <div class="zoomhint">click to enlarge</div>
+    <div class="specs">
+      <div class="spec good"><div class="k">Reads</div><div class="v">Square pillar, cylinder and hole array separate instantly; the empty gaps make the fill fraction visible without reading a number.</div></div>
+      <div class="spec cost"><div class="k">Costs</div><div class="v">Isometric foreshortening is honest but not measurable — exact dimensions belong on the S1 plate below.</div></div>
+      <div class="spec"><div class="k">Where</div><div class="v">The README's structure figure, and the sheet to point at when someone asks what the battery contains.</div></div>
+    </div>
+  </article>
+
+  <article class="plate">
+    <div class="plate-head">
+      <div class="plate-id">S3<small>opener</small></div>
+      <div>
+        <h3>All 13 on one shared length scale, sorted by period</h3>
+        <p>Every row shows the same 3.3 λ-wide window, so how many periods you see <em>is</em>
+          the sub-wavelength/diffracting story — and thicknesses are on that same scale too.
+          A2 fits sixteen periods in the window; B1 fits two.</p>
+        <p style="margin-top:.5em"><code>benchmark/plot_structures.py</code> →
+          <code>struct_atlas.png</code></p>
+      </div>
+    </div>
+    <div class="frame"><img src="{{IMG:struct_atlas.png}}" alt="All 13 structures on one shared length scale, sorted by period"></div>
+    <div class="zoomhint">click to enlarge</div>
+    <div class="specs">
+      <div class="spec good"><div class="k">Reads</div><div class="v">Comparative. The only plate where C2 and B2 show as nearly the same period but wildly different materials.</div></div>
+      <div class="spec cost"><div class="k">Costs</div><div class="v">A contact sheet, not a spec sheet — no per-structure detail.</div></div>
+      <div class="spec"><div class="k">Where</div><div class="v">Above the isometric sheet, once.</div></div>
+    </div>
+  </article>
+
+  <article class="plate">
+    <div class="plate-head">
+      <div class="plate-id">S1<small>dimensioned</small></div>
+      <div>
+        <h3>Dimensioned x–z cut, mechanical-drawing style</h3>
+        <p>The measurable counterpart to the isometric sheet: every thickness, period and
+          margin carried as a real dimension line, with a top-view inset for the 2D cases.
+          The λ bar sets the scale. Known rough edge: at full-sheet scale a few of the
+          smaller dimensions still crowd each other.</p>
+        <p style="margin-top:.5em"><code>viz_proposals/plot_s1_xsec.py</code></p>
+      </div>
+    </div>
+    <div class="frame"><img src="{{IMG:out_S1_crosssection.png}}" alt="All 13 benchmark structures as dimensioned x–z cross-sections"></div>
+    <div class="zoomhint">click to enlarge</div>
+  </article>
+</section>
+
+<!-- ============================ PART B ============================ -->
+<section id="convergence">
+  <div class="sec-head">
+    <div class="eyebrow">Part B</div>
+    <h2>Drawing the convergence</h2>
+    <p class="lede">Both convergence plates drop the red/green encoding: colour is now the
+      <em>factorization rule</em> and dash plus marker the <em>codebase</em>, on the argument
+      that the story this battery tells is direct-versus-faithful rather than
+      fork-versus-ikarus. Both Laurent columns therefore collapse onto one grey — which is
+      itself the claim that the direct rule behaves identically in both codes. The palette is
+      Okabe-Ito, so the figures survive colour-blind readers and greyscale printing.</p>
+  </div>
+
+  <article class="plate">
+    <div class="plate-head">
+      <div class="plate-id">C2<small>cost</small></div>
+      <div>
+        <h3>The cost staircase: the best error a wall-time budget can buy</h3>
+        <p>Faint markers are the raw measurements; the thick step is the running best — the
+          honest answer to “with 100 ms, how close can I get?”. Monotone by construction, so
+          the oscillation that makes a plain error-vs-time scatter unreadable becomes a flat
+          tread instead of a scribble. A flat tread means spending more buys nothing.</p>
+        <p style="margin-top:.5em"><code>benchmark/plot_conv_cost.py</code> →
+          <code>conv_cost_staircase.png</code></p>
+      </div>
+    </div>
+    <div class="frame"><img src="{{IMG:conv_cost_staircase.png}}" alt="Cost staircase: best achievable error versus wall time, per case"></div>
+    <div class="zoomhint">click to enlarge</div>
+    <div class="specs">
+      <div class="spec good"><div class="k">Reads</div><div class="v">The Ikarus-buys-back-its-cost result directly: on B2 and D1 the blue and green staircases sit two decades left of the orange one at equal accuracy.</div></div>
+      <div class="spec cost"><div class="k">Costs</div><div class="v">The envelope hides non-monotone behaviour on purpose — the raw markers stay visible so it remains honest.</div></div>
+      <div class="spec"><div class="k">Where</div><div class="v">The figure the README's time-to-accuracy table currently does in prose.</div></div>
+    </div>
+  </article>
+
+  <article class="plate">
+    <div class="plate-head">
+      <div class="plate-id">C4<small>two axes</small></div>
+      <div>
+        <h3>Signed deviation on a symlog axis</h3>
+        <p>One linear axis cannot hold both the low-order transient and the 1e-4 endgame,
+          which is why the raw figure needs a <code>_tight</code> twin. A symlog axis holds
+          both: outside ±1e-4 it is logarithmic and you read the transient and the
+          <em>sign</em> of the approach; inside the band it goes linear and the endgame is
+          legible in the same panel. Two variants — against retained orders and against wall
+          time — and Moose is now on <em>both</em>, since the scripted run records a
+          <code>t_solve</code> per point. Where a case is judged against Moose its black curve
+          is self-convergence, which the panel says; on D1 and D2 it is a genuine third-code
+          accuracy curve.</p>
+        <p style="margin-top:.5em"><code>benchmark/plot_deviation.py</code> →
+          <code>conv_deviation_orders.png</code>, <code>conv_deviation_time.png</code></p>
+      </div>
+    </div>
+    <div class="frame"><img src="{{IMG:conv_deviation_orders.png}}" alt="Signed deviation from the reference versus retained orders, symlog axis"></div>
+    <div class="zoomhint">versus retained orders — Moose in black · click to enlarge</div>
+    <div class="frame" style="border-top:1px solid var(--line)"><img src="{{IMG:conv_deviation_time.png}}" alt="Signed deviation from the reference versus wall time, symlog axis"></div>
+    <div class="zoomhint">versus wall time · click to enlarge</div>
+    <div class="specs">
+      <div class="spec good"><div class="k">Reads</div><div class="v">One figure replaces two, and the sign is back — Laurent visibly crawls in from above rather than just “being wrong”.</div></div>
+      <div class="spec cost"><div class="k">Costs</div><div class="v">A symlog axis needs its threshold explained once. After that it is the axis this data always wanted.</div></div>
+      <div class="spec"><div class="k">Where</div><div class="v">Alongside the Moose comparison; <code>plot_moose.py</code> still emits <code>moose_compare_raw</code> and <code>_tight</code> as the narrower cross-check.</div></div>
+      <div class="spec cost"><div class="k">Watch</div><div class="v">Group C compares two rasterizations of the same geometry, so read a residual offset as geometry before physics. Both sides now build the 2D cells from an explicit permittivity grid on a cell-centred exact grid, which removed the ~1e-2 mismatch the earlier runs showed.</div></div>
+    </div>
+  </article>
+
+  <article class="plate">
+    <div class="plate-head">
+      <div class="plate-id">C1<small>digits</small></div>
+      <div>
+        <h3>The digit map</h3>
+        <p>One row per code+rule, one colour step per correct digit of R, ▼ at the first
+          sustained |ΔR| ≤ 1e-4. Fastest glance of anything here — group C is visibly a wall
+          of blue, nobody converges — but it throws away the sign and the shape of the decay,
+          which is what C2 and C4 keep — so it reads fastest and tells least.</p>
+      </div>
+    </div>
+    <div class="frame"><img src="{{IMG:out_C1_digitmap_time.png}}" alt="Digit map of convergence versus wall time"></div>
+    <div class="zoomhint">versus wall time · click to enlarge</div>
+  </article>
+
+  <article class="plate">
+    <div class="plate-head">
+      <div class="plate-id">C3<small>verdict</small></div>
+      <div>
+        <h3>The scoreboard</h3>
+        <p>Cost to reach 1e-4 for every case × column, in orders and in milliseconds — hollow
+          markers are lone crossings, ✗ means the sweep never got there. It is the tabular
+          verdict of <code>conv_convergence.csv</code> as a single picture.</p>
+      </div>
+    </div>
+    <div class="frame"><img src="{{IMG:out_C3_scoreboard.png}}" alt="Scoreboard of cost to reach 1e-4 accuracy, in orders and wall time"></div>
+    <div class="zoomhint">click to enlarge</div>
+  </article>
+</section>
+
+<!-- ============================ PART X ============================ -->
+<section id="explorer">
+  <div class="sec-head">
+    <div class="eyebrow">Part X</div>
+    <h2>The explorer</h2>
+    <p class="lede">The same run with the axis as a control — switch what y means and what x
+      means and watch the same curves re-tell the story. All {{META:SOLVES}} solves are
+      embedded in this page, so it works offline with no server behind it.</p>
+  </div>
+
+  <div class="explorer">
+    <div class="casebar" id="cases"></div>
+    <div class="ctrls">
+      <div class="ctrl-row"><span class="lbl">y axis</span><span id="ymodes"></span></div>
+      <div class="ctrl-row"><span class="lbl">x axis</span><span id="xmodes"></span></div>
+      <div class="ctrl-row"><span class="lbl">series</span><span id="series"></span></div>
+    </div>
+    <div class="canvas-wrap"><canvas id="chart" width="1160" height="560"></canvas></div>
+    <div class="readout" id="readout">Hover the chart to read values.</div>
+  </div>
+</section>
+
+<!-- ============================ STATE ============================ -->
+<section id="state">
+  <div class="sec-head">
+    <div class="eyebrow">State</div>
+    <h2>How this page is made</h2>
+    <p class="lede">One command — <code>python benchmark/make_plate_book.py</code> — renders
+      the seven plotters below and inlines every figure into this file. Shared code sits in
+      <code>benchmark/</code>: <code>viz_palette.py</code> (materials, colours, physics badges,
+      geometry pulled from <code>structures.py</code>), <code>viz_iso.py</code> (the isometric
+      solid renderer) and <code>viz_conv.py</code> (tidy arrays, references, Moose sweep
+      parsing, the running-min envelope and the sustained-arrival rule that matches
+      <code>conv_run.py</code>).</p>
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Plate</th><th>Output</th><th>Plotter</th><th>Shows</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">S2</td><td class="mono">struct_iso.png</td><td class="mono">plot_structures.py</td><td>the battery, one cell each</td></tr>
+        <tr><td class="mono">S3</td><td class="mono">struct_atlas.png</td><td class="mono">plot_structures.py</td><td>all 13 at one scale</td></tr>
+        <tr><td class="mono">C2</td><td class="mono">conv_cost_staircase.png</td><td class="mono">plot_conv_cost.py</td><td>error a time budget buys</td></tr>
+        <tr><td class="mono">C4</td><td class="mono">conv_deviation_orders.png<br>conv_deviation_time.png</td><td class="mono">plot_deviation.py</td><td>signed approach, both axes</td></tr>
+        <tr><td class="mono">S1</td><td class="mono">out_S1_crosssection.png</td><td class="mono">viz_proposals/plot_s1_xsec.py</td><td>every dimension, measurable</td></tr>
+        <tr><td class="mono">C1 / C1t</td><td class="mono">out_C1_digitmap_*.png</td><td class="mono">viz_proposals/plot_c1_digitmap.py</td><td>correct digits of R</td></tr>
+        <tr><td class="mono">C3</td><td class="mono">out_C3_scoreboard.png</td><td class="mono">viz_proposals/plot_c3_scoreboard.py</td><td>cost to reach tolerance</td></tr>
+        <tr><td class="mono">X</td><td class="mono">plate_book.html</td><td class="mono">viz_proposals/export_web.py</td><td>this page, interactive</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <h3>What to keep in mind reading this</h3>
+    <ul>
+      <li><b>Reference drift, measured at build time:</b> {{META:REFDRIFT}}.
+        <code>conv_results.json</code> bakes in the reference each case was judged against
+        when it was solved, while <code>moose_reference.json</code> keeps improving
+        independently. These plates re-read the <em>live</em> Moose value for any case judged
+        against Moose, so where that list is not empty they and <code>plot_conv.py</code>
+        — which keeps the baked value — disagree until the sweep is re-run.</li>
+      <li><b>Self-convergence is not accuracy.</b> Where a case is judged against Moose, the
+        black Moose curve reaches its own reference by construction: it says how fast Moose
+        settles, not how right it is. Only D1 and D2, judged against Ikarus's normal-vector
+        value, carry a genuine third-code accuracy curve.</li>
+      <li><b>The older figures still exist.</b> <code>conv_accuracy_vs_time.png</code> and
+        <code>moose_compare_raw*.png</code> are what C2 and C4 were built to replace;
+        <code>plot_conv.py</code> and <code>plot_moose.py</code> still emit them, and this
+        page does not depend on them.</li>
+    </ul>
+  </div>
+</section>
+
+</div>
+
+<footer><div class="wrap">
+  Rendered {{META:BUILT}} from <span class="mono">{{META:CONV_JSON}}</span>,
+  <span class="mono">{{META:MOOSE_JSON}}</span> and
+  <span class="mono">benchmark/structures.py</span> by
+  <span class="mono">benchmark/make_plate_book.py</span>.
+</div></footer>
+
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Full-size figure">
+  <button class="close" id="lbclose" type="button">close ✕</button><img id="lbimg" alt="">
+</div>

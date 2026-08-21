@@ -93,12 +93,32 @@ Ikarus (as a topology plus one material per index). Neither backend draws its
 own geometry, so a disagreement *between those two* can never be a pixel-grid
 artifact.
 
-### The mask is not the structure — and on 2D it is not close
+### The mask is not the structure — and on 2D it was not close
+
+> **Status: fixed. This section is the record of the investigation, kept in the
+> past tense it earned.** Everything below describes the *legacy* grid
+> (`NX_1D = 8192`, `NX_2D = 256`, rect sampled at the left cell edge). The
+> current default puts every rect case on an exact grid — `NX_1D = 10240`,
+> `NX_2D = 260`, cell centres — and the error it diagnosed is gone:
+>
+> | case | legacy grid | current default |
+> |---|---|---|
+> | `C1_Si_pillars` | 153 / 256 → **−0.391 %** | 156 / 260 → **0.000 %** |
+> | `C1b_Si_pillars_diffract` | 103 / 256 → **+0.586 %** | 104 / 260 → **0.000 %** |
+> | `C2_Au_holes` | 127 / 256 → **−0.781 %** | 130 / 260 → **0.000 %** |
+> | `B3_Au_slits_TM` | 6554 / 8192 → +0.006 % | 8192 / 10240 → **0.000 %** |
+> | `D2_ikarus_cylinder_TE` | +0.076 % | **+0.007 %** (a circle has no exact raster) |
+>
+> `python benchmark/geometry_fidelity.py` prints the legacy table below;
+> `report(legacy=False)` prints the current one, where 0 of 11 patterned layers
+> exceed 0.10 %. Moose's side of the same mismatch was closed independently, by
+> rebuilding its 2D cells on an explicit permittivity grid (`CaModel`) instead
+> of the outward-rounding `Atom` rasterizer.
 
 Sharing one mask also means sharing its errors, and any code that builds the
 geometry from the parameters instead (Moose, S4, a fab process) solves a
-different structure. `python benchmark/geometry_fidelity.py` prints how
-different:
+different structure. That is what `geometry_fidelity.py` measured on the legacy
+grid:
 
 | case | nominal | mask | rasterized | error |
 |---|---|---|---|---|
@@ -416,6 +436,30 @@ raw and estimated solve time.
 In both, colour is the **codebase** and linestyle the **factorization rule**:
 solid for the direct (Laurent) rule, and a distinct broken style for each
 faithful one — `--` Pol (grcwa), `-.` Li and `:` NV (Ikarus).
+
+### The plate book
+
+One command turns a finished (or in-progress) run into a single self-contained
+HTML page — every structure drawn, every convergence plate, and an interactive
+explorer over the whole run:
+
+```bash
+python benchmark/make_plate_book.py    # -> benchmark/plate_book.html
+```
+
+It reads exactly three inputs, held as editable strings at the top of that file:
+`conv_results.json`, `moose_reference.json` and the optional `moose_timing.json`.
+There is no fallback to an older run — a missing input stops the build and names
+the command that produces it.
+
+The book's own palette differs from the plotters above on purpose: there
+**colour is the factorization rule** and dash plus marker the codebase, so both
+Laurent columns collapse onto one grey and the direct-versus-faithful story is
+what the eye picks up first. Details in `benchmark/viz_proposals/README.md`.
+
+Built while `run_overnight.bat` is still running, the page is a snapshot of the
+last finished stage and says so in its header, along with the q reached and the
+solve count — all measured at build time, never typed into the template.
 
 ## Night job
 

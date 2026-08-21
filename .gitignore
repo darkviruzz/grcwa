@@ -104,3 +104,8 @@ ENV/
 
 # IDE settings
 .vscode/
+# Plate book build outputs -- regenerate with benchmark/make_plate_book.py.
+# Never committed: a checked-in book is a snapshot of whatever run built it,
+# and a stale plate is worse than no plate.
+benchmark/plate_book.html
+benchmark/viz_proposals/figures/

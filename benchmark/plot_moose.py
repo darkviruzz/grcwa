@@ -13,17 +13,20 @@ Set WHITELIST = None to draw every column present. Moose is always overlaid.
 Only cases Moose actually ran are drawn (the group-D factorization cases are not
 among them -- they are referenced against Ikarus instead, in plot_conv.py).
 
-x-axis = total retained orders. Moose 2D keys "(m,m)" are read as m per-axis
-orders -> m*m total (matching the (q,q) convention in structures.py); 1D keys
-"N" -> N. If Moose actually means max-order m (2m+1 per axis), change parse_key.
+x-axis = total retained orders. Moose keys are a MAXIMUM order m, not an order
+count: it retains 2m+1 harmonics per axis, so a 1D key "m" is 2m+1 orders and a
+2D key "(mx,my)" is (2mx+1)(2my+1) -- see parse_total, and viz_conv._mkey, which
+uses the same rule. Verified against the nG that moose_timing.json records per
+key.
 
-CAVEAT on the 2D panels. `ref_of` uses the Moose value as the reference, so the
-error curves show |R(N) - R_moose|. On the 1D cases that is a convergence error.
-On C1/C1b/C2 it is not: those masks misrepresent their own nominal pillars by
-0.4-0.8 % in width (benchmark/geometry_fidelity.py), which is worth about 0.01
-in R -- more than the gap being plotted. The 2D error curves therefore flatten
-out on a geometry mismatch, not on a convergence floor. See "The mask is not the
-structure" in benchmark/README.md before reading anything into them.
+On the 2D panels `ref_of` uses the Moose value as the reference, so the error
+curves show |R(N) - R_moose|: a convergence error only insofar as both sides
+rasterize the same geometry. They now do -- Moose builds the 2D cells from an
+explicit permittivity grid (CaModel, not the Atom rasterizer) and structures.py
+puts the battery on cell-centred exact grids -- which removed the ~0.01 in R
+that the old 0.4-0.8 % mask width mismatch was worth. Residual flattening on
+C1/C1b/C2 is now worth reading as a convergence floor rather than dismissing as
+a geometry artefact, but check geometry before physics when it surprises you.
 """
 import os
 import json
