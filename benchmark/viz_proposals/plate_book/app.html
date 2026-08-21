@@ -18,12 +18,28 @@
 
   /* ---------------- explorer state ---------------- */
   var CASES = Object.keys(DATA.cases);
+  var META = DATA.meta || {};
+  var MOOSE_KEY = "Moose";
   var state = {
     cs: CASES.indexOf("D1_ikarus_hcg_TM") >= 0 ? "D1_ikarus_hcg_TM" : CASES[0],
     y: "err", x: "t",
     on: {}
   };
   DATA.columns.forEach(function (c) { state.on[c] = true; });
+  state.on[MOOSE_KEY] = true;
+
+  /* Moose as a series like any other: (x, R) pairs for the current x axis.
+     The order sweep and the timed sweep are different point sets -- timing
+     covers fewer keys -- so each axis reads its own pair of arrays. */
+  function mooseSeries(cs) {
+    var m = DATA.cases[cs].moose;
+    if (!m) return null;
+    if (state.x === "nG") return { x: m.nG, R: m.R };
+    if (!m.t || !m.t.length) return null;
+    return { x: m.t, R: m.tR };
+  }
+  function hasMoose(cs) { return !!mooseSeries(cs); }
+  function mooseShown(cs) { return state.on[MOOSE_KEY] && hasMoose(cs); }
 
   var YMODES = [
     ["R", "raw R"], ["dev", "signed R − R_ref  (symlog)"],
@@ -65,23 +81,42 @@
         state.on[c], function () { state.on[c] = !state.on[c]; rebuild(); }, " serie");
       sb.appendChild(b);
     });
+    if (DATA.cases[state.cs].moose) {
+      var mb = chip('<span class="sw" style="background:' + MOOSE_C + '"></span>' +
+        MOOSE_KEY + (hasMoose(state.cs) ? "" : " (no timings)"),
+        mooseShown(state.cs),
+        function () { state.on[MOOSE_KEY] = !state.on[MOOSE_KEY]; rebuild(); }, " serie");
+      if (!hasMoose(state.cs)) mb.disabled = true;
+      sb.appendChild(mb);
+    }
     draw();
   }
 
   /* ---------------- scales ---------------- */
-  var LT = 1e-4, LS = 0.95, FLOOR = 1e-12;
+  /* Same symlog band as plot_deviation.py: both take GRCWA_SYMLOG_LINTHRESH,
+     shipped here in meta so the plate and the explorer cannot disagree. */
+  var LT = +META.linthresh > 0 ? +META.linthresh : 1e-6;
+  var TOL = +META.tolerance > 0 ? +META.tolerance : 1e-4;
+  var LS = 0.95, FLOOR = 1e-12;
+  var MOOSE_C = "#111418";
   function symf(v) {
     var a = Math.abs(v), s = v < 0 ? -1 : 1;
     return s * (a <= LT ? (a / LT) * LS : LS + Math.log10(a / LT));
   }
   function digits(e) { return Math.max(0, Math.min(8, -Math.log10(Math.max(e, 1e-16)))); }
 
+  /* one y rule for every series, so Moose is measured exactly like a column */
+  function yOf(R, ref) {
+    if (state.y === "R") return R;
+    if (state.y === "dev") return R - ref;
+    if (state.y === "err") return Math.max(Math.abs(R - ref), FLOOR);
+    return digits(Math.abs(R - ref));
+  }
   function yValue(cs, col, i) {
     var d = DATA.cases[cs], c = d.cols[col];
-    if (state.y === "R") return c.R[i];
-    if (state.y === "dev") return c.R[i] - d.ref;
     if (state.y === "err") return Math.max(c.err[i], FLOOR);
-    return digits(c.err[i]);
+    if (state.y === "dig") return digits(c.err[i]);
+    return yOf(c.R[i], d.ref);
   }
   function yTransform(v) {
     if (state.y === "dev") return symf(v);
@@ -132,16 +167,33 @@
     var d = DATA.cases[state.cs];
     var cols = DATA.columns.filter(function (c) { return state.on[c]; });
 
+    var ms = mooseShown(state.cs) ? mooseSeries(state.cs) : null;
+
     var xlo = Infinity, xhi = 0, ylo = Infinity, yhi = -Infinity;
+    /* A series judged against itself -- Moose on a Moose-referenced case, or
+       ikarus[NV] on D1/D2 -- has |ΔR| = 0 at its own reference point. Let that
+       drive the range and the log axis stretches to the 1e-12 floor, squashing
+       every real curve. Such points still draw, clipped; they just do not vote. */
+    var FLOOR_T = Math.log10(FLOOR * 10);
+    function span(xv, t) {
+      if (!(xv > 0)) return;
+      xlo = Math.min(xlo, xv); xhi = Math.max(xhi, xv);
+      if (!isFinite(t)) return;
+      if (state.y === "err" && t <= FLOOR_T) return;
+      ylo = Math.min(ylo, t); yhi = Math.max(yhi, t);
+    }
     cols.forEach(function (col) {
       var n = d.cols[col].nG.length;
       for (var i = 0; i < n; i++) {
-        var xv = xValue(state.cs, col, i); if (!(xv > 0)) continue;
-        xlo = Math.min(xlo, xv); xhi = Math.max(xhi, xv);
-        var t = yTransform(yValue(state.cs, col, i));
-        if (isFinite(t)) { ylo = Math.min(ylo, t); yhi = Math.max(yhi, t); }
+        span(xValue(state.cs, col, i), yTransform(yValue(state.cs, col, i)));
       }
     });
+    /* Moose stretches the axes too -- otherwise it silently draws off-panel */
+    if (ms) {
+      for (var mi = 0; mi < ms.x.length; mi++) {
+        span(ms.x[mi], yTransform(yOf(ms.R[mi], d.ref)));
+      }
+    }
     if (!isFinite(xlo)) { return; }
     if (state.y === "dev") { yhi = Math.max(Math.abs(ylo), Math.abs(yhi)); ylo = -yhi; }
     if (state.y === "dig") { ylo = 0; yhi = 8; }
@@ -156,7 +208,7 @@
     /* bands */
     if (state.y === "err") {
       ctx.fillStyle = ok + "1f";
-      ctx.fillRect(M.l, Y(Math.log10(1e-4)), pw, M.t + ph - Y(Math.log10(1e-4)));
+      ctx.fillRect(M.l, Y(Math.log10(TOL)), pw, M.t + ph - Y(Math.log10(TOL)));
     } else if (state.y === "dev") {
       ctx.fillStyle = ok + "1f";
       ctx.fillRect(M.l, Y(symf(LT)), pw, Y(symf(-LT)) - Y(symf(LT)));
@@ -175,9 +227,13 @@
     });
     var yticks = [];
     if (state.y === "dev") {
-      [-1, -.1, -.01, -1e-3, -1e-4, 0, 1e-4, 1e-3, .01, .1, 1].forEach(function (v) {
-        var t = symf(v); if (t >= ylo && t <= yhi) yticks.push([t, (v > 0 ? "+" : "") + fmt(v)]);
-      });
+      /* decades from 1 down to the last one above the linear band */
+      var mags = [], lowest = Math.ceil(Math.log10(LT));
+      for (var e = 0; e > lowest; e--) mags.push(Math.pow(10, e));
+      mags.concat([0]).concat(mags.map(function (v) { return -v; }))
+        .forEach(function (v) {
+          var t = symf(v); if (t >= ylo && t <= yhi) yticks.push([t, (v > 0 ? "+" : "") + fmt(v)]);
+        });
     } else if (state.y === "err") {
       for (var k = Math.ceil(ylo); k <= Math.floor(yhi); k++) yticks.push([k, "1e" + k]);
     } else if (state.y === "dig") {
@@ -202,26 +258,27 @@
       ctx.moveTo(M.l, Y(0)); ctx.lineTo(M.l + pw, Y(0)); ctx.stroke();
     } else if (state.y === "err") {
       ctx.strokeStyle = ok; ctx.beginPath();
-      ctx.moveTo(M.l, Y(-4)); ctx.lineTo(M.l + pw, Y(-4)); ctx.stroke();
+      ctx.moveTo(M.l, Y(Math.log10(TOL))); ctx.lineTo(M.l + pw, Y(Math.log10(TOL))); ctx.stroke();
     } else {
       ctx.strokeStyle = ok; ctx.beginPath();
-      ctx.moveTo(M.l, Y(4)); ctx.lineTo(M.l + pw, Y(4)); ctx.stroke();
+      ctx.moveTo(M.l, Y(digits(TOL))); ctx.lineTo(M.l + pw, Y(digits(TOL))); ctx.stroke();
     }
     ctx.setLineDash([]);
 
-    /* Moose overlay */
-    if (d.moose && (state.y === "R" || state.y === "dev") && state.x === "nG") {
-      ctx.strokeStyle = ink; ctx.lineWidth = 2.4; ctx.beginPath();
-      d.moose.nG.forEach(function (g, i) {
-        var yv = state.y === "R" ? d.moose.R[i] : d.moose.R[i] - d.ref;
-        var px = X(g), py = Y(yTransform(yv));
-        i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
-      });
+    /* Moose overlay -- the independent code, on every y mode and both x axes */
+    if (ms) {
+      var mpts = [];
+      for (var k2 = 0; k2 < ms.x.length; k2++) {
+        var mx2 = ms.x[k2]; if (!(mx2 > 0)) continue;
+        var mt2 = yTransform(yOf(ms.R[k2], d.ref)); if (!isFinite(mt2)) continue;
+        mpts.push([X(mx2), Y(Math.max(ylo, Math.min(yhi, mt2)))]);
+      }
+      ctx.strokeStyle = MOOSE_C; ctx.lineWidth = 2.4; ctx.beginPath();
+      mpts.forEach(function (p, i) { i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); });
       ctx.stroke();
-      d.moose.nG.forEach(function (g, i) {
-        var yv = state.y === "R" ? d.moose.R[i] : d.moose.R[i] - d.ref;
-        ctx.fillStyle = surf; ctx.strokeStyle = ink; ctx.lineWidth = 1.6;
-        ctx.beginPath(); ctx.arc(X(g), Y(yTransform(yv)), 3.6, 0, 6.284);
+      mpts.forEach(function (p) {
+        ctx.fillStyle = surf; ctx.strokeStyle = MOOSE_C; ctx.lineWidth = 1.6;
+        ctx.beginPath(); ctx.arc(p[0], p[1], 3.6, 0, 6.284);
         ctx.fill(); ctx.stroke();
       });
     }
@@ -250,7 +307,7 @@
     /* hover guide + right-hand readout */
     ctx.font = '11.5px "IBM Plex Mono", monospace';
     ctx.textAlign = "left"; ctx.textBaseline = "middle";
-    var ry = M.t + 10, rows = [];
+    var ry = M.t + 10, rows = [], mooseHit = -1;
     if (hoverX != null) {
       var xv3 = Math.pow(10, lxlo + (hoverX - M.l) / pw * (lxhi - lxlo));
       ctx.strokeStyle = muted; ctx.setLineDash([2, 3]); ctx.lineWidth = 1;
@@ -266,6 +323,15 @@
         if (best < 0) return;
         rows.push([col, best]);
       });
+      if (ms) {
+        var mb2 = -1, mbd = Infinity;
+        for (var mj = 0; mj < ms.x.length; mj++) {
+          if (!(ms.x[mj] > 0)) continue;
+          var mdd = Math.abs(Math.log10(ms.x[mj]) - Math.log10(xv3));
+          if (mdd < mbd) { mbd = mdd; mb2 = mj; }
+        }
+        if (mb2 >= 0) mooseHit = mb2;
+      }
     }
     cols.forEach(function (col, k) {
       var y = ry + k * 30;
@@ -281,17 +347,39 @@
           M.l + pw + 40, y + 13);
       }
     });
-    if (rows.length) {
-      var i0 = rows[0][1], c0 = d.cols[rows[0][0]];
+    if (ms) {
+      var my = ry + cols.length * 30;
+      ctx.strokeStyle = MOOSE_C; ctx.lineWidth = 2.6;
+      ctx.beginPath(); ctx.moveTo(M.l + pw + 12, my); ctx.lineTo(M.l + pw + 34, my); ctx.stroke();
+      ctx.fillStyle = surf; ctx.beginPath();
+      ctx.arc(M.l + pw + 23, my, 3.6, 0, 6.284); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = ink; ctx.fillText(MOOSE_KEY, M.l + pw + 40, my);
+      if (mooseHit >= 0) {
+        var mv = yOf(ms.R[mooseHit], d.ref);
+        ctx.fillStyle = muted;
+        ctx.fillText((state.y === "dig" ? mv.toFixed(1) + " digits" : mv.toExponential(2)),
+          M.l + pw + 40, my + 13);
+      }
+    }
+    if (rows.length || mooseHit >= 0) {
+      var lines = rows.map(function (r) {
+        var cc = d.cols[r[0]];
+        return r[0] + "  R=" + cc.R[r[1]].toFixed(6) + "  |ΔR|=" + cc.err[r[1]].toExponential(2) +
+          "  " + cc.t[r[1]] + " ms  @ " + cc.nG[r[1]] + " orders";
+      });
+      if (mooseHit >= 0) {
+        lines.push(MOOSE_KEY + "  R=" + ms.R[mooseHit].toFixed(6) +
+          "  |ΔR|=" + Math.abs(ms.R[mooseHit] - d.ref).toExponential(2) +
+          (state.x === "nG" ? "  @ " + ms.x[mooseHit] + " orders"
+                            : "  " + ms.x[mooseHit] + " ms"));
+      }
+      var head = rows.length
+        ? (state.x === "nG" ? "orders " + d.cols[rows[0][0]].nG[rows[0][1]]
+                            : "≈ " + d.cols[rows[0][0]].t[rows[0][1]] + " ms")
+        : (state.x === "nG" ? "orders " + ms.x[mooseHit] : "≈ " + ms.x[mooseHit] + " ms");
       document.getElementById("readout").textContent =
-        state.cs + "   ·   " + (state.x === "nG" ? "orders " + c0.nG[i0]
-          : "≈ " + c0.t[i0] + " ms") + "   ·   ref " + d.ref.toFixed(6) +
-        " (" + d.refType + (d.prov ? ", provisional" : "") + ")\n" +
-        rows.map(function (r) {
-          var cc = d.cols[r[0]];
-          return r[0] + "  R=" + cc.R[r[1]].toFixed(6) + "  |ΔR|=" + cc.err[r[1]].toExponential(2) +
-            "  " + cc.t[r[1]] + " ms  @ " + cc.nG[r[1]] + " orders";
-        }).join("\n");
+        state.cs + "   ·   " + head + "   ·   ref " + d.ref.toFixed(6) +
+        " (" + d.refType + (d.prov ? ", provisional" : "") + ")\n" + lines.join("\n");
     }
     /* axis titles */
     ctx.fillStyle = muted; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";

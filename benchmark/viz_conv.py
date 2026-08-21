@@ -187,6 +187,24 @@ def moose_timed(case):
     return (np.array([p[0] for p in pairs], float),
             np.array([p[1] for p in pairs], float))
 
+def linthresh():
+    """Half-width of the symlog linear band, from GRCWA_SYMLOG_LINTHRESH.
+
+    Shared so the deviation plate and the plate book's explorer cannot drift
+    apart: both read this, and export_web.py ships the value into the page.
+    """
+    raw = os.environ.get("GRCWA_SYMLOG_LINTHRESH")
+    if not raw:
+        return 1e-6
+    try:
+        value = float(raw)
+    except ValueError:
+        raise SystemExit("GRCWA_SYMLOG_LINTHRESH is not a number: %r" % raw)
+    if not 0 < value < 1:
+        raise SystemExit("GRCWA_SYMLOG_LINTHRESH must be in (0, 1): %r" % raw)
+    return value
+
+
 def pareto(t, e):
     """Running-minimum error against increasing cost -> the honest cost curve."""
     o = np.argsort(t)

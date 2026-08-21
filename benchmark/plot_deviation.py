@@ -42,21 +42,7 @@ os.makedirs(OUT, exist_ok=True)
 plt.rcParams.update({"font.family": "DejaVu Sans", "figure.facecolor": "white",
                      "savefig.facecolor": "white"})
 INK, MUTED = "#1b2733", "#5b6b7b"
-def _linthresh():
-    """Half-width of the symlog linear band, from GRCWA_SYMLOG_LINTHRESH."""
-    raw = os.environ.get("GRCWA_SYMLOG_LINTHRESH")
-    if not raw:
-        return 1e-6
-    try:
-        value = float(raw)
-    except ValueError:
-        raise SystemExit("GRCWA_SYMLOG_LINTHRESH is not a number: %r" % raw)
-    if not 0 < value < 1:
-        raise SystemExit("GRCWA_SYMLOG_LINTHRESH must be in (0, 1): %r" % raw)
-    return value
-
-
-LT = _linthresh()      # symlog threshold: where the axis stops being logarithmic
+LT = D.linthresh()     # symlog threshold: where the axis stops being logarithmic
 
 
 def _decades(lt):

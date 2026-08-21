@@ -42,6 +42,13 @@ def _fmt(n):
     return "{:,}".format(n).replace(",", " ")
 
 
+def _exp(value, fallback):
+    """1e-06 is how %g spells it; 1e-6 is how the sheet spells it."""
+    if not value:
+        return fallback
+    return ("%g" % value).replace("e-0", "e-").replace("e+0", "e")
+
+
 def _meta_text(meta):
     """The {{META:*}} substitutions, all measured from the run itself.
 
@@ -62,7 +69,8 @@ def _meta_text(meta):
         "QMAX": str(q) if q else "?",
         "STATE": ("complete sweep" if meta.get("complete")
                   else "sweep still running — this is the last finished stage"),
-        "TOL": ("%g" % meta["tolerance"]) if meta.get("tolerance") else "1e-4",
+        "TOL": _exp(meta.get("tolerance"), "1e-4"),
+        "LINTHRESH": _exp(meta.get("linthresh"), "1e-6"),
         "REFDRIFT": (", ".join(drift) if drift else
                      "none — every baked reference matches the current Moose file"),
     }

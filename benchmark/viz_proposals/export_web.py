@@ -45,6 +45,7 @@ def meta():
         "qMax": max(q) if q else None,
         "complete": bool(m.get("complete")),
         "tolerance": m.get("convergence_tolerance"),
+        "linthresh": D.linthresh(),
         "refDrift": drift,
     }
 
@@ -69,6 +70,13 @@ def build():
         if mx is not None:
             entry["moose"] = dict(nG=[int(v) for v in mx],
                                   R=[round(float(v), 9) for v in mR])
+            # moose_timing.json covers fewer keys than the sweep, so the cost
+            # axis carries its own (t, R) pairs rather than reusing the order
+            # series -- exactly as plot_deviation's time variant does.
+            mt, mtR = D.moose_timed(case)
+            if mt is not None:
+                entry["moose"]["t"] = [float("%.4g" % v) for v in mt]
+                entry["moose"]["tR"] = [round(float(v), 9) for v in mtR]
         out["cases"][case] = entry
     return out
 

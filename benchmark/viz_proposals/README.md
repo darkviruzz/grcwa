@@ -52,7 +52,12 @@ stops the build and names the command that produces it.
 | `benchmark/structures.py` | — (the battery itself) | `viz_palette.py` → the structure plates. Add a dict to `STRUCTURES` and it appears with no other edit. |
 | `benchmark/conv_results.json` | `conv_run.py`, via `run_overnight.bat` | `viz_conv.py` → every convergence plate and the explorer |
 | `benchmark/moose_reference.json` | `moose/moose_csv_to_json.py` from a Moose `moose_conv.csv` | the black Moose overlay, and the live reference for cases judged against Moose |
-| `benchmark/moose_timing.json` | same converter, as a sibling file | the Moose points on the wall-time axis. Optional: without it Moose simply gets no cost axis. |
+| `benchmark/moose_timing.json` | same converter, as a sibling file | the Moose points on the wall-time axis, on the C4 plate and in the explorer. Optional: without it Moose simply gets no cost axis. |
+
+`GRCWA_SYMLOG_LINTHRESH` (default 1e-6) sets the half-width of the linear band
+on the signed-deviation views. `viz_conv.linthresh` is the single reader:
+`plot_deviation.py` scales its axis with it and `export_web.py` ships it in
+`meta`, so the C4 plate and the explorer's symlog mode cannot drift apart.
 
 Nothing is transcribed. Add data at the source and every figure follows.
 
