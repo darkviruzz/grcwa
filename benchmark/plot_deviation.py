@@ -1,10 +1,18 @@
 """C4 -- signed deviation from the reference on a symlog axis.
 
-One linear axis cannot hold both the low-order transient and the 1e-4 endgame,
-which is why the raw convergence figure needs a ``_tight`` twin.  A symlog axis
-holds both: outside +/-1e-4 it is logarithmic, so you read the transient and the
-SIGN of the approach; inside the band it turns linear, so the endgame is legible
-in the same panel.
+One linear axis cannot hold both the low-order transient and the endgame, which
+is why the raw convergence figure needs a ``_tight`` twin.  A symlog axis holds
+both: outside the linear band it is logarithmic, so you read the transient and
+the SIGN of the approach; inside the band it turns linear, so the endgame is
+legible in the same panel.
+
+The band half-width is ``GRCWA_SYMLOG_LINTHRESH``, default 1e-6.  It sets how
+far down the log region reaches before the axis goes linear, so a smaller value
+buys resolution in the endgame at the cost of collapsing everything below it
+into one flat zone.  1e-6 keeps the 1e-4 tolerance itself on the log side, where
+its decade is still readable; setting it to 1e-4 puts the tolerance at the band
+edge instead, which hides how a curve approaches it.  The tick decades follow
+automatically.
 
 Two variants of the same figure, chosen by the x axis: total retained orders,
 and wall time of the solve.  Moose is overlaid in black on both, from
@@ -34,7 +42,34 @@ os.makedirs(OUT, exist_ok=True)
 plt.rcParams.update({"font.family": "DejaVu Sans", "figure.facecolor": "white",
                      "savefig.facecolor": "white"})
 INK, MUTED = "#1b2733", "#5b6b7b"
-LT = 1e-4              # symlog threshold: the tolerance the sweep is judged on
+def _linthresh():
+    """Half-width of the symlog linear band, from GRCWA_SYMLOG_LINTHRESH."""
+    raw = os.environ.get("GRCWA_SYMLOG_LINTHRESH")
+    if not raw:
+        return 1e-6
+    try:
+        value = float(raw)
+    except ValueError:
+        raise SystemExit("GRCWA_SYMLOG_LINTHRESH is not a number: %r" % raw)
+    if not 0 < value < 1:
+        raise SystemExit("GRCWA_SYMLOG_LINTHRESH must be in (0, 1): %r" % raw)
+    return value
+
+
+LT = _linthresh()      # symlog threshold: where the axis stops being logarithmic
+
+
+def _decades(lt):
+    """Decade tick magnitudes from 0.1 down to the last one above the band."""
+    lowest = int(np.ceil(np.log10(lt)))
+    return [10.0 ** e for e in range(-1, lowest, -1)]
+
+
+def _tick_label(value):
+    """0.1 and 0.01 read better spelled out; below that use the exponent."""
+    if value >= 0.01:
+        return ("%g" % value).rstrip("0").rstrip(".")
+    return "1e%d" % round(np.log10(value))
 BAND = "#e6f4ec"
 
 
@@ -85,9 +120,11 @@ def panel(ax, case, xaxis):
     for v in (LT, -LT):
         ax.axhline(v, color="#7fbf9a", lw=.9, ls=(0, (4, 3)), zorder=3)
     ax.set_ylim(-1.15, 1.15)
-    ax.set_yticks([-1, -1e-1, -1e-2, -1e-3, 0, 1e-3, 1e-2, 1e-1, 1])
-    ax.set_yticklabels(["−1", "−0.1", "−0.01", "−1e-3", "0", "+1e-3", "+0.01",
-                        "+0.1", "+1"], fontsize=7.6)
+    mags = [1.0] + _decades(LT)
+    ax.set_yticks([-v for v in mags] + [0] + list(reversed(mags)))
+    ax.set_yticklabels(
+        ["−" + _tick_label(v) for v in mags] + ["0"] +
+        ["+" + _tick_label(v) for v in reversed(mags)], fontsize=7.6)
     ax.grid(axis="x", color="#eef2f6", lw=.7, zorder=0)
     ax.tick_params(axis="x", labelsize=8)
     for sp in ("top", "right"):
@@ -127,7 +164,8 @@ def figure(xaxis):
         handles.append(Line2D([], [], color=D.MOOSE_C, marker="D", ms=6, lw=2.4,
                               mfc="white", mew=1.4,
                               label="Moose (independent code)"))
-    handles.append(Line2D([], [], color=BAND, lw=9, label="±1e-4 band (linear zone)"))
+    handles.append(Line2D([], [], color=BAND, lw=9,
+                          label="±%s band (linear zone)" % _tick_label(LT)))
     fig.legend(handles=handles, loc="lower center", ncol=7, frameon=False,
                fontsize=9.6, bbox_to_anchor=(.5, .010))
     if xaxis == "orders":

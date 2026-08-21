@@ -149,8 +149,11 @@ def draw_iso(ax, g, nper=2, fs=8.5, show_beam=True):
 
     # ---- unit-cell footprint, on the ground plane -------------------------
     if dim:
-        cell = [P(0, 0, 0), P(Lam, 0, 0), P(Lam, Lam if dim == 2 else Ly, 0),
-                P(0, Lam if dim == 2 else Ly, 0)]
+        # Lam x Lam on both 1D and 2D.  A 1D grating is invariant along y, so
+        # the cell's depth is arbitrary and used to run the full nper*Lam --
+        # which drew as a 1:2 rectangle next to the square 2D ones.  Marking one
+        # period on each axis reads as the same object across the sheet.
+        cell = [P(0, 0, 0), P(Lam, 0, 0), P(Lam, Lam, 0), P(0, Lam, 0)]
         ax.add_patch(Polygon(cell, closed=True, fc="none", ec=BEAM, lw=1.2,
                              ls=(0, (3, 2)), zorder=2.5))
 

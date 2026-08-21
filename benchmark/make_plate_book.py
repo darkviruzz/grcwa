@@ -31,6 +31,11 @@ CONV_JSON = os.path.join(HERE, "conv_results.json")
 MOOSE_JSON = os.path.join(HERE, "moose_reference.json")
 MOOSE_TIMING_JSON = os.path.join(HERE, "moose_timing.json")
 
+# Half-width of the linear band on the symlog deviation plates.  Smaller buys
+# resolution in the endgame and collapses everything below it into one flat
+# zone; 1e-6 keeps the 1e-4 tolerance itself on the readable log side.
+SYMLOG_LINTHRESH = "1e-6"
+
 # ---------------------------------------------------------------------------
 # OUTPUTS
 # ---------------------------------------------------------------------------
@@ -62,6 +67,7 @@ def _env():
         GRCWA_CONV_JSON=CONV_JSON,
         GRCWA_MOOSE_JSON=MOOSE_JSON,
         GRCWA_MOOSE_TIMING_JSON=MOOSE_TIMING_JSON,
+        GRCWA_SYMLOG_LINTHRESH=SYMLOG_LINTHRESH,
         GRCWA_PLOT_OUTPUT_DIR=FIGURE_DIR,
         GRCWA_VIZ_OUT=FIGURE_DIR,
         GRCWA_VIZ_FIGURES=FIGURE_DIR,
