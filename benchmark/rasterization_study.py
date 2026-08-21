@@ -373,18 +373,20 @@ def cmd_pol(args):
         s = ST.STRUCT[name]
         base = exact_N(s) or ST.NX_2D
         grids = [base * k for k in (1, 2, 4, 8)][:args.n_grids]
-        print("\n%s, exact geometry, q = %d -- Pol's blur is specified in PIXELS"
+        print("\n%s, exact geometry, q = %d -- Pol's blur is a fraction of the period"
               % (name, args.q))
-        cols = ["Pol sigma=3px", "Pol sigma~period/87"] + (
+        cols = ["Pol sigma=3px", "Pol sigma=3/%d period" % base,
+                "Pol default=1/12"] + (
             ["ik-normal"] if have_ikarus() else [])
-        print(("%7s" + "%22s" * len(cols)) % tuple(["N"] + cols))
+        print(("%7s" + "%25s" * len(cols)) % tuple(["N"] + cols))
         for N in grids:
             eg = eps_of(s, N, "centre")
-            row = [N, solve_grcwa(s, args.q, eg, "pol"),
-                   solve_grcwa(s, args.q, eg, "pol", pol_sigma=3.0 * N / base)]
+            row = [N, solve_grcwa(s, args.q, eg, "pol", pol_sigma=3.0 / N),
+                   solve_grcwa(s, args.q, eg, "pol", pol_sigma=3.0 / base),
+                   solve_grcwa(s, args.q, eg, "pol")]
             if have_ikarus():
                 row.append(solve_ikarus(s, args.q, eg, "normal"))
-            print(("%7d" + "%22.9f" * (len(row) - 1)) % tuple(row))
+            print(("%7d" + "%25.9f" * (len(row) - 1)) % tuple(row))
 
 
 # ===========================================================================
@@ -401,14 +403,14 @@ def cmd_fill1d(args):
         ff = s["ff"]
         print("\n%s   ff = %.3f   (NX_1D=8192 -> %.1f cells)" % (name, ff, 8192 * ff))
         print("%8s %10s %16s %16s %16s"
-              % ("N", "cells", "Laurent", "Laurent+sinc", "Pol"))
+              % ("N", "cells", "Laurent", "Laurent+sinc", "Pol default"))
         for N in args.grids:
             f = prof(N, ff)
             eg = ST.eps(s["lo"]) * (1 - f) + ST.eps(s["hi"]) * f
             a = solve_grcwa(s, args.q, eg, None)
             with pixel_exact():
                 b = solve_grcwa(s, args.q, eg, None)
-            c = solve_grcwa(s, args.q, eg, "pol", pol_sigma=3.0 * N / 8192.0)
+            c = solve_grcwa(s, args.q, eg, "pol")
             print("%8d %10.1f %16.9f %16.9f %16.9f" % (N, f.sum(), a, b, c))
 
 

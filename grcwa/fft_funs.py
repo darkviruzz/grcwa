@@ -38,7 +38,7 @@ def Epsilon_fft(dN, eps_grid, G):
     return epsinv, eps2
 
 
-def Epsilon_fft_pol(dN, eps_grid, G, pol_sigma=3.0, pol_niter=20):
+def Epsilon_fft_pol(dN, eps_grid, G, pol_sigma=1.0 / 12.0, pol_niter=0):
     """Fourier-space epsilon matrices using the Pol method (S4 paper Eq. 51).
 
     Implements the PolBasisVL formulation from S4 (fmm_PolBasisVL.cpp), which
@@ -61,16 +61,19 @@ def Epsilon_fft_pol(dN, eps_grid, G, pol_sigma=3.0, pol_niter=20):
     G : array (nG, 2)
         Integer G-vector indices (Lk1, Lk2 components).
     pol_sigma : float
-        Gaussian blur sigma (in pixels) for smoothing the tangent field.
+        Gaussian blur sigma as a fraction of the grid period.  It is converted
+        to pixels using the largest grid dimension.
     pol_niter : int
-        Number of blur+reset iterations.  0 means a single blur (no reset).
+        Number of optional blur+reset iterations.  The default 0 performs the
+        reference single blur without re-pinning rasterized interface pixels.
 
     Returns
     -------
     epsinv : (nG, nG) complex array
-        Inverse-rule Toeplitz matrix of 1/eps (used for the kp matrix).
+        Inverse of the Toeplitz matrix of eps (used for the kp matrix).
     eps2 : (2*nG, 2*nG) complex array
-        Pol-corrected in-plane epsilon matrix (block 2x2: xx, xy, yx, yy).
+        Pol-corrected in-plane epsilon operator.  It acts on the rotated field
+        vector [-Ey, Ex], rather than directly on [Ex, Ey].
 
     References
     ----------
@@ -101,7 +104,9 @@ def Epsilon_fft_pol(dN, eps_grid, G, pol_sigma=3.0, pol_niter=20):
     # S4 sign convention (fmm_PolBasisVL.cpp lines 257-268):
     #   mDelta = inv(Eta) - Epsilon       (negated Delta in Eq. 51)
     #   eps2[block] += mDelta @ P[block]
-    # Block order: (0,0)=xx, (0,1)=xy, (1,0)=yx, (1,1)=yy
+    # eps2 acts on [-Ey, Ex].  Consequently these blocks represent the
+    # rotated tensor [[eps_yy, -eps_yx], [-eps_xy, eps_xx]], and the tangent
+    # projector returned below is the physical normal projector in this basis.
     mDelta = bd.inv(eta_hat) - eps_hat
 
     E_xx = eps_hat + bd.dot(mDelta, P_xx_hat)
@@ -116,28 +121,27 @@ def Epsilon_fft_pol(dN, eps_grid, G, pol_sigma=3.0, pol_niter=20):
     return epsinv, eps2
 
 
-def _compute_tangent_field_pol(eps_grid, pol_sigma=3.0, pol_niter=20):
+def _compute_tangent_field_pol(eps_grid, pol_sigma=1.0 / 12.0, pol_niter=0):
     """Tangent vector field and projection operators for the Pol method.
 
-    Computes a smooth tangent vector field at material interfaces and returns
-    the outer-product projection matrices P_ij = t_i * t_j used by
-    Epsilon_fft_pol.  The implementation is fully autograd-compatible so that
-    gradients propagate correctly through the Pol correction during
-    topology optimization.
+    Computes a smooth, undirected interface orientation and returns the
+    tangent outer-product projection matrices used by Epsilon_fft_pol.  Since
+    eps2 acts on [-Ey, Ex], this tangent projection applies the inverse rule
+    along the physical interface normal.  The implementation is fully
+    autograd-compatible so that gradients propagate correctly through the Pol
+    correction during topology optimization.
 
     Algorithm:
-      1. Detect interfaces via forward finite differences of eps (periodic BC).
-      2. Rotate the gradient 90 deg to obtain the raw tangent field.
-      3. Iterative blur+reset: blur the tangent field, then reset interface
-         pixels to their exact gradient values.  Repeated pol_niter times,
-         this approximates a Laplace solve (smooth harmonic extension from
-         interface pixels).  If pol_niter=0, a single blur is applied with
-         no reset (original behaviour).
-      4. Per-pixel unit normalization (|t| = 1 at every point) so that
-         P = t t^T is a true projection.  (A previous version used a single
-         global max-normalization, which left |t| < 1 across the cell and made
-         the inverse-rule correction vanish -- Pol then just reproduced Laurent.)
-      5. Form P_ij = t_i * t_j.
+      1. Detect interfaces via periodic central finite differences of the real
+         and imaginary parts of eps.
+      2. Encode the normal as the doubled angle z = (gx + i*gy)^2, so opposite
+         interface normals have the same orientation instead of cancelling.
+      3. Blur Re(z) and Im(z) once to diffuse the orientation through the cell.
+         Optional positive pol_niter values retain the legacy blur+reset
+         extension, but the reference/default path does not re-pin the smooth
+         field to staircase pixels at a rasterized curved boundary.
+      4. Recover the unit tangent projection directly from cos(2*theta) and
+         sin(2*theta), with no angle/arctan2 operation.
 
     All operations use the ``bd`` backend so autograd can differentiate
     through them.  The only raw-numpy operations are the Gaussian kernel
@@ -148,9 +152,11 @@ def _compute_tangent_field_pol(eps_grid, pol_sigma=3.0, pol_niter=20):
     eps_grid : 2d array (Nx, Ny)
         Isotropic permittivity grid.  May be an autograd ArrayBox.
     pol_sigma : float
-        Gaussian blur sigma in pixels for smoothing the tangent field.
+        Gaussian blur sigma as a fraction of the grid period.  It is converted
+        to pixels using max(Nx, Ny), matching the reference normal-vector rule.
     pol_niter : int
-        Number of blur+reset iterations.  0 means a single blur (no reset).
+        Number of optional blur+reset iterations.  0 (the default) means a
+        single blur with no interface reset.
 
     Returns
     -------
@@ -164,92 +170,96 @@ def _compute_tangent_field_pol(eps_grid, pol_sigma=3.0, pol_niter=20):
     eps_re = bd.real(eps_grid)
     eps_im = bd.imag(eps_grid)
 
-    # --- 1. Interface detection: periodic forward differences ---
-    # Check both real and imaginary parts; an interface exists if either differs.
-    grad_x_re = bd.concatenate([eps_re[1:, :], eps_re[:1, :]], axis=0) - eps_re
-    grad_y_re = bd.concatenate([eps_re[:, 1:], eps_re[:, :1]], axis=1) - eps_re
-    grad_x_im = bd.concatenate([eps_im[1:, :], eps_im[:1, :]], axis=0) - eps_im
-    grad_y_im = bd.concatenate([eps_im[:, 1:], eps_im[:, :1]], axis=1) - eps_im
+    # --- 1. Interface detection: periodic central differences. ---
+    # Keep real and imaginary gradients separate.  Combining their squared
+    # doubled-angle fields below gives a complex-safe structure tensor: a step
+    # with contrast a+i*b is weighted by a**2+b**2, so neither opposite signs
+    # nor equal-magnitude phase contrasts can make a real interface disappear.
+    def _central_grad(field):
+        x_next = bd.concatenate([field[1:, :], field[:1, :]], axis=0)
+        x_prev = bd.concatenate([field[-1:, :], field[:-1, :]], axis=0)
+        y_next = bd.concatenate([field[:, 1:], field[:, :1]], axis=1)
+        y_prev = bd.concatenate([field[:, -1:], field[:, :-1]], axis=1)
+        return 0.5 * (x_next - x_prev), 0.5 * (y_next - y_prev)
 
-    # Early exit for uniform permittivity (detached check on both parts)
+    grad_x_re, grad_y_re = _central_grad(eps_re)
+    grad_x_im, grad_y_im = _central_grad(eps_im)
+
+    # Early exit for uniform permittivity (detached check).
     def _detach(arr):
         return np.real(np.asarray(arr._value if hasattr(arr, "_value") else arr))
 
-    _max_grad = np.sqrt(
-        np.max(
-            _detach(grad_x_re) ** 2
-            + _detach(grad_y_re) ** 2
-            + _detach(grad_x_im) ** 2
-            + _detach(grad_y_im) ** 2
-        )
-    )
+    _grad_mag = np.sqrt(
+        _detach(grad_x_re) ** 2 + _detach(grad_y_re) ** 2
+        + _detach(grad_x_im) ** 2 + _detach(grad_y_im) ** 2)
+    _max_grad = np.max(_grad_mag)
     if _max_grad < POL_GRAD_TOL:
         z = bd.zeros_like(eps_re)
         return z, z, z, z
 
-    # Combined gradient: sum of real and imaginary contributions
-    grad_x = grad_x_re + grad_x_im
-    grad_y = grad_y_re + grad_y_im
+    # --- 2. Double-angle encoding of the undirected interface normal. ---
+    # Squaring maps normals n and -n to the same value, so opposite-facing
+    # interfaces reinforce instead of cancelling during the extension.  The
+    # projection is recovered algebraically below; no angle/arctan2 backend
+    # primitive is needed.
+    z_raw = ((grad_x_re + 1j * grad_y_re) ** 2
+             + (grad_x_im + 1j * grad_y_im) ** 2)
+    z_re_raw = bd.real(z_raw)
+    z_im_raw = bd.imag(z_raw)
 
-    # --- 2. Tangent field = 90-deg rotated gradient: t = (-grad_y, grad_x).
-    # This is the projection that leaves the continuous tangential (TE) field on
-    # Laurent's rule untouched while steering the inverse-rule correction onto
-    # the discontinuous (TM) component (verified: TE Pol == Laurent to ~1e-15).
-    tx_raw = -grad_y
-    ty_raw = grad_x
-
-    # --- 3. Iterative blur+reset to extend the tangent field smoothly ---
+    # --- 3. Iterative blur+reset to extend the orientation smoothly ---
     # The blur kernel and interface mask are constant numpy arrays (not
-    # differentiated).  The iteration approximates lap(t) = 0 with Dirichlet
-    # BC at interface pixels, producing a smooth harmonic extension.
+    # differentiated).  pol_sigma is a fraction of the period; converting it
+    # with the largest dimension also handles native 1D grids shaped (N, 1).
     kx_freq = np.fft.fftfreq(Nx)
     ky_freq = np.fft.fftfreq(Ny)
     KX, KY = np.meshgrid(kx_freq, ky_freq, indexing="ij")
-    blur_kernel = np.exp(-2 * np.pi**2 * pol_sigma**2 * (KX**2 + KY**2))
+    sigma_px = pol_sigma * max(Nx, Ny)
+    blur_kernel = np.exp(-2 * np.pi**2 * sigma_px**2 * (KX**2 + KY**2))
 
     if pol_niter <= 0:
         # Single blur, no reset.
-        tx = bd.real(bd.ifft2(bd.fft2(tx_raw) * blur_kernel))
-        ty = bd.real(bd.ifft2(bd.fft2(ty_raw) * blur_kernel))
+        z_re = bd.real(bd.ifft2(bd.fft2(z_re_raw) * blur_kernel))
+        z_im = bd.real(bd.ifft2(bd.fft2(z_im_raw) * blur_kernel))
     else:
         # Interface mask: constant (detached) binary array.
-        _grad_mag = np.sqrt(
-            _detach(grad_x_re) ** 2
-            + _detach(grad_y_re) ** 2
-            + _detach(grad_x_im) ** 2
-            + _detach(grad_y_im) ** 2
-        )
         mask = (_grad_mag > POL_GRAD_TOL).astype(float)
         mask_inv = 1.0 - mask
 
-        tx = tx_raw
-        ty = ty_raw
+        z_re = z_re_raw
+        z_im = z_im_raw
         for _ in range(pol_niter):
-            tx = mask * tx_raw + mask_inv * bd.real(bd.ifft2(bd.fft2(tx) * blur_kernel))
-            ty = mask * ty_raw + mask_inv * bd.real(bd.ifft2(bd.fft2(ty) * blur_kernel))
+            z_re = mask * z_re_raw + mask_inv * bd.real(
+                bd.ifft2(bd.fft2(z_re) * blur_kernel))
+            z_im = mask * z_im_raw + mask_inv * bd.real(
+                bd.ifft2(bd.fft2(z_im) * blur_kernel))
 
-    # --- 4. PER-PIXEL unit normalization -> a true projection (|t| = 1).
-    # Li's method needs a unit tangent at every point.  The previous global
-    # max-normalization left |t| < 1 across most of the cell, so P = t t^T was
-    # not a projection and the inverse-rule correction was negligible everywhere
-    # except the single peak-gradient pixel (Pol then just reproduced Laurent).
-    t_mag_sq = tx * tx + ty * ty
-    _raw_mag = np.real(np.asarray(t_mag_sq._value if hasattr(t_mag_sq, "_value") else t_mag_sq))
-    if np.max(_raw_mag) < POL_GRAD_TOL**2:
+    # --- 4. Recover the tangent projection from the doubled normal angle. ---
+    # A detached mask gives undefined/near-zero orientations a zero projection.
+    # Adding the invalid mask *inside* sqrt keeps autograd finite at z=0 while
+    # retaining an exact |z| denominator on valid pixels.  A blanket additive
+    # floor would bias cos(2 theta) away from +/-1 and leak the correction into
+    # TE on an axis-aligned 1D interface.
+    z_mag_sq = z_re * z_re + z_im * z_im
+    _raw_mag_sq = np.real(np.asarray(
+        z_mag_sq._value if hasattr(z_mag_sq, "_value") else z_mag_sq))
+    peak_z_mag_sq = float(np.max(_raw_mag_sq))
+    if peak_z_mag_sq < POL_GRAD_TOL**4:
         z = bd.zeros_like(eps_re)
         return z, z, z, z
-    # Small floor (relative to the peak field) avoids 0/0 at the few pixels the
-    # extension leaves at zero; eps is uniform there so the correction Delta ~ 0
-    # and the projection there is irrelevant.
-    t_floor = POL_GRAD_TOL * float(np.sqrt(np.max(_raw_mag)))
-    t_mag = bd.sqrt(t_mag_sq) + t_floor
-    tx = tx / t_mag
-    ty = ty / t_mag
 
-    # --- 5. Projection operators P_ij = t_i t_j ---
-    P_xx = tx * tx
-    P_xy = tx * ty
-    P_yy = ty * ty
+    z_tol_sq = POL_GRAD_TOL**2 * peak_z_mag_sq
+    valid = (_raw_mag_sq > z_tol_sq).astype(float)
+    z_mag = bd.sqrt(z_mag_sq + (1.0 - valid))
+    cos_2theta = valid * z_re / z_mag
+    sin_2theta = valid * z_im / z_mag
+
+    # eps2 uses the rotated basis [-Ey, Ex], so the physical normal projector
+    # becomes the tangent projector in this basis.  For an x-normal 1D grating
+    # this gives P_xx=0, P_yy=1 and leaves TE exactly on Laurent's rule.
+    P_xx = 0.5 * valid * (1.0 - cos_2theta)
+    P_yy = 0.5 * valid * (1.0 + cos_2theta)
+    P_xy = -0.5 * valid * sin_2theta
 
     return P_xx, P_xy, P_xy, P_yy
 

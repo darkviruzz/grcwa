@@ -85,7 +85,9 @@ handles the TE/TM coupling automatically.
   of Fourier orders. The incident medium must stay isotropic.
 * **Fourier factorization**: Laurent's rule by default;
   ``grcwa.obj(..., fmm_method='pol')`` selects the Pol method (S4 Eq. 51) for
-  patterned layers.
+  patterned layers. Its ``pol_sigma`` argument is the Gaussian smoothing width
+  as a fraction of the sampled unit-cell period (default ``1/12``); internally
+  it is converted to pixels using the larger grid dimension.
 
 
 Quick Start

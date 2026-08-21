@@ -18,7 +18,7 @@ def _is_tensor_eps(ep):
 
 class obj:
     def __init__(self,nG,L1,L2,freq,theta,phi,verbose=1,
-                 fmm_method=None,pol_sigma=3.0,pol_niter=20):
+                 fmm_method=None,pol_sigma=1.0 / 12.0,pol_niter=0):
         '''The time harmonic convention is exp(-i omega t), speed of light = 1
 
         Two kinds of layers are currently supported: uniform layer,
@@ -44,8 +44,12 @@ class obj:
         fmm_method: None for Laurent's rule (default), or 'pol' for the Pol
                     method (S4 Eq. 51, faster Fourier convergence for
                     discontinuous/high-contrast/absorbing patterns).
-        pol_sigma, pol_niter: smoothing parameters for the Pol tangent field
-                    (only used when fmm_method='pol').
+        pol_sigma: Gaussian smoothing width for the Pol tangent field, as a
+                   fraction of the sampled unit-cell period (default 1/12).
+                   It is converted to pixels using max(Nx, Ny).
+        pol_niter: optional Pol blur+reset iterations (default 0, a single
+                   blur without resetting interface pixels). These parameters
+                   are used only when fmm_method='pol'.
         '''
         self.freq = freq
         self.omega = 2*bd.pi*freq+0.j
